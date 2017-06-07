@@ -2,6 +2,25 @@
 
 use <../includes/maths.scad>;
 
+/* Pyramid space truss library.
+   The finalized modules are:
+   
+   pyramid_box_truss(): rectangular truss with parametric dimensions and internal
+     structure
+     
+   triangular_truss(): triangular truss with parametric dimensions and structure, with
+     ability to make the dimensions smaller towards the far end
+     
+   With the above two modules you can replicate the structures familiar from most
+     construction cranes, with box truss forming the mast and the triangular truss the
+     boom. The rest of the modules apart from the three bolt pattern ones are
+     mostly utilities used by the two above.
+   
+   box_bolt_pattern_side(), box_bolt_pattern_lower(), box_bolt_pattern_upper():
+     auxiliary modules for adding bolt patterns to box trusses (or anything rectangular
+     really)
+*/
+
 /* Regular rectangular truss composed of pyramid layers with
    alternating orientation.
 
@@ -29,8 +48,8 @@ use <../includes/maths.scad>;
 
 /* Example box truss structure. */
 if (false)
-  pyramid_box_truss(100, 40, 30, // Overall dimensions
-                      3, 1, 2,      // Segment counts
+  pyramid_box_truss(40, 40, 120, // Overall dimensions
+                      1, 1, 6,      // Segment counts
                       4, 4, 4, 4, 4, // Thicknesses
                       true, true, $16);
    
@@ -246,7 +265,7 @@ module truss_side_lattice(z_size, x_segs, x_pitch, slat_xy_thickness,
      to make the model temporarily easier to render.
 */
 
-if (false)
+if (true)
   triangular_truss(100, 5, 25, 40, 10, 20, // Dimensions
                    4, 2, 3.6, 4, 2.4, 2, 2.4, 2, // Thicknesses
                    8);
@@ -483,7 +502,7 @@ module pyramid_cylinder(r=0, h=0, $fn=12)
 */
 
 /* Example structures, truss box with bolts at one side, bottom, top */
-pyramid_box_truss(50, 50, 50, 1, 1, 2, 4, 4, 4, 4, 4, true, true, $16);
+//pyramid_box_truss(50, 50, 50, 1, 1, 2, 4, 4, 4, 4, 4, true, true, $16);
 //box_bolt_pattern_side(50, 50, 50, 4, 4, 2.2, 6, true);
 //box_bolt_pattern_lower(50, 50, 4, 4, 2.2, 6);
 //box_bolt_pattern_upper(50, 50, 50, 4, 4, 2.2, 4, 6, 0.3);
