@@ -1,6 +1,6 @@
 /* Pyramid Space Truss by Tomi T. Salo <ttsalo@iki.fi> 2012 */
 
-use <maths.scad>;
+use <../includes/maths.scad>;
 
 /* Regular rectangular truss composed of pyramid layers with
    alternating orientation.
