@@ -1,4 +1,4 @@
-/* Pyramid Space Truss by Tomi T. Salo <ttsalo@iki.fi> 2012 */
+/* Pyramid Space Truss by Tomi T. Salo <ttsalo@iki.fi> 2012-2017 */
 
 use <../includes/maths.scad>;
 
@@ -18,14 +18,22 @@ use <../includes/maths.scad>;
    slat_k_thickness: the horizontal thickness of the diagonal rectangular bars
 
    bar_diameter: the diameter of the vertical and slanted round bars
+   
+   vert_thickness: the horizontal thickness of the vertical segment corner bars
 
    crossbars1, crossbars2: each true or false depending on if crossbars are
      wanted at the sides
-
-   pyramids: if 0, omit the pyramidal truss elements and only generate the box frame
-
+     
    bar_fn: used as the $fn parameter for the round bars
    */
+
+/* Example box truss structure. */
+if (false)
+  pyramid_box_truss(100, 40, 30, // Overall dimensions
+                      3, 1, 2,      // Segment counts
+                      4, 4, 4, 4, 4, // Thicknesses
+                      true, true, $16);
+   
 module 
 pyramid_box_truss(x_size, y_size, z_size, x_segs, y_segs, z_segs,
                          slat_z_thickness, slat_xy_thickness, slat_k_thickness,
@@ -208,11 +216,47 @@ module truss_side_lattice(z_size, x_segs, x_pitch, slat_xy_thickness,
     }
 }
 
-/* Triangular truss with variable dimensions */
+/* Triangular truss with variable dimensions.
+
+   x_size: total length of the structure in x dimension
+
+   x_segs: number of segments along the x dimension
+
+   y1_size, z1_size: dimensions in y and z at x=0
+
+   y2_size, z2_size: dimensions in y and z at x=x_size
+
+   slat_xy1_thickness: thickness of the crosswise rectangular slats in y dimension
+     in the first segment
+
+   slat_z1_thickness: thickness of the crosswise rectangular slats in z dimension
+     in the first segment
+
+   bar1_diameter: thickness of the diagonal round bars in the first segment
+
+   top_bar1_diameter: thickness of the top round bars in the first segment
+
+   slat_xy2_thickness, slat_z2_thickness, bar2_diameter, top_bar2_diameter:
+     same as the previous four except applied to the last segment. Segments in
+     between are interpolated from the first and last.
+ 
+   bar_fn: used as the $fn parameter for the round bars
+   
+   use_truss: replaces the truss with an equivalent solid structure. Can be used
+     to make the model temporarily easier to render.
+*/
+
+if (false)
+  triangular_truss(100, 5, 25, 40, 10, 20, // Dimensions
+                   4, 2, 3.6, 4, 2.4, 2, 2.4, 2, // Thicknesses
+                   8);
+
 module triangular_truss(x_size, x_segs, y1_size, z1_size, y2_size, z2_size,
-                        slat_xy1_thickness, slat_z1_thickness, bar1_diameter, top_bar1_diameter,
-                        slat_xy2_thickness, slat_z2_thickness, bar2_diameter, top_bar2_diameter,
-                        bar_fn, use_truss=true)
+                         slat_xy1_thickness, slat_z1_thickness, bar1_diameter,       
+                         top_bar1_diameter,
+                         slat_xy2_thickness, slat_z2_thickness, bar2_diameter,
+                         top_bar2_diameter,
+                         bar_fn, use_truss=true)
 {
   y_step = (y1_size-y2_size)/x_segs;
   z_step = (z1_size-z2_size)/x_segs;
@@ -257,12 +301,6 @@ module triangular_truss(x_size, x_segs, y1_size, z1_size, y2_size, z2_size,
   }
   }
 }
-
-/*
-triangular_truss(100, 5, 25, 60, 10, 30,
-                 4, 2, 3.6, 5.6,
-                 2.4, 2, 2.4, 3.6, 8);*
-*/
 
 module triangular_truss_section(x_size, y1_size, z1_size, y2_size, z2_size,
                                 slat_xy_thickness, slat_z_thickness,
@@ -321,6 +359,7 @@ module triangular_truss_section(x_size, y1_size, z1_size, y2_size, z2_size,
                           x_size-bar_r, top_y, top_z, bar_r, fn=bar_fn);
 
   }
+
   if (first) {
     placed_pyramid_cylinder(top_x+1, top_y, top_z, 
                             0, top_y, top_z, 
@@ -328,9 +367,11 @@ module triangular_truss_section(x_size, y1_size, z1_size, y2_size, z2_size,
   }
 }
 
-triangular_truss_adapter(30, 30, 30, 20, 20, 4, 2, 3, 3, 16);
-
 /* Adapter between triangular and box truss sections. */
+
+if (false)
+  triangular_truss_adapter(30, 30, 30, 20, 20, 4, 2, 3, 3, 16);
+
 module triangular_truss_adapter(x_size, y1_size, z1_size, y2_size, z2_size,
                                 slat_xy_thickness, slat_z_thickness,
                                 bar_diameter, top_bar_diameter, bar_fn,
@@ -441,6 +482,12 @@ module pyramid_cylinder(r=0, h=0, $fn=12)
      Y=0 or at the far end
 */
 
+/* Example structures, truss box with bolts at one side, bottom, top */
+pyramid_box_truss(50, 50, 50, 1, 1, 2, 4, 4, 4, 4, 4, true, true, $16);
+//box_bolt_pattern_side(50, 50, 50, 4, 4, 2.2, 6, true);
+//box_bolt_pattern_lower(50, 50, 4, 4, 2.2, 6);
+//box_bolt_pattern_upper(50, 50, 50, 4, 4, 2.2, 4, 6, 0.3);
+
 module box_bolt_pattern_side(x, y, z, thickness, truss_xy_thickness, 
                              hole_r, clearance_r, near) {
   intersection() {
@@ -545,13 +592,3 @@ module box_one_side_bolts(x, y, thickness, hole_r, hex_r, clearance_r,
     }
   }
 }
-
-/*
-sw = 2.0; // slat width for testing
-for (x = [0 : 3]) {
-  for (y = [0 : 3]) {
-    translate([50*x, 50*y, 0])
-      pyramid_box_truss(40, 40, 40, 1, 1, 2, sw, sw, sw, sw + x*0.1 + y*0.4, sw/4*6, 1, 1, 12);
-  }
-}
-*/
