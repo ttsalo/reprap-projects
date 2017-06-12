@@ -86,9 +86,9 @@ module lid(r, bt, wt, tl, p, rr) {
 }
 
 
-module input_thread() {
+module input_thread(tl) {
     trapezoidThreadNegativeSpace(
-	length=input_tl,				// axial length of the threaded rod
+	length=tl,				// axial length of the threaded rod
 	pitch=1.337,				// axial distance from crest to crest
 	pitchRadius=(13.157+11.445)/4,			// radial distance from center to mid-profile
 	threadHeightToPitch=(13.157-11.445)/2/1.337,	// ratio between the height of the profile and the pitch
@@ -104,14 +104,32 @@ module input_thread() {
   );
 }
 
+module output_thread(r, tl, p) { 
+    trapezoidThreadNegativeSpace(
+	length=tl,				// axial length of the threaded rod
+	pitch=p,				// axial distance from crest to crest
+	pitchRadius=r+p/2,			// radial distance from center to mid-profile
+	threadHeightToPitch=0.5,	// ratio between the height of the profile and the pitch
+						// std value for Acme or metric lead screw is 0.5
+	profileRatio=0.5,			// ratio between the lengths of the raised part of the profile and the pitch
+						// std value for Acme or metric lead screw is 0.5
+	threadAngle=29,			// angle between the two faces of the thread
+						// std value for Acme is 29 or for metric lead screw is 30
+	RH=true,				// true/false the thread winds clockwise looking along shaft, i.e.follows the Right Hand Rule
+	clearance=0.0,			// radial clearance, normalized to thread height
+	backlash=0.0,			// axial clearance, normalized to pitch
+	stepsPerTurn=60			// number of slices to create per turn
+  );
+}
+
 tol = 0.25;
 cone_offset = 10;
 cone_r1 = 10;
 cone_r2 = 30;
-cone_h = 25;
+cone_h = 65;
 wt = 5;
-cyl_h = 60;
-inner_cyl_r = 10;
+cyl_h = 40;
+inner_cyl_r = 13;
 input_r = 12/2;
 input_l = 35;
 input_tl = 15;
@@ -129,27 +147,23 @@ module vesitys() {
           translate([-input_r-wt, -input_r-wt, 0])
             cube([input_r*2+wt*2, input_r*2+wt*2, input_l]);
     }
-    cylinder(r=cone_r1, h=cone_offset+cone_h+cyl_h+1);
     translate([0, 0, cone_offset])
       cylinder(r1=cone_r1, r2=cone_r2, h=cone_h, $fn=60);
+    difference() {
+      translate([0, 0, cone_offset+cone_h])
+        cylinder(r=cone_r2, h=cyl_h-wt, $fn=60);
+      translate([0, 0, cone_offset+cone_h])
+        cylinder(r=inner_cyl_r+wt, h=cyl_h, $fn=60);
+      }
     translate([0, 0, cone_offset+cone_h])
-      cylinder(r=cone_r2, h=cyl_h-wt, $fn=60);
+      output_thread(r=inner_cyl_r, tl=cyl_h, p=4);
     translate([0, cone_r2-input_r, cone_offset+cone_h+cyl_h-input_r-wt])
       rotate([0, -90, 0])
          union() {
            cylinder(r=input_r, h=input_l);
            translate([0, 0, input_l-input_tl])
-             input_thread();
+             input_thread(input_tl);
          }
-  }
-  // Inner cylinder
-  difference() {
-    union() {
-      translate([0, 0, cone_offset+cone_h])
-        cylinder(r=inner_cyl_r+wt, h=cyl_h, $fn=60);
-    }
-    translate([0, 0, cone_offset+cone_h])
-      cylinder(r=inner_cyl_r, h=cyl_h, $fn=60);
   }
 }
 
@@ -157,7 +171,7 @@ module vesitys() {
 intersection() {
   rotate([0, 180, 0])
     vesitys();
-//  translate([0, 0, -100])
-//  cube([50, 50, 30]);
+  //translate([0, 0, -200])
+  //cube([50, 50, 300]);
 }
 //cylinder(r=25.07/2, h=5);
