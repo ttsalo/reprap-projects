@@ -66,7 +66,7 @@ module container(r, h, bt, wt, tl, p, rr, fn) {
 module lid(r, bt, wt, tl, p, rr) {
   translate([0, 0, tl]) cylinder(r=r+p+wt-rr, h=bt, $fn=90);
   difference() {
-    roundedCylinder(r=r+p+wt, h=bt+tl, rr=rr, $fn=90);
+    roundedCylinder(r=r+p+wt, h=bt+tl+10, rr=rr, $fn=90);
     trapezoidThreadNegativeSpace(
 	length=tl,				// axial length of the threaded rod
 	pitch=p,				// axial distance from crest to crest
