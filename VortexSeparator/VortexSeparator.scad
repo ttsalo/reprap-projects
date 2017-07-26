@@ -146,6 +146,12 @@ module vesitys() {
         rotate([0, -90, 0])
           translate([-input_r-wt, -input_r-wt, 0])
             cube([input_r*2+wt*2, input_r*2+wt*2, input_l]);
+      translate([0, cone_r2+wt, cone_offset+cone_h+cyl_h-input_r-wt])
+        rotate([0, -90, 0])
+          difference() {
+            cylinder(r=input_r+wt, h=input_l);
+            cylinder(r=input_r, h=input_l);
+          }
     }
     translate([0, 0, cone_offset])
       cylinder(r1=cone_r1, r2=cone_r2, h=cone_h, $fn=60);
