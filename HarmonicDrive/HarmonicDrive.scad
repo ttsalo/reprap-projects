@@ -27,8 +27,11 @@
    and another from flex flange to bearing separation to make the slope clear the bearing
    connectors.
    
+   DONE: Changed to smaller 6812 bearing.
+   
    TODO: Circspline and motor mount. These should be just one unit. 
-
+   TODO: Reprint and check fit with 6812 bearing.
+   
 */   
 
 use <../includes/parametric_involute_gear_v5.0.scad>;
@@ -37,16 +40,16 @@ tol = 0.1;
 lh = 0.5;
 
 /* 6012 size bearing */
-bearing_inner_r = 60/2;
+/* bearing_inner_r = 60/2;
 bearing_outer_r = 95/2;
 bearing_h = 18;
-bearing_cone_l = 1.25; // Length of the bearing conical section 
+bearing_cone_l = 1.25; */ // Length of the bearing conical section 
 
 /* 6812 size bearing */
-/* bearing_inner_r = 60/2;
+bearing_inner_r = 60/2;
 bearing_outer_r = 78/2;
 bearing_h = 10;
-bearing_cone_l = 1.25; */ // Length of the bearing conical section 
+bearing_cone_l = 1.25; // Length of the bearing conical section 
 
 
 flange_r = 45;
