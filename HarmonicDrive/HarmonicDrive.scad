@@ -30,14 +30,15 @@
    DONE: Changed to smaller 6812 bearing.
    
    TODO: Circspline and motor mount. These should be just one unit. 
-   TODO: Reprint and check fit with 6812 bearing.
+   DONE: Reprint and check fit with 6812 bearing. The shorter braces are now too stiff
+   for inserting the bearing. Reduced the upper hook, which should now allow bearing insertion.
    
 */   
 
 use <../includes/parametric_involute_gear_v5.0.scad>;
 
-tol = 0.1;
-lh = 0.5;
+tol = 0.2;
+lh = 0.3;
 
 /* 6012 size bearing */
 /* bearing_inner_r = 60/2;
@@ -60,8 +61,8 @@ flex_flange_r = 40;
 flex_flange_h = 3;
 flex_flange_sep = 4; // Distance from bearing to flange
 flex_inner_t = 2.5; // Outer side thickness of the bearing support
-flex_below_hook = 5;
-flex_above_hook = 2;
+flex_below_hook = 2;
+flex_above_hook = 1.2; // Was 2
 flex_above_h = 3;
 flex_base_t = 8;
 flex_lockring_h = 2;
@@ -416,6 +417,7 @@ difference() {
 assembly();
 
 //circspline();
+//circ_flange();
 //flex_flange();
 //flex_lockring();
 //flexspline();
