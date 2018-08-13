@@ -118,7 +118,7 @@ flex_rifling_h = 2;
 flex_rifling_tol = 0.2;
 
 /* Circspline details. */
-circspl_tooth_h = 10;
+circspl_tooth_h = 6; // 10
 circspl_tooth_start_h = 10;
 circspl_total_h = 20;
 circspl_outer_r = 32;
@@ -394,12 +394,20 @@ module flexspline() {
 }
 
 module circspline() {
+  color("teal")
   difference() {
     cylinder(r=circspl_outer_r, h=circspl_tooth_h, $fn=60);
     spline_gear(flex_teeth + teeth_diff, circspl_tooth_h, circspl_backlash, circspl_clearance);
   }
 }
 
+module circ_assembly() {
+  circ_flange();
+  translate([0, 0, -flexspl_h+flex_flange_sep+bearing_h+circ_flange_sep+circ_flange_h])
+    circspline();
+}
+
+// Assembly Z=0 is at the lower surface of the bearing
 module assembly() {
 difference() {
   union() {
@@ -407,7 +415,7 @@ difference() {
     translate([0, 0, -flex_flange_h-flex_flange_sep])
       #flex_flange();
     translate([0, 0, bearing_h+circ_flange_sep+circ_flange_h])
-      mirror([0, 0, -1]) circ_flange();
+      mirror([0, 0, -1]) circ_assembly();
     translate([0, 0, -circ_above_h]) circ_lockring();
     translate([0, 0, bearing_h+flex_above_h-flex_lockring_h+tol]) flex_lockring();
     translate([0, 0, -flex_flange_sep]) flexspline();
@@ -418,6 +426,7 @@ difference() {
 
 assembly();
 
+//circ_assembly();
 //circspline();
 //circ_flange();
 //flex_flange();
