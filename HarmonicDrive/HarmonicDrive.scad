@@ -394,17 +394,54 @@ module flexspline() {
 }
 
 module circspline() {
-  color("teal")
   difference() {
     cylinder(r=circspl_outer_r, h=circspl_tooth_h, $fn=60);
     spline_gear(flex_teeth + teeth_diff, circspl_tooth_h, circspl_backlash, circspl_clearance);
   }
 }
 
-module circ_assembly() {
-  circ_flange();
-  translate([0, 0, -flexspl_h+flex_flange_sep+bearing_h+circ_flange_sep+circ_flange_h])
-    circspline();
+// Circspline that mounts to the carriage.
+module circspline_unit() {
+  color("teal")
+  difference() {
+    union() {
+      circspline();
+      cylinder(r=circ_outer_r, h=circ_bottom_h, $fn=60);
+      difference() {
+        union() {
+          rotate([0, 0, circ_mount_1]) circspline_mount();
+          rotate([0, 0, circ_mount_2]) circspline_mount();
+          rotate([0, 0, circ_mount_3]) circspline_mount();
+        }
+        cylinder(r=circ_outer_r-1, h=circ_h, $fn=60);
+      }
+    }
+    // Cut out unnecessary toothing
+    translate([0, 0, circ_bottom_h])
+      cylinder(r=circ_inner_r, h=circ_h-circ_bottom_h-tooth_overlap-2);
+    translate([0, 0, circ_h-tooth_overlap-2])
+      cylinder(r1=circ_inner_r, r2=circ_inner_r-2, h=2);
+    // NEMA17 screw holes
+    for (i = [45 : 90 : 315]) {
+      rotate(i, [0, 0, 1])
+      translate([0, 21.8, 0])
+      union() {
+        cylinder(r = 1.5, h = circ_bottom_h, $fn=8);
+        translate([0, 0, circ_bottom_h - 1.5])
+          cylinder(r1 = 1.5, r2 = 3, h = 1.5, $fn=16);
+      }
+    }
+    // Lightening the construction. Also peepholes.
+    for (i = [0 : 90 : 360]) {
+      rotate(i, [0, 0, 1])
+      translate([0, 21, 0])
+      cylinder(r = 7, h = circ_bottom_h, $fn=24);
+    }
+    cylinder(r = 12, h = circ_bottom_h); // NEMA17 central hole
+    rotate([0, 0, circ_mount_1]) circspline_mount_void();
+    rotate([0, 0, circ_mount_2]) circspline_mount_void();
+    rotate([0, 0, circ_mount_3]) circspline_mount_void();
+  }
 }
 
 // Assembly Z=0 is at the lower surface of the bearing
@@ -415,7 +452,9 @@ difference() {
     translate([0, 0, -flex_flange_h-flex_flange_sep])
       #flex_flange();
     translate([0, 0, bearing_h+circ_flange_sep+circ_flange_h])
-      mirror([0, 0, -1]) circ_assembly();
+      mirror([0, 0, -1]) circ_flange();
+    translate([0, 0, flexspl_h-flex_flange_sep])
+      mirror([0, 0, -1]) circspline_unit();
     translate([0, 0, -circ_above_h]) circ_lockring();
     translate([0, 0, bearing_h+flex_above_h-flex_lockring_h+tol]) flex_lockring();
     translate([0, 0, -flex_flange_sep]) flexspline();
@@ -424,10 +463,11 @@ difference() {
 }
 }
 
-assembly();
+//assembly();
 
 //circ_assembly();
 //circspline();
+circspline_unit();
 //circ_flange();
 //flex_flange();
 //flex_lockring(adjust=0.6);
