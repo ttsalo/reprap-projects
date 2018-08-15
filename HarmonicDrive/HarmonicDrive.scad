@@ -136,10 +136,9 @@ flex_rifling_tol = 0.2;
 
 /* Circspline details. */
 circspl_tooth_h = 6; // 10
-circspl_tooth_start_h = 10;
 circspl_total_h = 20;
 circspl_outer_r = 32;
-circspl_inner_r = 30;
+circspl_inner_r = 27;
 circspl_bottom_h = 4;
 circspl_clearance = -0.25;
 circspl_backlash = -0.2;
@@ -412,8 +411,14 @@ module flexspline() {
 
 module circspline() {
   difference() {
-    cylinder(r=circspl_outer_r, h=circspl_tooth_h, $fn=60);
-    spline_gear(flex_teeth + teeth_diff, circspl_tooth_h, circspl_backlash, circspl_clearance);
+    union() {
+      cylinder(r=circspl_outer_r, h=circspl_total_h, $fn=60);
+        
+    }
+    cylinder(r1=circspl_outer_r, r2=circspl_inner_r, h=(circspl_total_h - circspl_tooth_h)/2, $fn=60);
+    spline_gear(flex_teeth + teeth_diff, circspl_total_h, circspl_backlash, circspl_clearance);
+    translate([0, 0, circspl_total_h - (circspl_total_h - circspl_tooth_h)/2])
+      cylinder(r1=circspl_inner_r, h=(circspl_total_h - circspl_tooth_h)/2, r2=circspl_outer_r, $fn=60); 
   }
 }
 
@@ -422,6 +427,7 @@ module circspline_unit() {
   color("teal")
   difference() {
     union() {
+      translate([0, 0, -(circspl_total_h - circspl_tooth_h)/2])
       circspline();
       // Motor mounting plate
       translate([0, 0, -stepper_shaft_l+driver_h/2])
