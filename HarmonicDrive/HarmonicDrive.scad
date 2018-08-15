@@ -353,7 +353,8 @@ module rifled_cylinder(r, h, r_l, r_w, r_n, $fn) {
 module flexspline() {
   difference() {
     intersection() {
-      //spline_gear(flex_teeth, flexspl_h, 0.4, 0);
+      // Non-zero backlash results in a non-manifold object
+      spline_gear(flex_teeth, flexspl_h, 0.0, 0.0);
       union() {
         // The flexspline is made lighter by intersecting the main
         // gear shape with the union of the following shapes.
@@ -371,7 +372,6 @@ module flexspline() {
           cylinder(r=flexspl_outer_r, h=flexspl_tooth_h+1, $fn=60);
       }
     }
-    
     /* The inner hollow is made by subtracting the following from the lightened gear shape */
     difference() {
       union () {
@@ -499,9 +499,9 @@ difference() {
 
 //circ_assembly();
 //circspline();
-circspline_unit();
+//circspline_unit();
 //circ_flange();
 //circ_lockring();
 //flex_flange();
 //flex_lockring(adjust=0.6);
-//flexspline();
+flexspline();
