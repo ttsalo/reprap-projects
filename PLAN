@@ -1,0 +1,17 @@
+Development plan
+
+1. Armstrong parallel SCARA printer model B
+ * Redesign to solve imprecise motion in the original A1 design
+
+1.1 New generation harmonic drives about done
+ * Large diameter bearings to better constrain the motion
+ * Drives stackable on a single axis, eliminating axis offset problems
+
+1.2 Rigid chain actuator to move the assembly or the print surface
+ * Done 
+
+1.3 Constraining the motion of the rigid chain actuator
+ * Sarrus linkage, WIP
+
+
+
