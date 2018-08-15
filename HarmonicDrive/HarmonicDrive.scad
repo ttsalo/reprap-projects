@@ -89,9 +89,10 @@ circ_lockring_h = 2;
 circ_lockring_t = 2.5;
 circ_conn_w = 5;
 circ_conn_n = 12;
-circ_mount_r = 45;
-circ_mount_n = 6;
-circ_bolt_r = 2;
+circ_mount_r = 36;
+circ_mount_n = 12;
+circ_bolt_r = 2.5/2;
+circ_bearing_upper_extra_tol = 0.4; // Extra for bearing outer edge upper fit
 
 /* Flexspline details. */
 flexspl_h = 36;
@@ -275,11 +276,11 @@ module circ_flange() {
              [bearing_outer_r-circ_above_hook,
               circ_flange_h+circ_flange_sep+bearing_h+circ_above_h],
              [bearing_outer_r-circ_above_hook,
-              circ_flange_h+circ_flange_sep+bearing_h+tol],
+              circ_flange_h+circ_flange_sep+bearing_h+tol+circ_bearing_upper_extra_tol],
              [bearing_outer_r-bearing_cone_l+tol*0.7,
-              circ_flange_h+circ_flange_sep+bearing_h+tol],
+              circ_flange_h+circ_flange_sep+bearing_h+tol+circ_bearing_upper_extra_tol],
              [bearing_outer_r+tol,
-              circ_flange_h+circ_flange_sep+bearing_h-bearing_cone_l+tol*0.7],
+              circ_flange_h+circ_flange_sep+bearing_h-bearing_cone_l+tol*0.7+circ_bearing_upper_extra_tol],
              [bearing_outer_r+tol,
               circ_flange_h+circ_flange_sep+bearing_cone_l-tol*0.7],
              [bearing_outer_r-bearing_cone_l+tol*0.7,
@@ -467,8 +468,9 @@ difference() {
 
 //circ_assembly();
 //circspline();
-circspline_unit();
-//circ_flange();
+//circspline_unit();
+circ_flange();
+//circ_lockring();
 //flex_flange();
 //flex_lockring(adjust=0.6);
 //flexspline();
