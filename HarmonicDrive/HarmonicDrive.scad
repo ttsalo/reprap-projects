@@ -54,7 +54,6 @@ bearing_outer_r = 78/2;
 bearing_h = 10;
 bearing_cone_l = 1.25; // Length of the bearing conical section 
 
-
 flange_r = 45;
 flange_h = 2;
 
@@ -92,7 +91,7 @@ circ_conn_n = 12;
 circ_mount_r = 36;
 circ_mount_n = 12;
 circ_bolt_r = 2.5/2;
-circ_bearing_upper_extra_tol = 0.4; // Extra for bearing outer edge upper fit
+circ_bearing_extra_tol = 0.4; // Extra vertical tolerance for bearing outer edge
 
 /* Flexspline details. */
 flexspl_h = 36;
@@ -109,6 +108,23 @@ flexspl_extra_wall_t = 0.4;
 flexspl_lip = 1.4;
 flexspl_rifling_extra_r=5;
 flexspl_rifling_extra_h=1;
+
+/* Driver details. */
+drive_bearing_r = 13/2;
+drive_bearing_h = 7;
+wave_radius = 52.75/2;
+driver_h = 12;
+driver_w = 10;
+drive_bearing_spacing_r = wave_radius - drive_bearing_r;
+
+/* Circspline unit details */
+circ_outer_r = 29;
+circ_unit_wall_t = 3;
+circ_unit_flange_h = flange_h;
+circ_bottom_h = 3; // Bottom thickness for the motor mount part
+stepper_shaft_l = 20;
+// Unit height from motor mount to circ flange, derived from other parameters
+circ_unit_h = stepper_shaft_l - driver_h/2 + flexspl_h - flex_flange_sep - bearing_h - circ_flange_sep - circ_flange_h;
 
 /* Rifling connects flexspline to the flange. Details below. */
 flex_rifling_r = 8;
@@ -276,17 +292,17 @@ module circ_flange() {
              [bearing_outer_r-circ_above_hook,
               circ_flange_h+circ_flange_sep+bearing_h+circ_above_h],
              [bearing_outer_r-circ_above_hook,
-              circ_flange_h+circ_flange_sep+bearing_h+tol+circ_bearing_upper_extra_tol],
+              circ_flange_h+circ_flange_sep+bearing_h+tol+circ_bearing_extra_tol],
              [bearing_outer_r-bearing_cone_l+tol*0.7,
-              circ_flange_h+circ_flange_sep+bearing_h+tol+circ_bearing_upper_extra_tol],
+              circ_flange_h+circ_flange_sep+bearing_h+tol+circ_bearing_extra_tol],
              [bearing_outer_r+tol,
-              circ_flange_h+circ_flange_sep+bearing_h-bearing_cone_l+tol*0.7+circ_bearing_upper_extra_tol],
+              circ_flange_h+circ_flange_sep+bearing_h-bearing_cone_l+tol*0.7+circ_bearing_extra_tol],
              [bearing_outer_r+tol,
-              circ_flange_h+circ_flange_sep+bearing_cone_l-tol*0.7],
+              circ_flange_h+circ_flange_sep+bearing_cone_l-tol*0.7-circ_bearing_extra_tol],
              [bearing_outer_r-bearing_cone_l+tol*0.7,
-              circ_flange_h+circ_flange_sep-tol],
+              circ_flange_h+circ_flange_sep-tol-circ_bearing_extra_tol],
              [bearing_outer_r-circ_below_hook,
-              circ_flange_h+circ_flange_sep-tol],
+              circ_flange_h+circ_flange_sep-tol-circ_bearing_extra_tol],
             ]);
     }
   }
@@ -407,41 +423,50 @@ module circspline_unit() {
   difference() {
     union() {
       circspline();
-      cylinder(r=circ_outer_r, h=circ_bottom_h, $fn=60);
-      difference() {
-        union() {
-          rotate([0, 0, circ_mount_1]) circspline_mount();
-          rotate([0, 0, circ_mount_2]) circspline_mount();
-          rotate([0, 0, circ_mount_3]) circspline_mount();
+      // Motor mounting plate
+      translate([0, 0, -stepper_shaft_l+driver_h/2])
+        cylinder(r=circ_outer_r, h=circ_bottom_h, $fn=60);
+      // Main unit frame
+      translate([0, 0, -stepper_shaft_l+driver_h/2])
+        difference() {
+          cylinder(r=circ_outer_r+circ_unit_wall_t, h=circ_unit_h, $fn=60);
+          cylinder(r=circ_outer_r, h=circ_unit_h+1, $fn=60);
         }
-        cylinder(r=circ_outer_r-1, h=circ_h, $fn=60);
+      // Mounting flange
+      translate([0, 0, circ_unit_h-stepper_shaft_l+driver_h/2-circ_unit_flange_h])
+      difference() {
+        intersection() {
+          cylinder(r=circ_flange_r, h=circ_unit_flange_h);
+          translate([-circ_flange_r, -circ_outer_r-circ_unit_wall_t, 0])
+            cube([circ_flange_r*2, (circ_outer_r+circ_unit_wall_t)*2, circ_unit_flange_h]);
+        }
+        translate([0, 0, -0.5]) cylinder(r=circ_outer_r, h=circ_unit_flange_h+1);
+        for (i = [0 : 360/circ_mount_n : 360]) {
+          rotate([0, 0, i+360/circ_conn_n/2]) 
+            translate([circ_mount_r, 0, 0]) cylinder(r=circ_bolt_r, h=circ_unit_flange_h);
+       }
+     }
+    }
+    translate([0, 0, -stepper_shaft_l+driver_h/2])
+    {        
+       // NEMA17 screw holes
+       for (i = [45 : 90 : 315]) {
+        rotate(i, [0, 0, 1])
+        translate([0, 21.8, 0])
+        union() {
+          cylinder(r = 1.5, h = circ_bottom_h, $fn=8);
+          translate([0, 0, circ_bottom_h - 1.5])
+            cylinder(r1 = 1.5, r2 = 3, h = 1.5, $fn=16);
+        }
       }
-    }
-    // Cut out unnecessary toothing
-    translate([0, 0, circ_bottom_h])
-      cylinder(r=circ_inner_r, h=circ_h-circ_bottom_h-tooth_overlap-2);
-    translate([0, 0, circ_h-tooth_overlap-2])
-      cylinder(r1=circ_inner_r, r2=circ_inner_r-2, h=2);
-    // NEMA17 screw holes
-    for (i = [45 : 90 : 315]) {
-      rotate(i, [0, 0, 1])
-      translate([0, 21.8, 0])
-      union() {
-        cylinder(r = 1.5, h = circ_bottom_h, $fn=8);
-        translate([0, 0, circ_bottom_h - 1.5])
-          cylinder(r1 = 1.5, r2 = 3, h = 1.5, $fn=16);
+      // Lightening the construction. Also peepholes.
+      for (i = [0 : 90 : 360]) {
+        rotate(i, [0, 0, 1])
+        translate([0, 21, 0])
+        cylinder(r = 7, h = circ_bottom_h, $fn=24);
       }
+      cylinder(r = 12, h = circ_bottom_h); // NEMA17 central hole
     }
-    // Lightening the construction. Also peepholes.
-    for (i = [0 : 90 : 360]) {
-      rotate(i, [0, 0, 1])
-      translate([0, 21, 0])
-      cylinder(r = 7, h = circ_bottom_h, $fn=24);
-    }
-    cylinder(r = 12, h = circ_bottom_h); // NEMA17 central hole
-    rotate([0, 0, circ_mount_1]) circspline_mount_void();
-    rotate([0, 0, circ_mount_2]) circspline_mount_void();
-    rotate([0, 0, circ_mount_3]) circspline_mount_void();
   }
 }
 
@@ -468,8 +493,8 @@ difference() {
 
 //circ_assembly();
 //circspline();
-//circspline_unit();
-circ_flange();
+circspline_unit();
+//circ_flange();
 //circ_lockring();
 //flex_flange();
 //flex_lockring(adjust=0.6);
