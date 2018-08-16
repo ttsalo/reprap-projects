@@ -34,7 +34,20 @@
    Implemented an adjustment parameter for the lockring to improve fit. 0.4 and 0.6 both make
    the bearing mount solid.
    
-   TODO: Circspline and motor mount. These should be just one unit. 
+   DONE: Circspline and motor mount. These should be just one unit. 
+   
+   TODO: Adjust bearing assembly dimensions:
+   - Reduce flex flange diameter, check bolt pattern
+   - Increase circ flange inner diameter, need clearance vs. the flex flange, check bolt pattern
+   - Increase circ flange outer diameter by 1mm, put that also to the supports
+   - Change support extra tolerance to radial as well as vertical, just vertical spacing doesn't fix
+     the fit issues.
+   - Allocate some of the extra diameter to the lock ring
+   - Increase the rifled connector diameter and tooth size
+   
+   Maybe TODO: There is an option to make the bearing assembly a lot flatter if the lock rings
+   are in the same plane as the other side's flange. However this eliminates the possibility of using
+   through bolts in the flanges. May not be a good idea.
 */   
 
 use <../includes/parametric_involute_gear_v5.0.scad>;
@@ -499,9 +512,9 @@ difference() {
 
 //circ_assembly();
 //circspline();
-//circspline_unit();
+circspline_unit();
 //circ_flange();
 //circ_lockring();
 //flex_flange();
 //flex_lockring(adjust=0.6);
-flexspline();
+//flexspline();

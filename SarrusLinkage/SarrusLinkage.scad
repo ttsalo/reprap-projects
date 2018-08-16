@@ -7,6 +7,10 @@
   - Hinge
    - Let's at least try snap-on hinges in the same style that the rigid chain connectors use.
 
+  TODO: With lh=0.3 and nozzle=0.5, fit is currently way too tight. Feels pretty sturdy though.
+
+  Maybe TODO: Would increasing the hinge bar and holder diameter make the assembly more
+  rigid?
 */
 
 // Parameters
@@ -71,5 +75,6 @@ module assembly() {
      
 }
 
-assembly();
-
+//assembly();
+//element();
+hinge();
