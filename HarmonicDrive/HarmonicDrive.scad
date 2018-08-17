@@ -36,18 +36,23 @@
    
    DONE: Circspline and motor mount. These should be just one unit. 
    
-   TODO: Adjust bearing assembly dimensions:
-   - Reduce flex flange diameter, check bolt pattern
-   - Increase circ flange inner diameter, need clearance vs. the flex flange, check bolt pattern
-   - Increase circ flange outer diameter by 1mm, put that also to the supports
+   DONE: Adjust bearing assembly dimensions:
+   - Reduce flex flange diameter, check bolt pattern. DONE
+   - Increase circ flange inner diameter, need clearance vs. the flex flange, check bolt pattern. DONE
+   - Increase circ flange outer diameter by 1mm, put that also to the supports. DONE
    - Change support extra tolerance to radial as well as vertical, just vertical spacing doesn't fix
-     the fit issues.
-   - Allocate some of the extra diameter to the lock ring
-   - Increase the rifled connector diameter and tooth size
+     the fit issues. DONE
+   - Allocate some of the extra diameter to the lock ring. DONE
+   - Increase the rifled connector diameter and tooth size. DONE
+   - Add a conical section to the circ flange to get rid of the need to use supports
    
    Maybe TODO: There is an option to make the bearing assembly a lot flatter if the lock rings
    are in the same plane as the other side's flange. However this eliminates the possibility of using
    through bolts in the flanges. May not be a good idea.
+   
+   TODO: Full assembly and functional testing
+   
+   TODO: Design some parts to turn this into a demonstrator, for example a robot arm.
 */   
 
 use <../includes/parametric_involute_gear_v5.0.scad>;
@@ -71,40 +76,41 @@ flange_r = 45;
 flange_h = 2;
 
 /* Flexspline side flange details. */
-flex_flange_r = 40;
+flex_flange_r = 36;
 flex_flange_h = 3;
 flex_flange_sep = 4; // Distance from bearing to flange
 flex_inner_t = 2.5; // Outer side thickness of the bearing support
 flex_below_hook = 2;
 flex_above_hook = 1.2; // Was 2
 flex_above_h = 3;
-flex_base_t = 8;
+flex_base_t = 6;
 flex_lockring_h = 2;
 flex_lockring_t = 2;
 flex_conn_w = 5;
 flex_conn_n = 12;
-flex_mount_r = 35;
+flex_mount_r = 32;
 flex_mount_n = 6;
-flex_bolt_r = 2;
+flex_bolt_r = 3/2;
 
 /* Circspline side flange details. */
-circ_flange_r = bearing_outer_r+3;
-circ_flange_cut_r = 30;
+circ_flange_r = bearing_outer_r+4;
+circ_flange_cut_r = 32;
 circ_flange_h = flange_h;
 circ_flange_sep = 4; // Distance from bearing to flange
-circ_outer_t = 3; // Outer side thickness of the bearing support
+circ_outer_t = 4; // Outer side thickness of the bearing support
 circ_below_hook = 3;
 circ_above_hook = 1.2; // Was 2
 circ_above_h = 3;
 circ_base_t = 8;
 circ_lockring_h = 2;
-circ_lockring_t = 2.5;
+circ_lockring_t = 3;
 circ_conn_w = 5;
 circ_conn_n = 12;
-circ_mount_r = 36;
+circ_mount_r = 38;
 circ_mount_n = 12;
 circ_bolt_r = 2.5/2;
-circ_bearing_extra_tol = 0.4; // Extra vertical tolerance for bearing outer edge
+circ_bolt_head_r = circ_bolt_r*3;
+circ_bearing_extra_tol = 0.2; // Extra tolerance for bearing outer edge
 
 /* Flexspline details. */
 flexspl_h = 36;
@@ -140,9 +146,9 @@ stepper_shaft_l = 20;
 circ_unit_h = stepper_shaft_l - driver_h/2 + flexspl_h - flex_flange_sep - bearing_h - circ_flange_sep - circ_flange_h;
 
 /* Rifling connects flexspline to the flange. Details below. */
-flex_rifling_r = 8;
-flex_rifling_w = 2;
-flex_rifling_l = 2;
+flex_rifling_r = 12;
+flex_rifling_w = 3;
+flex_rifling_l = 3;
 flex_rifling_n = 12;
 flex_rifling_h = 2;
 flex_rifling_tol = 0.2;
@@ -307,9 +313,9 @@ module circ_flange() {
               circ_flange_h+circ_flange_sep+bearing_h+tol+circ_bearing_extra_tol],
              [bearing_outer_r-bearing_cone_l+tol*0.7,
               circ_flange_h+circ_flange_sep+bearing_h+tol+circ_bearing_extra_tol],
-             [bearing_outer_r+tol,
+             [bearing_outer_r+tol+circ_bearing_extra_tol,
               circ_flange_h+circ_flange_sep+bearing_h-bearing_cone_l+tol*0.7+circ_bearing_extra_tol],
-             [bearing_outer_r+tol,
+             [bearing_outer_r+tol+circ_bearing_extra_tol,
               circ_flange_h+circ_flange_sep+bearing_cone_l-tol*0.7-circ_bearing_extra_tol],
              [bearing_outer_r-bearing_cone_l+tol*0.7,
               circ_flange_h+circ_flange_sep-tol-circ_bearing_extra_tol],
@@ -426,7 +432,6 @@ module circspline() {
   difference() {
     union() {
       cylinder(r=circspl_outer_r, h=circspl_total_h, $fn=60);
-        
     }
     cylinder(r1=circspl_outer_r, r2=circspl_inner_r, h=(circspl_total_h - circspl_tooth_h)/2, $fn=60);
     spline_gear(flex_teeth + teeth_diff, circspl_total_h, circspl_backlash, circspl_clearance);
@@ -455,14 +460,22 @@ module circspline_unit() {
       translate([0, 0, circ_unit_h-stepper_shaft_l+driver_h/2-circ_unit_flange_h])
       difference() {
         intersection() {
-          cylinder(r=circ_flange_r, h=circ_unit_flange_h);
-          translate([-circ_flange_r, -circ_outer_r-circ_unit_wall_t, 0])
-            cube([circ_flange_r*2, (circ_outer_r+circ_unit_wall_t)*2, circ_unit_flange_h]);
+          union() {
+            cylinder(r=circ_flange_r, h=circ_unit_flange_h);
+            translate([0, 0, -circ_flange_r])
+            cylinder(r1=0, r2=circ_flange_r, h=circ_flange_r);
+           }
+          translate([-circ_flange_r, -circ_outer_r-circ_unit_wall_t, -circ_flange_r/2])
+            cube([circ_flange_r*2, (circ_outer_r+circ_unit_wall_t)*2, circ_flange_r]);
         }
+        translate([0, 0, -circ_flange_r/2])
+          cylinder(r=circ_outer_r, h=circ_unit_h+1, $fn=60);
         translate([0, 0, -0.5]) cylinder(r=circ_outer_r, h=circ_unit_flange_h+1);
         for (i = [0 : 360/circ_mount_n : 360]) {
-          rotate([0, 0, i+360/circ_conn_n/2]) 
-            translate([circ_mount_r, 0, 0]) cylinder(r=circ_bolt_r, h=circ_unit_flange_h);
+          rotate([0, 0, i+360/circ_conn_n/2]) {
+             translate([circ_mount_r, 0, 0]) cylinder(r=circ_bolt_r, h=circ_unit_flange_h+1);
+             translate([circ_mount_r, 0, -circ_flange_r/2-lh]) cylinder(r=circ_bolt_head_r, h=circ_flange_r/2);
+          }
        }
      }
     }
@@ -508,11 +521,11 @@ difference() {
 }
 }
 
-//assembly();
+assembly();
 
 //circ_assembly();
 //circspline();
-circspline_unit();
+//circspline_unit();
 //circ_flange();
 //circ_lockring();
 //flex_flange();
