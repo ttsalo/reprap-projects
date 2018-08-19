@@ -81,7 +81,7 @@ flex_flange_h = 3;
 flex_flange_sep = 4; // Distance from bearing to flange
 flex_inner_t = 2.5; // Outer side thickness of the bearing support
 flex_below_hook = 2;
-flex_above_hook = 1.2; // Was 2
+flex_above_hook = 1.1; // Was 2
 flex_above_h = 3;
 flex_base_t = 6;
 flex_lockring_h = 2;
@@ -521,13 +521,13 @@ difference() {
 }
 }
 
-assembly();
+//assembly();
 
 //circ_assembly();
 //circspline();
 //circspline_unit();
 //circ_flange();
 //circ_lockring();
-//flex_flange();
-//flex_lockring(adjust=0.6);
+flex_flange();
+//flex_lockring(adjust=0.4);
 //flexspline();
