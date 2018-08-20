@@ -1,4 +1,4 @@
-/* Harmonic Drive NG by Tomi T. Salo <ttsalo@iki.fi> 2013 */
+/* Harmonic Drive NG by Tomi T. Salo <ttsalo@iki.fi> 2018 */
 
 /* New Generation Harmonic Drive. 
 
@@ -44,15 +44,19 @@
      the fit issues. DONE
    - Allocate some of the extra diameter to the lock ring. DONE
    - Increase the rifled connector diameter and tooth size. DONE
-   - Add a conical section to the circ flange to get rid of the need to use supports
+   - Add a conical section to the circ flange to get rid of the need to use supports. DONE
    
    Maybe TODO: There is an option to make the bearing assembly a lot flatter if the lock rings
    are in the same plane as the other side's flange. However this eliminates the possibility of using
    through bolts in the flanges. May not be a good idea.
    
    TODO: Full assembly and functional testing
+     DONE: Bearing assembly (flanges, lockrings, bearing)
+     TODO: Drive assembly, 
    
-   TODO: Design some parts to turn this into a demonstrator, for example a robot arm.
+   TODO: Design some parts to turn this into a demonstrator, for example a robot arm. Or start
+      with parSCARA printer from beginning?
+      
 */   
 
 use <../includes/parametric_involute_gear_v5.0.scad>;
@@ -140,6 +144,7 @@ drive_bearing_spacing_r = wave_radius - drive_bearing_r;
 circ_outer_r = 29;
 circ_unit_wall_t = 3;
 circ_unit_flange_h = flange_h;
+circ_unit_offset = 0; // Offset from circ flange - space for mounting another flange in between.
 circ_bottom_h = 3; // Bottom thickness for the motor mount part
 stepper_shaft_l = 20;
 // Unit height from motor mount to circ flange, derived from other parameters
@@ -369,11 +374,11 @@ module rifled_cylinder(r, h, r_l, r_w, r_n, $fn) {
   }
 }
 
-module flexspline() {
+module flexspline(omit_gear=false) {
   difference() {
     intersection() {
       // Non-zero backlash results in a non-manifold object
-      spline_gear(flex_teeth, flexspl_h, 0.0, 0.0);
+      if (!omit_gear) spline_gear(flex_teeth, flexspl_h, 0.0, 0.0);
       union() {
         // The flexspline is made lighter by intersecting the main
         // gear shape with the union of the following shapes.
@@ -428,36 +433,37 @@ module flexspline() {
   }
 }
 
-module circspline() {
+module circspline(omit_gear=false) {
   difference() {
     union() {
       cylinder(r=circspl_outer_r, h=circspl_total_h, $fn=60);
     }
     cylinder(r1=circspl_outer_r, r2=circspl_inner_r, h=(circspl_total_h - circspl_tooth_h)/2, $fn=60);
-    spline_gear(flex_teeth + teeth_diff, circspl_total_h, circspl_backlash, circspl_clearance);
+    if (!omit_gear)
+      spline_gear(flex_teeth + teeth_diff, circspl_total_h, circspl_backlash, circspl_clearance);
     translate([0, 0, circspl_total_h - (circspl_total_h - circspl_tooth_h)/2])
       cylinder(r1=circspl_inner_r, h=(circspl_total_h - circspl_tooth_h)/2, r2=circspl_outer_r, $fn=60); 
   }
 }
 
 // Circspline that mounts to the carriage.
-module circspline_unit() {
+module circspline_unit(circ_unit_offset=0, omit_gear=false) {
   color("teal")
   difference() {
     union() {
       translate([0, 0, -(circspl_total_h - circspl_tooth_h)/2])
-      circspline();
+      circspline(omit_gear=omit_gear);
       // Motor mounting plate
       translate([0, 0, -stepper_shaft_l+driver_h/2])
         cylinder(r=circ_outer_r, h=circ_bottom_h, $fn=60);
       // Main unit frame
       translate([0, 0, -stepper_shaft_l+driver_h/2])
         difference() {
-          cylinder(r=circ_outer_r+circ_unit_wall_t, h=circ_unit_h, $fn=60);
-          cylinder(r=circ_outer_r, h=circ_unit_h+1, $fn=60);
+          cylinder(r=circ_outer_r+circ_unit_wall_t, h=circ_unit_h-circ_unit_offset, $fn=60);
+          cylinder(r=circ_outer_r, h=circ_unit_h-circ_unit_offset+1, $fn=60);
         }
       // Mounting flange
-      translate([0, 0, circ_unit_h-stepper_shaft_l+driver_h/2-circ_unit_flange_h])
+      translate([0, 0, circ_unit_h-stepper_shaft_l+driver_h/2-circ_unit_flange_h-circ_unit_offset])
       difference() {
         intersection() {
           union() {
@@ -512,22 +518,22 @@ difference() {
     translate([0, 0, bearing_h+circ_flange_sep+circ_flange_h])
       mirror([0, 0, -1]) circ_flange();
     translate([0, 0, flexspl_h-flex_flange_sep])
-      mirror([0, 0, -1]) circspline_unit();
+      mirror([0, 0, -1]) circspline_unit(circ_unit_offset=circ_unit_offset, omit_gear=true);
     translate([0, 0, -circ_above_h]) circ_lockring();
     translate([0, 0, bearing_h+flex_above_h-flex_lockring_h+tol]) flex_lockring();
-    translate([0, 0, -flex_flange_sep]) flexspline();
+    translate([0, 0, -flex_flange_sep]) flexspline(omit_gear=true);
   }
   translate([0, 0, -50]) cube([100, 100, 100]);
 }
 }
 
-//assembly();
+assembly();
 
 //circ_assembly();
 //circspline();
-//circspline_unit();
+//circspline_unit(circ_unit_offset=0);
 //circ_flange();
 //circ_lockring();
-flex_flange();
+//flex_flange();
 //flex_lockring(adjust=0.4);
 //flexspline();
