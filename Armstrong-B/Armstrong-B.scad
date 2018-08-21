@@ -21,6 +21,17 @@
      the intended rotation.
    - Arm sections, as well as attachments, are higher in the Z dimension to resist sagging.
    
+   Project Plan:
+   1. Develop the harmonic drive ready for use in Armstrong-B
+     - Almost done
+   2. Develop the mounting tower for the drives
+   3. Prototype with the arm designs to figure out what is needed for sufficient rigidity
+   4. Figure out the effector mount
+   4.1 Optionally a pen holder
+   5. Figure out homing switches
+   6. Develop the bed Z mechanism
+   7. Functional testing
+   
 */
 
 // Configuration
@@ -31,6 +42,10 @@ arm_1 = 100;
 arm_2 = 100;
 arm_1_w = 20; // Main width of arm 1 sctructure
 arm_1_h = 40; // Main height of arm 1 sctructure
+
+// Tower parameters
+tower_platform_t = 4;
+
 
 // Arm origin is at the midpoint of the tower
 module inner_arm() {
