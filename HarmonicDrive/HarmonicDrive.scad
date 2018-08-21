@@ -46,20 +46,18 @@
    - Increase the rifled connector diameter and tooth size. DONE
    - Add a conical section to the circ flange to get rid of the need to use supports. DONE
    
-   Maybe TODO: There is an option to make the bearing assembly a lot flatter if the lock rings
-   are in the same plane as the other side's flange. However this eliminates the possibility of using
-   through bolts in the flanges. May not be a good idea.
-   
    TODO: Full assembly and functional testing
      DONE: Bearing assembly (flanges, lockrings, bearing)
-     TODO: Drive assembly, 
+     DONE: Full assembly, worked fine except for the flexspline base fit. No powered testing but
+             manually seems to work fine.
+     TODO: Powered testing
    
-   TODO: Design some parts to turn this into a demonstrator, for example a robot arm. Or start
-      with parSCARA printer from beginning?
+   DONE: Single piece circspline side unit assembly including arm attachment truss.
       
 */   
 
 use <../includes/parametric_involute_gear_v5.0.scad>;
+use <../PyramidSpaceTruss/PyramidSpaceTruss.scad>;
 
 tol = 0.2;
 lh = 0.3;
@@ -149,6 +147,12 @@ circ_bottom_h = 3; // Bottom thickness for the motor mount part
 stepper_shaft_l = 20;
 // Unit height from motor mount to circ flange, derived from other parameters
 circ_unit_h = stepper_shaft_l - driver_h/2 + flexspl_h - flex_flange_sep - bearing_h - circ_flange_sep - circ_flange_h;
+// Attachment truss parameters
+circ_truss_offset = 25;
+circ_truss_w = 30;
+circ_truss_h = 47;
+circ_truss_l = 30;
+circ_truss_supp_w = 40; // Width of the supporting structure in bearing mount
 
 /* Rifling connects flexspline to the flange. Details below. */
 flex_rifling_r = 12;
@@ -288,20 +292,21 @@ module flex_flange() {
   }
 }
 
-module circ_flange() {
+module circ_flange(full_unit=false) {
   difference() {
     cylinder(r=circ_flange_r, h=circ_flange_h);
     translate([0, 0, -0.5]) cylinder(r=circ_flange_cut_r, h=flex_flange_h+1);
-    for (i = [0 : 360/circ_mount_n : 360]) {
-      rotate([0, 0, i+360/circ_conn_n/2]) 
-        translate([circ_mount_r, 0, 0]) cylinder(r=circ_bolt_r, h=circ_flange_h);
-    }
+    if (!full_unit)
+      for (i = [0 : 360/circ_mount_n : 360]) {
+        rotate([0, 0, i+360/circ_conn_n/2]) 
+          translate([circ_mount_r, 0, 0]) cylinder(r=circ_bolt_r, h=circ_flange_h);
+      }
   }
   for (i = [0 : 360/circ_conn_n : 360]) {
     intersection() {
     rotate([0, 0, i])
-    translate([0, -circ_conn_w/2, -50])
-      cube([bearing_outer_r+50, circ_conn_w, 100]);
+    translate([0, -(i == 0 ? circ_truss_supp_w : circ_conn_w)/2, -50])
+      cube([bearing_outer_r+50, (i == 0  ? circ_truss_supp_w : circ_conn_w), 100]);
   rotate_extrude(convexity=10)
     polygon([[bearing_outer_r+circ_outer_t-circ_base_t, circ_flange_h],
              [bearing_outer_r+circ_outer_t-circ_base_t, 0],
@@ -447,7 +452,7 @@ module circspline(omit_gear=false) {
 }
 
 // Circspline that mounts to the carriage.
-module circspline_unit(circ_unit_offset=0, omit_gear=false) {
+module circspline_unit(circ_unit_offset=0, omit_gear=false, full_unit=false) {
   color("teal")
   difference() {
     union() {
@@ -471,17 +476,20 @@ module circspline_unit(circ_unit_offset=0, omit_gear=false) {
             translate([0, 0, -circ_flange_r])
             cylinder(r1=0, r2=circ_flange_r, h=circ_flange_r);
            }
-          translate([-circ_flange_r, -circ_outer_r-circ_unit_wall_t, -circ_flange_r/2])
-            cube([circ_flange_r*2, (circ_outer_r+circ_unit_wall_t)*2, circ_flange_r]);
+          // Optimization for the individual unit size, can optionally cut in Y
+          translate([-circ_flange_r, (-circ_outer_r-circ_unit_wall_t)*2, -circ_flange_r/2])
+            cube([circ_flange_r*2, (circ_outer_r+circ_unit_wall_t)*4, circ_flange_r]);
         }
         translate([0, 0, -circ_flange_r/2])
           cylinder(r=circ_outer_r, h=circ_unit_h+1, $fn=60);
         translate([0, 0, -0.5]) cylinder(r=circ_outer_r, h=circ_unit_flange_h+1);
+        if (!full_unit) {
         for (i = [0 : 360/circ_mount_n : 360]) {
           rotate([0, 0, i+360/circ_conn_n/2]) {
              translate([circ_mount_r, 0, 0]) cylinder(r=circ_bolt_r, h=circ_unit_flange_h+1);
              translate([circ_mount_r, 0, -circ_flange_r/2-lh]) cylinder(r=circ_bolt_head_r, h=circ_flange_r/2);
           }
+        }
        }
      }
     }
@@ -508,6 +516,32 @@ module circspline_unit(circ_unit_offset=0, omit_gear=false) {
   }
 }
 
+module circspline_full_void() {
+    translate([0, 0, -circ_unit_flange_h])
+      cylinder(r=circ_flange_r, h=circ_unit_flange_h + circ_flange_h + circ_flange_sep + bearing_h + flex_flange_sep);
+    translate([0, 0, -circ_unit_h])
+      cylinder(r=circ_outer_r, h=circ_unit_h);
+}
+
+// Full unit combining the bearing attachment and the circspline unit
+module circspline_full() {
+    circ_flange(full_unit=true);
+    translate([0, 0, -(circ_unit_h-stepper_shaft_l+driver_h/2-circ_unit_flange_h-circ_unit_offset-
+                      -circ_unit_flange_h)])
+      circspline_unit(circ_unit_offset=0, full_unit=true);
+    difference() {
+      translate([circ_truss_offset, -circ_truss_w/2, -circ_unit_h]) {
+        pyramid_box_truss(circ_truss_l, circ_truss_w, circ_truss_h, 1, 1, 2,
+                           3, 3, 3, 3, 3, 3, 3, 16);
+        translate([0, circ_truss_w, 0])
+          rotate([0, 0, -90])
+            box_bolt_pattern_side(circ_truss_w, circ_truss_l, circ_truss_h, 3, 3,
+                                    4/2, 8/2, false);
+      }
+      circspline_full_void();
+    }
+}
+
 // Assembly Z=0 is at the lower surface of the bearing
 module assembly() {
 difference() {
@@ -516,9 +550,11 @@ difference() {
     translate([0, 0, -flex_flange_h-flex_flange_sep])
       #flex_flange();
     translate([0, 0, bearing_h+circ_flange_sep+circ_flange_h])
-      mirror([0, 0, -1]) circ_flange();
-    translate([0, 0, flexspl_h-flex_flange_sep])
-      mirror([0, 0, -1]) circspline_unit(circ_unit_offset=circ_unit_offset, omit_gear=true);
+      mirror([0, 0, -1]) circspline_full();
+    //translate([0, 0, bearing_h+circ_flange_sep+circ_flange_h])
+    //  mirror([0, 0, -1]) circ_flange();
+    //translate([0, 0, flexspl_h-flex_flange_sep])
+    //  mirror([0, 0, -1]) circspline_unit(circ_unit_offset=circ_unit_offset, omit_gear=true);
     translate([0, 0, -circ_above_h]) circ_lockring();
     translate([0, 0, bearing_h+flex_above_h-flex_lockring_h+tol]) flex_lockring();
     translate([0, 0, -flex_flange_sep]) flexspline(omit_gear=true);
@@ -527,9 +563,9 @@ difference() {
 }
 }
 
-assembly();
+//assembly();
 
-//circ_assembly();
+circspline_full();
 //circspline();
 //circspline_unit(circ_unit_offset=0);
 //circ_flange();
