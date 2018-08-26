@@ -53,7 +53,9 @@
      TODO: Powered testing
    
    DONE: Single piece circspline side unit assembly including arm attachment truss.
-      
+      - But it doesn't work. The much stiffer bearing attachment is cannot reasonably be placed
+        over the bearing and trying to insert the driver onto the flexspline at the same time is
+        hard.
 */   
 
 use <../includes/parametric_involute_gear_v5.0.scad>;
@@ -477,8 +479,8 @@ module circspline_unit(circ_unit_offset=0, omit_gear=false, full_unit=false) {
             cylinder(r1=0, r2=circ_flange_r, h=circ_flange_r);
            }
           // Optimization for the individual unit size, can optionally cut in Y
-          translate([-circ_flange_r, (-circ_outer_r-circ_unit_wall_t)*2, -circ_flange_r/2])
-            cube([circ_flange_r*2, (circ_outer_r+circ_unit_wall_t)*4, circ_flange_r]);
+          translate([-circ_flange_r, (-circ_outer_r-circ_unit_wall_t), -circ_flange_r/2])
+            cube([circ_flange_r*2, (circ_outer_r+circ_unit_wall_t)*2, circ_flange_r]);
         }
         translate([0, 0, -circ_flange_r/2])
           cylinder(r=circ_outer_r, h=circ_unit_h+1, $fn=60);
@@ -549,12 +551,12 @@ difference() {
     bearing();
     translate([0, 0, -flex_flange_h-flex_flange_sep])
       #flex_flange();
-    translate([0, 0, bearing_h+circ_flange_sep+circ_flange_h])
-      mirror([0, 0, -1]) circspline_full();
     //translate([0, 0, bearing_h+circ_flange_sep+circ_flange_h])
-    //  mirror([0, 0, -1]) circ_flange();
-    //translate([0, 0, flexspl_h-flex_flange_sep])
-    //  mirror([0, 0, -1]) circspline_unit(circ_unit_offset=circ_unit_offset, omit_gear=true);
+    //  mirror([0, 0, -1]) circspline_full();
+    translate([0, 0, bearing_h+circ_flange_sep+circ_flange_h])
+      mirror([0, 0, -1]) circ_flange();
+    translate([0, 0, flexspl_h-flex_flange_sep])
+      mirror([0, 0, -1]) circspline_unit(circ_unit_offset=circ_unit_offset, omit_gear=true);
     translate([0, 0, -circ_above_h]) circ_lockring();
     translate([0, 0, bearing_h+flex_above_h-flex_lockring_h+tol]) flex_lockring();
     translate([0, 0, -flex_flange_sep]) flexspline(omit_gear=true);
@@ -565,10 +567,10 @@ difference() {
 
 //assembly();
 
-circspline_full();
+//circspline_full();
 //circspline();
 //circspline_unit(circ_unit_offset=0);
-//circ_flange();
+circ_flange();
 //circ_lockring();
 //flex_flange();
 //flex_lockring(adjust=0.4);
