@@ -56,6 +56,7 @@
       - But it doesn't work. The much stiffer bearing attachment is cannot reasonably be placed
         over the bearing and trying to insert the driver onto the flexspline at the same time is
         hard.
+
 */   
 
 use <../includes/parametric_involute_gear_v5.0.scad>;
@@ -315,9 +316,12 @@ module circ_flange(full_unit=false) {
                            circ_truss_t, circ_truss_t, circ_truss_t, circ_truss_t, circ_truss_t, 
                            circ_truss_t, circ_truss_t, 16);
        translate([0, circ_truss_w, 0])
-           rotate([0, 0, -90])
+           rotate([0, 0, -90]) {
              box_bolt_pattern_side(circ_truss_w, circ_truss_l, circ_truss_h-circ_unit_h, 
-                                    circ_truss_t, circ_truss_t, 4/2, 8/2, false);
+                                    circ_truss_t, circ_truss_t, 4/2, 8/2, false, lower=false);
+               box_bolt_pattern_lower(circ_truss_w, circ_truss_l, circ_truss_t, circ_truss_t, 
+                                        3/2, 8/2);
+          }
     }
     // Cutout for truss
     translate([0, 0, -0.5]) cylinder(r=circ_flange_r-1, h=circ_truss_h-circ_unit_h+1);
@@ -493,9 +497,12 @@ module circspline_unit(circ_unit_offset=0, omit_gear=false, full_unit=false) {
                                   circ_truss_t, circ_truss_t, circ_truss_t, circ_truss_t, circ_truss_t, 
                                   circ_truss_t, circ_truss_t, 16);
             translate([0, circ_truss_w, 0])
-              rotate([0, 0, -90])
+              rotate([0, 0, -90]) {
                 box_bolt_pattern_side(circ_truss_w, circ_truss_l, circ_unit_h, circ_truss_t, circ_truss_t,
-                                       4/2, 8/2, false);
+                                       4/2, 8/2, false, upper=false);
+                box_bolt_pattern_upper(circ_truss_w, circ_truss_l, circ_unit_h, circ_truss_t, circ_truss_t, 
+                                         3/2, 6/2, 8/2, lh, bolt_fn=16);
+              }
             }
          translate([0, 0, circ_unit_h-circ_unit_flange_h-circ_unit_offset])
           // Flange
@@ -569,6 +576,7 @@ module circspline_full() {
           rotate([0, 0, -90])
             box_bolt_pattern_side(circ_truss_w, circ_truss_l, circ_truss_h, 3, 3,
                                     4/2, 8/2, false);
+              
       }
       circspline_full_void();
     }
@@ -595,12 +603,12 @@ difference() {
 }
 }
 
-//assembly();
+assembly();
 
 //circspline_full();
 //circspline();
 //circspline_unit(circ_unit_offset=0);
-circ_flange();
+//circ_flange();
 //circ_lockring();
 //flex_flange();
 //flex_lockring(adjust=0.4);

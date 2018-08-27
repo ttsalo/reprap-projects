@@ -508,16 +508,16 @@ module pyramid_cylinder(r=0, h=0, $fn=12)
 //box_bolt_pattern_upper(50, 50, 50, 4, 4, 2.2, 4, 6, 0.3);
 
 module box_bolt_pattern_side(x, y, z, thickness, truss_xy_thickness, 
-                             hole_r, clearance_r, near) {
+                             hole_r, clearance_r, near, upper=true, lower=true) {
   intersection() {
     translate([0, near ? thickness : y, 0])
       rotate([90, 0, 0]) {
         box_one_side_bolts(x, z, thickness, hole_r, 0, clearance_r, 
-                           false, true);
+                           false, true, upper=upper, lower=lower);
         translate([x, 0, 0])
           mirror([1, 0, 0])
             box_one_side_bolts(x, z, thickness, hole_r, 0, clearance_r, 
-                               false, true);
+                               false, true, upper=upper, lower=lower);
         cube([truss_xy_thickness, z, thickness]);
         translate([x-truss_xy_thickness, 0, 0])
           cube([truss_xy_thickness, z, thickness]);
@@ -541,14 +541,14 @@ module box_bolt_pattern_lower(x, y, thickness, truss_xy_thickness,
 }
 
 module box_bolt_pattern_upper(x, y, z, thickness, truss_xy_thickness,
-                              hole_r, hex_r, clearance_r, layer_height) {
+                              hole_r, hex_r, clearance_r, layer_height, bolt_fn=6) {
   translate([0, 0, z - thickness]) {
     box_one_side_bolts(x, y, thickness, hole_r, hex_r, clearance_r, 
-                       true, false, layer_height);
+                       true, false, layer_height, bolt_fn=bolt_fn);
     translate([x, 0, 0])
       mirror([1, 0, 0])
         box_one_side_bolts(x, y, thickness, hole_r, hex_r, clearance_r, 
-                           true, false, layer_height);
+                           true, false, layer_height, bolt_fn=bolt_fn);
   }
   translate([0, 0, z-clearance_r*2-thickness-truss_xy_thickness])
     intersection() {
@@ -571,17 +571,19 @@ module box_bolt_pattern_upper(x, y, z, thickness, truss_xy_thickness,
 }
 
 module box_one_side_bolts(x, y, thickness, hole_r, hex_r, clearance_r, 
-                          supported, teardrop, layer_height=0) {
+                          supported, teardrop, upper=true, lower=true, 
+                          layer_height=0, bolt_fn=6) {
   for (offset = [0 , y - 2*clearance_r]) {
+    if (offset == 0 ? lower : upper)
     intersection () {
       union () {
         translate([-clearance_r, clearance_r+offset, 0])
           difference() {
             union () {
-              translate([0, 0, -clearance_r*3]) {
-                cylinder(r=clearance_r, h=thickness+clearance_r*3);
-                
-              }
+              
+                translate([0, 0, -clearance_r*3]) {
+                  cylinder(r=clearance_r, h=thickness+clearance_r*3);
+                }
               if (teardrop) {
                 intersection() {
                   rotate([0, 0, -45]) translate([0, -clearance_r, 0])
@@ -602,7 +604,7 @@ module box_one_side_bolts(x, y, thickness, hole_r, hex_r, clearance_r,
             translate([0, clearance_r+offset, -clearance_r*2])
               cylinder(r1=0, r2=clearance_r*3, h=clearance_r*3);
             translate([-clearance_r, clearance_r+offset, -clearance_r*2-layer_height])
-              cylinder(r=hex_r, h=clearance_r*2, $fn=6);
+              cylinder(r=hex_r, h=clearance_r*2, $fn=bolt_fn);
           }
         }
         translate([0, clearance_r+offset, 0])
