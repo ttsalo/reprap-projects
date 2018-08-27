@@ -155,6 +155,7 @@ circ_truss_w = 30;
 circ_truss_h = 47;
 circ_truss_l = 30;
 circ_truss_supp_w = 40; // Width of the supporting structure in bearing mount
+circ_truss_t = 4;
 
 /* Rifling connects flexspline to the flange. Details below. */
 flex_rifling_r = 12;
@@ -296,20 +297,37 @@ module flex_flange() {
 
 module circ_flange(full_unit=false) {
   difference() {
+    // Flange disk
     cylinder(r=circ_flange_r, h=circ_flange_h);
-    translate([0, 0, -0.5]) cylinder(r=circ_flange_cut_r, h=flex_flange_h+1);
+    // Flange disk cutout
+    translate([0, 0, -0.5]) cylinder(r=circ_flange_cut_r, h=circ_flange_h+1);
+    // Mounting holes for flange
     if (!full_unit)
       for (i = [0 : 360/circ_mount_n : 360]) {
         rotate([0, 0, i+360/circ_conn_n/2]) 
           translate([circ_mount_r, 0, 0]) cylinder(r=circ_bolt_r, h=circ_flange_h);
       }
   }
+  // Output truss
+  difference() {
+    translate([circ_truss_offset, -circ_truss_w/2, 0]) {
+       pyramid_box_truss(circ_truss_l, circ_truss_w, circ_truss_h-circ_unit_h, 1, 1, 2,
+                           circ_truss_t, circ_truss_t, circ_truss_t, circ_truss_t, circ_truss_t, 
+                           circ_truss_t, circ_truss_t, 16);
+       translate([0, circ_truss_w, 0])
+           rotate([0, 0, -90])
+             box_bolt_pattern_side(circ_truss_w, circ_truss_l, circ_truss_h-circ_unit_h, 
+                                    circ_truss_t, circ_truss_t, 4/2, 8/2, false);
+    }
+    // Cutout for truss
+    translate([0, 0, -0.5]) cylinder(r=circ_flange_r-1, h=circ_truss_h-circ_unit_h+1);
+  }
   for (i = [0 : 360/circ_conn_n : 360]) {
     intersection() {
     rotate([0, 0, i])
     translate([0, -(i == 0 ? circ_truss_supp_w : circ_conn_w)/2, -50])
       cube([bearing_outer_r+50, (i == 0  ? circ_truss_supp_w : circ_conn_w), 100]);
-  rotate_extrude(convexity=10)
+   rotate_extrude(convexity=10)
     polygon([[bearing_outer_r+circ_outer_t-circ_base_t, circ_flange_h],
              [bearing_outer_r+circ_outer_t-circ_base_t, 0],
              [bearing_outer_r+circ_outer_t, 0],
@@ -466,35 +484,47 @@ module circspline_unit(circ_unit_offset=0, omit_gear=false, full_unit=false) {
       // Main unit frame
       translate([0, 0, -stepper_shaft_l+driver_h/2])
         difference() {
-          cylinder(r=circ_outer_r+circ_unit_wall_t, h=circ_unit_h-circ_unit_offset, $fn=60);
-          cylinder(r=circ_outer_r, h=circ_unit_h-circ_unit_offset+1, $fn=60);
-        }
-      // Mounting flange
-      translate([0, 0, circ_unit_h-stepper_shaft_l+driver_h/2-circ_unit_flange_h-circ_unit_offset])
-      difference() {
-        intersection() {
           union() {
-            cylinder(r=circ_flange_r, h=circ_unit_flange_h);
-            translate([0, 0, -circ_flange_r])
-            cylinder(r1=0, r2=circ_flange_r, h=circ_flange_r);
-           }
-          // Optimization for the individual unit size, can optionally cut in Y
-          translate([-circ_flange_r, (-circ_outer_r-circ_unit_wall_t), -circ_flange_r/2])
-            cube([circ_flange_r*2, (circ_outer_r+circ_unit_wall_t)*2, circ_flange_r]);
-        }
-        translate([0, 0, -circ_flange_r/2])
-          cylinder(r=circ_outer_r, h=circ_unit_h+1, $fn=60);
-        translate([0, 0, -0.5]) cylinder(r=circ_outer_r, h=circ_unit_flange_h+1);
-        if (!full_unit) {
-        for (i = [0 : 360/circ_mount_n : 360]) {
-          rotate([0, 0, i+360/circ_conn_n/2]) {
-             translate([circ_mount_r, 0, 0]) cylinder(r=circ_bolt_r, h=circ_unit_flange_h+1);
-             translate([circ_mount_r, 0, -circ_flange_r/2-lh]) cylinder(r=circ_bolt_head_r, h=circ_flange_r/2);
+            // Primary cylinder frame
+            cylinder(r=circ_outer_r+circ_unit_wall_t, h=circ_unit_h-circ_unit_offset, $fn=60);
+            // Output truss
+            translate([circ_truss_offset, -circ_truss_w/2, 0]) {
+              pyramid_box_truss(circ_truss_l, circ_truss_w, circ_unit_h, 1, 1, 2,
+                                  circ_truss_t, circ_truss_t, circ_truss_t, circ_truss_t, circ_truss_t, 
+                                  circ_truss_t, circ_truss_t, 16);
+            translate([0, circ_truss_w, 0])
+              rotate([0, 0, -90])
+                box_bolt_pattern_side(circ_truss_w, circ_truss_l, circ_unit_h, circ_truss_t, circ_truss_t,
+                                       4/2, 8/2, false);
+            }
+         translate([0, 0, circ_unit_h-circ_unit_flange_h-circ_unit_offset])
+          // Flange
+          intersection() {
+            union() {
+              cylinder(r=circ_flange_r, h=circ_unit_flange_h);
+              translate([0, 0, -circ_flange_r])
+              cylinder(r1=0, r2=circ_flange_r, h=circ_flange_r);
+             }
+            // Optimization for the individual unit size, can optionally cut in Y
+            translate([-circ_flange_r, (-circ_outer_r-circ_unit_wall_t), -circ_flange_r/2])
+              cube([circ_flange_r*2, (circ_outer_r+circ_unit_wall_t)*2, circ_flange_r]);
+           } 
           }
-        }
-       }
-     }
-    }
+          // Main inner cylinder cutout
+          cylinder(r=circ_outer_r, h=circ_unit_h-circ_unit_offset+1, $fn=60);
+          // Flange mounting holes
+          if (!full_unit) {
+            translate([0, 0, circ_unit_h-circ_flange_h])
+            for (i = [0 : 360/circ_mount_n : 360]) {
+              rotate([0, 0, i+360/circ_conn_n/2]) {
+                translate([circ_mount_r, 0, 0]) cylinder(r=circ_bolt_r, h=circ_unit_flange_h+1);
+                translate([circ_mount_r, 0, -circ_flange_r/2-lh]) cylinder(r=circ_bolt_head_r, 
+                                                                          h=circ_flange_r/2);
+           }
+          }
+         }
+        }          
+      }
     translate([0, 0, -stepper_shaft_l+driver_h/2])
     {        
        // NEMA17 screw holes
