@@ -45,6 +45,9 @@ include <Armstrong-B-Configuration.scad>;
 
 // Assembly origin is at the midpoint of the tower
 
+t = 0.2;
+lh = 0.3;
+
 // Arm lengths.
 arm_1 = 120;
 arm_2 = 120;
@@ -56,12 +59,33 @@ arm_1_l = arm_1 - drive_truss_x_offset - drive_truss_l;
 tower_platform_r = 40; // Mounting platform radius
 tower_platform_inner_r = 25; // Mounting platform radius
 tower_platform_t = 4; // Mounting platform thickness
-tower_h = 50;
+tower_h = 100;
+
+tower_truss_l = 40;
+tower_truss_w = 30;
+tower_truss_t = 3;
+tower_truss_offset = 48;
 
 module tower() {
     translate([0, 0, -tower_platform_t/2])
       difference() {
-        cylinder(r=tower_platform_r, h=tower_platform_t, $fn=64);
+        union() {
+          cylinder(r=tower_platform_r, h=tower_platform_t, $fn=64);
+          for (i = [0, 90, 180])
+            rotate([0, 0, i]) {
+              translate([0, tower_truss_offset, -tower_h]) {
+                pyramid_box_truss(tower_truss_l, tower_truss_w, tower_h, 2, 1, 6,
+                                    tower_truss_t, tower_truss_t, tower_truss_t, tower_truss_t, tower_truss_t, 
+                                    tower_truss_t, tower_truss_t, 16);
+                translate([0, 0, tower_h])
+                  mirror([0, 0, -1])
+                  box_bolt_pattern_upper(tower_truss_l, tower_truss_w, tower_h, tower_truss_t,
+                                           tower_truss_t, 4/2, 8/2, 12/2, lh, bolt_fn=16);
+              }
+              translate([0, 0, 0])
+                cube([tower_truss_l, tower_truss_offset + tower_truss_w, tower_platform_t]);
+            }
+        }
         translate([0, 0, -0.5]) {
           cylinder(r=tower_platform_inner_r, h=tower_platform_t+1, $fn=64);
           for (i = [0 : 360/drive_mount_n : 360]) {
@@ -93,5 +117,7 @@ module assembly() {
     rotate([180, 0, 0]) inner_arm();
 }
 
-assembly();
+//assembly();
+
+tower();
 //inner_arm();
