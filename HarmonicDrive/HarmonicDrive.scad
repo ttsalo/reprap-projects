@@ -62,6 +62,9 @@
 use <../includes/parametric_involute_gear_v5.0.scad>;
 use <../PyramidSpaceTruss/PyramidSpaceTruss.scad>;
 
+// Use some common configuration parameters from Armstrong-B when used as a component
+include <../Armstrong-B/Armstrong-B-Configuration.scad>;
+
 tol = 0.2;
 lh = 0.3;
 
@@ -92,10 +95,10 @@ flex_base_t = 6;
 flex_lockring_h = 2;
 flex_lockring_t = 2;
 flex_conn_w = 5;
-flex_conn_n = 12;
-flex_mount_r = 32;
-flex_mount_n = 6;
-flex_bolt_r = 3/2;
+flex_conn_n = drive_conn_n;
+flex_mount_r = drive_mount_r;
+flex_mount_n = drive_mount_n;
+flex_bolt_r = drive_mount_bolt_r;
 
 /* Circspline side flange details. */
 circ_flange_r = bearing_outer_r+4;
@@ -258,7 +261,7 @@ module flex_flange() {
     translate([0, 0, flexspl_nut_h+lh])
       cylinder(r=flexspl_bolt_r, h=flex_flange_h+flex_rifling_h);
     for (i = [0 : 360/flex_mount_n : 360]) {
-      rotate([0, 0, i+360/flex_conn_n/2]) 
+      rotate([0, 0, i+360/flex_mount_n/2]) 
         translate([flex_mount_r, 0, 0]) cylinder(r=flex_bolt_r, h=flex_flange_h);
     } 
   }
@@ -583,7 +586,8 @@ module circspline_full() {
 }
 
 // Assembly Z=0 is at the lower surface of the bearing
-module assembly() {
+module drive_assembly() {
+  translate([0, 0, flex_flange_sep+flex_flange_h])
 difference() {
   union() {
     bearing();
@@ -603,7 +607,7 @@ difference() {
 }
 }
 
-assembly();
+drive_assembly();
 
 //circspline_full();
 //circspline();

@@ -34,7 +34,15 @@
    
 */
 
+use <../HarmonicDrive/HarmonicDrive.scad>;
+use <../PyramidSpaceTruss/PyramidSpaceTruss.scad>;
+include <Armstrong-B-Configuration.scad>;
+
 // Configuration
+
+// Bunch of parameters are inherited from the HarmonicDrive project which is an
+// integral part of this one.
+
 // Assembly origin is at the midpoint of the tower
 
 // Arm lengths.
@@ -44,8 +52,25 @@ arm_1_w = 20; // Main width of arm 1 sctructure
 arm_1_h = 40; // Main height of arm 1 sctructure
 
 // Tower parameters
-tower_platform_t = 4;
+tower_platform_r = 40; // Mounting platform radius
+tower_platform_inner_r = 25; // Mounting platform radius
+tower_platform_t = 4; // Mounting platform thickness
+tower_h = 50;
 
+module tower() {
+    translate([0, 0, -tower_platform_t/2])
+      difference() {
+        cylinder(r=tower_platform_r, h=tower_platform_t, $fn=64);
+        translate([0, 0, -0.5]) {
+          cylinder(r=tower_platform_inner_r, h=tower_platform_t+1, $fn=64);
+          for (i = [0 : 360/drive_mount_n : 360]) {
+            rotate([0, 0, i+360/drive_conn_n/2]) 
+              translate([drive_mount_r, 0, 0]) 
+                cylinder(r=drive_mount_bolt_r, h=tower_platform_t+1, $fn=16);
+          } 
+        }
+      }
+}
 
 // Arm origin is at the midpoint of the tower
 module inner_arm() {
@@ -55,8 +80,14 @@ module inner_arm() {
 }
 
 module assembly() {
+    tower();
+    translate([0, 0, tower_platform_t/2])
+      drive_assembly();
+    mirror([0, 0, -1])
+      translate([0, 0, tower_platform_t/2])
+        drive_assembly();
     inner_arm();
-    rotate([180, 0, 0]) inner_arm();    
+    rotate([180, 0, 0]) inner_arm();
 }
 
 assembly();
