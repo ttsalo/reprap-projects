@@ -85,12 +85,12 @@ flange_h = 2;
 
 /* Flexspline side flange details. */
 flex_flange_r = 36;
-flex_flange_h = 3;
-flex_flange_sep = 4; // Distance from bearing to flange
+flex_flange_h = drive_mount_flange_h;
+flex_flange_sep = drive_mount_flange_sep; // Distance from bearing to flange
 flex_inner_t = 2.5; // Outer side thickness of the bearing support
 flex_below_hook = 2;
 flex_above_hook = 1.1; // Was 2
-flex_above_h = 3;
+flex_above_h = 2;
 flex_base_t = 6;
 flex_lockring_h = 2;
 flex_lockring_t = 2;
@@ -108,9 +108,9 @@ circ_flange_sep = 4; // Distance from bearing to flange
 circ_outer_t = 4; // Outer side thickness of the bearing support
 circ_below_hook = 3;
 circ_above_hook = 1.2; // Was 2
-circ_above_h = 3;
+circ_above_h = drive_mount_above_h;
 circ_base_t = 8;
-circ_lockring_h = 2;
+circ_lockring_h = drive_mount_lockring_h;
 circ_lockring_t = 3;
 circ_conn_w = 5;
 circ_conn_n = 12;
@@ -154,12 +154,12 @@ stepper_shaft_l = 20;
 // Unit height from motor mount to circ flange, derived from other parameters
 circ_unit_h = stepper_shaft_l - driver_h/2 + flexspl_h - flex_flange_sep - bearing_h - circ_flange_sep - circ_flange_h;
 // Attachment truss parameters
-circ_truss_offset = 25;
-circ_truss_w = 30;
-circ_truss_h = 47;
-circ_truss_l = 30;
+circ_truss_offset = drive_truss_x_offset;
+circ_truss_w = drive_truss_w;
+circ_truss_h = drive_truss_h;
+circ_truss_l = drive_truss_l;
 circ_truss_supp_w = 40; // Width of the supporting structure in bearing mount
-circ_truss_t = 4;
+circ_truss_t = drive_truss_t;
 
 /* Rifling connects flexspline to the flange. Details below. */
 flex_rifling_r = 12;

@@ -46,10 +46,11 @@ include <Armstrong-B-Configuration.scad>;
 // Assembly origin is at the midpoint of the tower
 
 // Arm lengths.
-arm_1 = 100;
-arm_2 = 100;
-arm_1_w = 20; // Main width of arm 1 sctructure
-arm_1_h = 40; // Main height of arm 1 sctructure
+arm_1 = 120;
+arm_2 = 120;
+arm_1_w = drive_truss_w; // Main width of arm 1 sctructure
+arm_1_h = drive_truss_h; // Main height of arm 1 sctructure
+arm_1_l = arm_1 - drive_truss_x_offset - drive_truss_l;
 
 // Tower parameters
 tower_platform_r = 40; // Mounting platform radius
@@ -74,9 +75,11 @@ module tower() {
 
 // Arm origin is at the midpoint of the tower
 module inner_arm() {
-    
-    
-    
+  translate([drive_truss_x_offset+drive_truss_l, -drive_truss_w/2, 
+            tower_platform_t/2 + drive_truss_z_offset])
+    pyramid_box_truss(arm_1_l, drive_truss_w, drive_truss_h, 2, 1, 2,
+                        drive_truss_t, drive_truss_t, drive_truss_t, drive_truss_t, drive_truss_t, 
+                        drive_truss_t, drive_truss_t, 16);
 }
 
 module assembly() {
