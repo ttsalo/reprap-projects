@@ -23,8 +23,9 @@
    
    Project Plan:
    1. Develop the harmonic drive ready for use in Armstrong-B
-     - Almost done
+     - Design pretty much done, testing missing
    2. Develop the mounting tower for the drives
+     - Basic tower done
    3. Prototype with the arm designs to figure out what is needed for sufficient rigidity
    4. Figure out the effector mount
    4.1 Optionally a pen holder
@@ -49,7 +50,7 @@ t = 0.2;
 lh = 0.3;
 
 // Arm lengths.
-arm_1 = 120;
+arm_1 = 120; // Totals between the rotation axes
 arm_2 = 120;
 arm_1_w = drive_truss_w; // Main width of arm 1 sctructure
 arm_1_h = drive_truss_h; // Main height of arm 1 sctructure
@@ -100,10 +101,15 @@ module tower() {
 // Arm origin is at the midpoint of the tower
 module inner_arm() {
   translate([drive_truss_x_offset+drive_truss_l, -drive_truss_w/2, 
-            tower_platform_t/2 + drive_truss_z_offset])
-    pyramid_box_truss(arm_1_l, drive_truss_w, drive_truss_h, 2, 1, 2,
-                        drive_truss_t, drive_truss_t, drive_truss_t, drive_truss_t, drive_truss_t, 
-                        drive_truss_t, drive_truss_t, 16);
+            tower_platform_t/2 + drive_truss_z_offset]) {
+      pyramid_box_truss(arm_1_l, drive_truss_w, drive_truss_h, 2, 1, 2,
+                          drive_truss_t, drive_truss_t, drive_truss_t, drive_truss_t, drive_truss_t, 
+                          drive_truss_t, drive_truss_t, 16);
+      translate([-arm_1_l+drive_truss_t, drive_truss_w, 0])
+        rotate([0, 0, -90])
+          box_bolt_pattern_side(drive_truss_w, arm_1_l, drive_truss_h, drive_truss_t, drive_truss_t,
+                                 4/2, 8/2, false);
+   }
 }
 
 module assembly() {
@@ -119,5 +125,5 @@ module assembly() {
 
 //assembly();
 
-tower();
-//inner_arm();
+//tower();
+inner_arm();

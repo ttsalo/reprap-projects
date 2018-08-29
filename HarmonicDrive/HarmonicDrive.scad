@@ -516,8 +516,8 @@ module circspline_unit(circ_unit_offset=0, omit_gear=false, full_unit=false) {
               cylinder(r1=0, r2=circ_flange_r, h=circ_flange_r);
              }
             // Optimization for the individual unit size, can optionally cut in Y
-            translate([-circ_flange_r, (-circ_outer_r-circ_unit_wall_t), -circ_flange_r/2])
-              cube([circ_flange_r*2, (circ_outer_r+circ_unit_wall_t)*2, circ_flange_r]);
+            translate([-circ_flange_r, (-circ_outer_r-circ_unit_wall_t)*2, -circ_flange_r/2])
+              cube([circ_flange_r*2, (circ_outer_r+circ_unit_wall_t)*4, circ_flange_r]);
            } 
           }
           // Main inner cylinder cutout
