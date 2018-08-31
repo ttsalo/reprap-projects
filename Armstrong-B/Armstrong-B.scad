@@ -67,6 +67,42 @@ tower_truss_w = 30;
 tower_truss_t = 3;
 tower_truss_offset = 48;
 
+// Arm bearing parameters
+bearing_R = 22/2;
+bearing_r = 8/2;
+bearing_h = 7;
+bearing_tol = 0.3;
+bearing_holder_r = 20/2;
+bearing_holder_t = 3;
+bearing_holder_extra_z = 20;
+washer_t = 0.7;
+
+// Arm bearing Z placement relative to assembly origin, arm joints top down
+// Position of bearing open edge
+arm_1_1_bearing_1_z = drive_truss_z_offset + tower_platform_t/2 + drive_truss_h;
+arm_1_1_bearing_2_z = drive_truss_z_offset + tower_platform_t/2;
+
+echo(str("Drive truss Z offset: ", (drive_truss_z_offset)));
+
+// Bearing holder, open upwards, bearing upper edge at Z=0
+module bearing_holder(void=false) {
+  if (!void) {
+    translate([0, 0, -bearing_h-bearing_holder_t-bearing_holder_extra_z])
+      difference() {
+        cylinder(r=bearing_R+bearing_holder_t, 
+                 h=bearing_h+bearing_holder_t+bearing_holder_extra_z, $fn=32);
+      }
+  } else {
+    translate([0, 0, -bearing_h])
+      cylinder(r=bearing_R + bearing_tol, h=bearing_h+1, $fn=32);
+    translate([0, 0, -bearing_h-bearing_holder_t-1])
+      cylinder(r=bearing_holder_r, h=bearing_h+bearing_holder_t, $fn=32);
+    translate([0, 0, -bearing_h-bearing_holder_t-bearing_holder_extra_z])
+      cylinder(r=bearing_R, 
+               h=bearing_holder_extra_z, $fn=32);
+  }    
+}
+
 module tower() {
     translate([0, 0, -tower_platform_t/2])
       difference() {
@@ -99,17 +135,35 @@ module tower() {
 }
 
 // Arm origin is at the midpoint of the tower
-module inner_arm() {
-  translate([drive_truss_x_offset+drive_truss_l, -drive_truss_w/2, 
-            tower_platform_t/2 + drive_truss_z_offset]) {
-      pyramid_box_truss(arm_1_l, drive_truss_w, drive_truss_h, 2, 1, 2,
-                          drive_truss_t, drive_truss_t, drive_truss_t, drive_truss_t, drive_truss_t, 
-                          drive_truss_t, drive_truss_t, 16);
-      translate([-arm_1_l+drive_truss_t, drive_truss_w, 0])
-        rotate([0, 0, -90])
-          box_bolt_pattern_side(drive_truss_w, arm_1_l, drive_truss_h, drive_truss_t, drive_truss_t,
-                                 4/2, 8/2, false);
+module inner_arm(arm_n=1) {
+  difference() {
+    union() {
+      translate([drive_truss_x_offset+drive_truss_l, -drive_truss_w/2, 
+                tower_platform_t/2 + drive_truss_z_offset]) {
+          pyramid_box_truss(arm_1_l, drive_truss_w, drive_truss_h, 2, 1, 2,
+                              drive_truss_t, drive_truss_t, drive_truss_t, drive_truss_t, drive_truss_t, 
+                              drive_truss_t, drive_truss_t, 16);
+          translate([-arm_1_l+drive_truss_t, drive_truss_w, 0])
+            rotate([0, 0, -90])
+              box_bolt_pattern_side(drive_truss_w, arm_1_l, drive_truss_h, drive_truss_t, drive_truss_t,
+                                     4/2, 8/2, false);
+       }
+       if (arm_n == 1) {
+         translate([arm_1, 0, arm_1_1_bearing_1_z])
+           bearing_holder();
+         translate([arm_1, 0, arm_1_1_bearing_2_z])
+           mirror([0, 0, -1])
+             bearing_holder();
+       }
    }
+   if (arm_n == 1) {
+     translate([arm_1, 0, arm_1_1_bearing_1_z])
+       bearing_holder(void=true);
+     translate([arm_1, 0, arm_1_1_bearing_2_z])
+       mirror([0, 0, -1])
+         bearing_holder(void=true);   
+    }
+  }
 }
 
 module assembly() {
@@ -119,8 +173,8 @@ module assembly() {
     mirror([0, 0, -1])
       translate([0, 0, tower_platform_t/2])
         drive_assembly();
-    inner_arm();
-    rotate([180, 0, 0]) inner_arm();
+    inner_arm(arm_n=1);
+    rotate([180, 0, 0]) inner_arm(arm_n=2);
 }
 
 //assembly();
