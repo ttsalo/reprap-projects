@@ -72,7 +72,7 @@ bearing_R = 22/2;
 bearing_r = 8/2;
 bearing_h = 7;
 bearing_tol = 0.3;
-bearing_holder_r = 20/2;
+bearing_holder_r = 13/2;
 bearing_holder_t = 3;
 bearing_holder_extra_z = 20;
 washer_t = 0.7;
@@ -95,10 +95,15 @@ module bearing_holder(void=false) {
   } else {
     translate([0, 0, -bearing_h])
       cylinder(r=bearing_R + bearing_tol, h=bearing_h+1, $fn=32);
-    translate([0, 0, -bearing_h-bearing_holder_t-1])
-      cylinder(r=bearing_holder_r, h=bearing_h+bearing_holder_t, $fn=32);
+    // Platforms for the bearing to rest on with square cutout
+    intersection() {
+      translate([-bearing_holder_r, -bearing_R-bearing_tol, -bearing_h-bearing_holder_t-1])
+        cube([bearing_holder_r*2, bearing_R*2+bearing_tol*2, bearing_h+bearing_holder_t]);
+      translate([0, 0, -bearing_h-bearing_holder_t-1])
+        cylinder(r=bearing_R+bearing_tol, h=bearing_h+bearing_holder_t, $fn=32);
+    }
     translate([0, 0, -bearing_h-bearing_holder_t-bearing_holder_extra_z])
-      cylinder(r=bearing_R, 
+      cylinder(r=bearing_R+bearing_tol, 
                h=bearing_holder_extra_z, $fn=32);
   }    
 }
