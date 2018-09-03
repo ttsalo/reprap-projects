@@ -53,13 +53,13 @@ lh = 0.3;
 bearing_R = 22/2;
 bearing_r = 8/2;
 bearing_h = 7;
-bearing_tol = 0.3;
+bearing_tol = 0.2;
 bearing_holder_r = 13/2;
 bearing_holder_t = 3;
 bearing_holder_extra_z = 20;
 bearing_holder_flat_t = 4; // Thickness of the flat part of bearing holder
 bearing_holder_flat_r = 12;
-washer_t = 0.7;
+washer_t = 1.5;
 
 // Arm lengths.
 arm_1 = 120; // Totals between the rotation axes
@@ -216,5 +216,5 @@ module assembly() {
 //assembly();
 
 //tower();
-//inner_arm();
-upper_outer_arm();
+inner_arm();
+//upper_outer_arm();

@@ -376,7 +376,7 @@ module circ_lockring() {
   difference() {
     cylinder(r=bearing_outer_r+circ_outer_t,
              h=circ_lockring_h-tol);
-    translate([0, 0, -.5]) cylinder(r=bearing_outer_r+circ_outer_t-circ_lockring_t+tol,
+    translate([0, 0, -.5]) cylinder(r=bearing_outer_r+circ_outer_t-circ_lockring_t+tol+0.2,
              h=circ_lockring_h-tol+1);
   }
 }
@@ -607,13 +607,13 @@ difference() {
 }
 }
 
-drive_assembly();
+//drive_assembly();
 
 //circspline_full();
 //circspline();
 //circspline_unit(circ_unit_offset=0);
 //circ_flange();
-//circ_lockring();
+circ_lockring();
 //flex_flange();
 //flex_lockring(adjust=0.4);
 //flexspline();
