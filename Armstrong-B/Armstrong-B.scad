@@ -49,12 +49,32 @@ include <Armstrong-B-Configuration.scad>;
 t = 0.2;
 lh = 0.3;
 
+// Arm bearing parameters
+bearing_R = 22/2;
+bearing_r = 8/2;
+bearing_h = 7;
+bearing_tol = 0.3;
+bearing_holder_r = 13/2;
+bearing_holder_t = 3;
+bearing_holder_extra_z = 20;
+bearing_holder_flat_t = 4; // Thickness of the flat part of bearing holder
+bearing_holder_flat_r = 12;
+washer_t = 0.7;
+
 // Arm lengths.
 arm_1 = 120; // Totals between the rotation axes
 arm_2 = 120;
 arm_1_w = drive_truss_w; // Main width of arm 1 sctructure
 arm_1_h = drive_truss_h; // Main height of arm 1 sctructure
 arm_1_l = arm_1 - drive_truss_x_offset - drive_truss_l;
+
+// Second section of upper arm (1)
+arm_2_1_w = drive_truss_w;
+arm_2_1_h = arm_1_h + 2*washer_t + 2*bearing_holder_flat_t + 6; // Uses a fudge factor
+arm_2_1_z_offset = -washer_t-bearing_holder_flat_t; // Offset relative to first section
+arm_2_1_truss_x_offset = 10; // Where the truss starts
+arm_2_1_truss_l = 60; // Truss part length
+arm_2_1_truss_t = 3;
 
 // Tower parameters
 tower_platform_r = 40; // Mounting platform radius
@@ -67,22 +87,12 @@ tower_truss_w = 30;
 tower_truss_t = 3;
 tower_truss_offset = 48;
 
-// Arm bearing parameters
-bearing_R = 22/2;
-bearing_r = 8/2;
-bearing_h = 7;
-bearing_tol = 0.3;
-bearing_holder_r = 13/2;
-bearing_holder_t = 3;
-bearing_holder_extra_z = 20;
-washer_t = 0.7;
-
 // Arm bearing Z placement relative to assembly origin, arm joints top down
 // Position of bearing open edge
 arm_1_1_bearing_1_z = drive_truss_z_offset + tower_platform_t/2 + drive_truss_h;
 arm_1_1_bearing_2_z = drive_truss_z_offset + tower_platform_t/2;
 
-echo(str("Drive truss Z offset: ", (drive_truss_z_offset)));
+echo(str("Drive truss h: ", (arm_2_1_h)));
 
 // Bearing holder, open upwards, bearing upper edge at Z=0
 module bearing_holder(void=false) {
@@ -171,6 +181,26 @@ module inner_arm(arm_n=1) {
   }
 }
 
+module upper_outer_arm() {
+    translate([arm_1, 0, tower_platform_t/2 + drive_truss_z_offset + arm_2_1_z_offset]) {
+      difference() {
+        union() {
+          cylinder(r=bearing_holder_flat_r, h=bearing_holder_flat_t, $fn=24);
+          translate([0, 0, bearing_holder_flat_t + washer_t*2 + drive_truss_h])
+            cylinder(r=bearing_holder_flat_r, h=bearing_holder_flat_t, $fn=24);
+          translate([arm_2_1_truss_x_offset, 0, 0])
+            triangular_truss(arm_2_1_truss_l, 4, arm_2_1_w, arm_2_1_h, 20, 20,
+            arm_2_1_truss_t, arm_2_1_truss_t, arm_2_1_truss_t, arm_2_1_truss_t,
+            arm_2_1_truss_t, arm_2_1_truss_t, arm_2_1_truss_t, arm_2_1_truss_t,
+            16, use_truss=true);            
+        }
+        cylinder(r=bearing_r, h=bearing_holder_flat_t, $fn=24);
+        translate([0, 0, bearing_holder_flat_t + washer_t*2 + drive_truss_h])
+            cylinder(r=bearing_r, h=bearing_holder_flat_t, $fn=24);
+    }
+  }  
+}
+
 module assembly() {
     tower();
     translate([0, 0, tower_platform_t/2])
@@ -180,9 +210,11 @@ module assembly() {
         drive_assembly();
     inner_arm(arm_n=1);
     rotate([180, 0, 0]) inner_arm(arm_n=2);
+    upper_outer_arm();
 }
 
 //assembly();
 
 //tower();
-inner_arm();
+//inner_arm();
+upper_outer_arm();
