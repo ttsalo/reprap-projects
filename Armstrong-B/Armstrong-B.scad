@@ -57,9 +57,18 @@ bearing_tol = 0.2;
 bearing_holder_r = 13/2;
 bearing_holder_t = 3;
 bearing_holder_extra_z = 20;
-bearing_holder_flat_t = 4; // Thickness of the flat part of bearing holder
-bearing_holder_flat_r = 12;
 washer_t = 1.5;
+
+// Bearing holder parameters for second section of upper arm
+bearing_holder_lower_flat_t = 4; // Thickness of the flat part of bearing holder
+bearing_holder_lower_flat_r = drive_truss_w/2;
+bearing_holder_upper_flat_t = 6;
+bearing_holder_upper_flat_r = 10;
+bearing_holder_upper_brace_w = 9;
+bearing_holder_upper_brace_l = 28;
+bearing_holder_far_R = 20;
+bearing_holder_far_r = 10;
+bearing_holder_far_t = 4;
 
 // Arm lengths.
 arm_1 = 120; // Totals between the rotation axes
@@ -70,11 +79,12 @@ arm_1_l = arm_1 - drive_truss_x_offset - drive_truss_l;
 
 // Second section of upper arm (1)
 arm_2_1_w = drive_truss_w;
-arm_2_1_h = arm_1_h + 2*washer_t + 2*bearing_holder_flat_t + 6; // Uses a fudge factor
-arm_2_1_z_offset = -washer_t-bearing_holder_flat_t; // Offset relative to first section
-arm_2_1_truss_x_offset = 10; // Where the truss starts
-arm_2_1_truss_l = 60; // Truss part length
-arm_2_1_truss_t = 3;
+arm_2_1_h = arm_1_h + 2*washer_t + bearing_holder_lower_flat_t + bearing_holder_upper_flat_t + 6; // Uses a fudge factor
+arm_2_1_z_offset = -washer_t-bearing_holder_lower_flat_t; // Offset relative to first section
+arm_2_1_truss_x_offset = 14; // Where the truss starts
+arm_2_1_truss_l = 95; // Truss part length
+arm_2_1_truss_t = 5;
+arm_2_1_truss_2_t = 3;
 
 // Tower parameters
 tower_platform_r = 40; // Mounting platform radius
@@ -185,19 +195,35 @@ module upper_outer_arm() {
     translate([arm_1, 0, tower_platform_t/2 + drive_truss_z_offset + arm_2_1_z_offset]) {
       difference() {
         union() {
-          cylinder(r=bearing_holder_flat_r, h=bearing_holder_flat_t, $fn=24);
-          translate([0, 0, bearing_holder_flat_t + washer_t*2 + drive_truss_h])
-            cylinder(r=bearing_holder_flat_r, h=bearing_holder_flat_t, $fn=24);
+          cylinder(r=bearing_holder_lower_flat_r, h=bearing_holder_lower_flat_t, $fn=24);
+          translate([0, -bearing_holder_lower_flat_r, 0])
+            cube([arm_2_1_truss_x_offset, bearing_holder_lower_flat_r*2, bearing_holder_lower_flat_t]);
+          translate([0, 0, bearing_holder_lower_flat_t + washer_t*2 + drive_truss_h])
+            cylinder(r=bearing_holder_upper_flat_r, h=bearing_holder_upper_flat_t, $fn=24);
+          translate([0, -bearing_holder_upper_brace_w/2, 
+                    bearing_holder_lower_flat_t + washer_t*2 + drive_truss_h])
+            cube([bearing_holder_upper_brace_l, bearing_holder_upper_brace_w, bearing_holder_upper_flat_t]);
           translate([arm_2_1_truss_x_offset, 0, 0])
-            triangular_truss(arm_2_1_truss_l, 4, arm_2_1_w, arm_2_1_h, 20, 20,
+            triangular_truss(arm_2_1_truss_l, 5, arm_2_1_w, arm_2_1_h, arm_2_1_w, 5,
             arm_2_1_truss_t, arm_2_1_truss_t, arm_2_1_truss_t, arm_2_1_truss_t,
-            arm_2_1_truss_t, arm_2_1_truss_t, arm_2_1_truss_t, arm_2_1_truss_t,
-            16, use_truss=true);            
+            arm_2_1_truss_2_t, arm_2_1_truss_2_t, arm_2_1_truss_2_t, arm_2_1_truss_2_t,
+            16, use_truss=true);
+            translate([arm_2, 0, 0])
+              cylinder(r=bearing_holder_far_R, h=bearing_holder_far_t, $fn=24);
         }
-        cylinder(r=bearing_r, h=bearing_holder_flat_t, $fn=24);
-        translate([0, 0, bearing_holder_flat_t + washer_t*2 + drive_truss_h])
-            cylinder(r=bearing_r, h=bearing_holder_flat_t, $fn=24);
+        cylinder(r=bearing_r, h=bearing_holder_lower_flat_t, $fn=24);
+        translate([0, 0, bearing_holder_lower_flat_t + washer_t*2 + drive_truss_h])
+            cylinder(r=bearing_r, h=bearing_holder_upper_flat_t, $fn=24);
+        translate([0, 0, bearing_holder_lower_flat_t])
+            cylinder(r=bearing_R+bearing_holder_t+bearing_tol*3, h=drive_truss_h+washer_t*2, $fn=32);
+        translate([arm_2, 0, 0])
+            cylinder(r=bearing_holder_far_r, h=bearing_holder_far_t, $fn=24);
     }
+    // Printing support for upper holder
+    cylinder(r=bearing_r-t, h=lh);
+    cylinder(r=bearing_r-1, h=40);
+    translate([0, 0, bearing_holder_lower_flat_t + washer_t*2 + drive_truss_h - 15.4])
+      cylinder(r1=bearing_r-1, r2=bearing_holder_upper_flat_r, h=15);
   }  
 }
 
@@ -216,5 +242,5 @@ module assembly() {
 //assembly();
 
 //tower();
-inner_arm();
-//upper_outer_arm();
+//inner_arm();
+upper_outer_arm();
