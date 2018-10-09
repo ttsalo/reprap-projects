@@ -83,7 +83,7 @@ arm_2_1_h = arm_1_h + 2*washer_t + bearing_holder_lower_flat_t + bearing_holder_
 arm_2_1_z_offset = -washer_t-bearing_holder_lower_flat_t; // Offset relative to first section
 arm_2_1_truss_x_offset = 14; // Where the truss starts
 arm_2_1_truss_l = 95; // Truss part length
-arm_2_1_truss_t = 5;
+arm_2_1_truss_t = 4;
 arm_2_1_truss_2_t = 3;
 
 // Tower parameters
