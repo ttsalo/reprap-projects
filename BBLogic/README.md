@@ -629,4 +629,9 @@ Logic ideas:
        - This also allows creating memory cells in which the latch acts as the memory element.
        - For the gate element, the latch would be partial so that it forces the movement in only
          one direction.
+       - Idea 2: let's make a "follower" which snaps to the empty middle part of the sync wheel
+         shaft. It can then have trigger wedges and guides whereever needed. In the kick case the
+         B0 channel would have a trigger edge which lifts out a guide from A0 channel. If
+         the B signal is 1, the guide remains down and kicks the A signal from 0 to 1.
+
 
