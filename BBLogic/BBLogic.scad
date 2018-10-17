@@ -24,6 +24,7 @@ R2R = 26;      // Track separation
 r_tol = 1;   // Ball track tolerance
 r_t = 1.8;       // Ball track wall thickness
 mid_h = r+r_tol+r_t; // Pipe vertical midpoint - as low as possible to make room on top
+sync_frame_pos = 20; // Sync frame start
 
 switch_ramp_l = r + 0.5; // Length of the ramp in the switch section
 roof_cut = r*2; // Width of the cut in open-roof pipe sections
@@ -323,7 +324,7 @@ module shaft_holder(r, h, $fn=$fn) {
 
 // Sync part parameters
 
-gate_x = 14; // Gate positioning
+gate_x = 36; // Gate positioning (wheel shaft offset inside frame)
 
 // Wheel positioning in y: edges of the main cylinder relative to track centerline.
 wheel_min_y = -8;
@@ -353,7 +354,7 @@ wheel_offset_z = 12;
 wheel_minor_r = 7;
 
 // Ratchet arm parameters
-ratchet_shaft_x = 39; // Shaft centerline x position
+ratchet_shaft_x = 11; // Shaft centerline x position
 ratchet_shaft_r = 4/2;
 ratchet_shaft_holder_r = 12/2;
 ratchet_shaft_l = 16;
@@ -477,12 +478,12 @@ module sync_void() {
    mirror([0, mirror ? 1 : 0, 0]) {
        // Wheel cutout
        translate([gate_x, R2R/2, wheel_offset_z])
-          rotate([0, -135, 0])
+          rotate([0, -45, 0])
             wheel(void=true);
       // Ratchet shaft void
       translate([ratchet_shaft_x, R2R/2, ratchet_shaft_z_offset])
        rotate([90, 0, 0])
-        rotate([0, 0, 135])
+        rotate([0, 0, 45])
          translate([0, 0, -ratchet_shaft_l/2-wheel_void_tol])
            shaft_holder_void(r=ratchet_shaft_r+wheel_void_tol, 
                               gap=ratchet_shaft_holder_gap, h=ratchet_shaft_l+
@@ -494,10 +495,10 @@ module sync_void() {
          translate([0, 0, -ratchet_arm_w/2-wheel_void_tol]) {
            cylinder(r=ratchet_shaft_holder_r+wheel_void_tol, 
                     h=ratchet_arm_w+wheel_void_tol*2, $fn=24);
-             rotate([0, 0, 135])
-              translate([0, -ratchet_shaft_holder_r-wheel_void_tol, 0])
-              cube([ratchet_arm_l, (ratchet_shaft_holder_r+wheel_void_tol)*2,
-                  ratchet_arm_w+wheel_void_tol*2]);
+           rotate([0, 0, 135])
+             translate([-ratchet_arm_l, -ratchet_shaft_holder_r-wheel_void_tol, 0])
+               cube([ratchet_arm_l, (ratchet_shaft_holder_r+wheel_void_tol)*2,
+                     ratchet_arm_w+wheel_void_tol*2]);
          }
     }
 }
@@ -509,7 +510,7 @@ module sync_frame_parts() {
             translate([gate_x, R2R/2, wheel_offset_z])
               rotate([90, 0, 0])
                 translate([0, 0, wheel_shaft_min_y])
-                  rotate([0, 0, -45])
+                  rotate([0, 0, -135])
                      // Dropped the inner shaft holders,
                      // was h=wheel_shaft_max_y-wheel_shaft_min_y
                     shaft_holder(r=wheel_shaft_holder_r,
@@ -517,7 +518,7 @@ module sync_frame_parts() {
            translate([ratchet_shaft_x, R2R/2, ratchet_shaft_z_offset])
              rotate([90, 0, 0])
                translate([0, 0, -ratchet_shaft_l/2])
-                 rotate([0, 0, -45])
+                 rotate([0, 0, -135])
                    shaft_holder(r=ratchet_shaft_holder_r, h=ratchet_shaft_l, $fn=24);
          }
 }
@@ -624,6 +625,86 @@ module full_gate(invert_a=false, invert_b=false, invert_c=false) {
     // "inspection hatches"
     translate([110, -5, h/2]) cylinder(r=r, h=h); // Routes to sink
     translate([70+35/2, w/2+R2R/2, h/2]) cylinder(r=r, h=h); // Kick section
+  }
+}
+
+
+/* Full gate NG organization:
+   0-5 mm straight section in input
+   5-20 mm switch section
+   20-70 mm sync section
+   70-105 mm kick section
+   105-110 mm straight intermediate section
+   110-125 mm switch section
+   125-130 mm straight section in output
+*/
+module full_gate_ng(invert_a=false, invert_b=false, invert_c=false) {
+  difference() {
+    union() {
+      translate([0, w/2+R2R/2, mid_h])
+        rotate([0, 90, 0]) {
+          dpipe(invert_a ? 5 : 20);
+          if (invert_a)
+            translate([0, 0, 5]) switch_dpipe(15, inverter=true); 
+          translate([0, 0, 20]) switch_dpipe(sync_frame_l, roofonly=true);
+          translate([0, 0, 20+sync_frame_l]) dpipe(40);
+          //translate([0, 0, 20+sync_frame_l]) switch_dpipe(35);
+          //translate([0, 0, 20+sync_frame_l+35]) dpipe(5);
+          if (invert_c)
+            translate([0, 0, gate_l-20]) switch_dpipe(15, inverter=false);
+          translate([0, 0, gate_l-(invert_c ? 5 : 20)]) dpipe(invert_c ? 5 : 20); 
+       }
+      translate([0, w/2-R2R/2, mid_h])
+        rotate([0, 90, 0]) {
+          dpipe(invert_b ? 5 : 20);
+          if (invert_b)          
+            translate([0, 0, 5]) switch_dpipe(15, inverter=true);
+          translate([0, 0, 20]) switch_dpipe(sync_frame_l, roofonly=true);   
+          //translate([0, 0, 20+sync_frame_l]) kick_and_sink_dpipe(35, 55, 7);
+        }
+      translate([sync_frame_pos, w/2, mid_h])
+          sync_frame_parts();
+      translate([0, -ss_offset, mid_h])
+        rotate([0, 90, 0])
+          pipe(gate_l);
+    }
+    translate([sync_frame_pos, w/2, mid_h])
+      sync_void();
+    translate([0, w/2+R2R/2, mid_h])
+        rotate([0, 90, 0]) {
+          dpipe(0.1, void=true);
+          if (invert_a)
+            translate([0, 0, 0]) switch_dpipe(20, inverter=false, void=true);
+          else
+            translate([0, 0, 0]) dpipe(20, void=true);
+          translate([0, 0, 20]) switch_dpipe(sync_frame_l, roofonly=true, void=true);
+          translate([0, 0, 20+sync_frame_l]) dpipe(40, void=true); 
+          //translate([0, 0, 20+sync_frame_l]) switch_dpipe(35, void=true);
+          //translate([0, 0, 20+sync_frame_l+35]) dpipe(5, void=true); 
+          if (invert_c) {
+            translate([0, 0, gate_l-20]) switch_dpipe(20, inverter=false, void=true);
+            translate([0, 0, gate_l-0.1]) dpipe(0.1, void=true); 
+          } else {
+            translate([0, 0, gate_l-20]) dpipe(20, void=true);
+          }
+        }
+    translate([0, w/2-R2R/2, mid_h])
+        rotate([0, 90, 0]) {
+          if (invert_b) {
+            dpipe(0.1, void=true);
+            translate([0, 0, 0]) switch_dpipe(20, inverter=false, void=true);
+          } else {
+            translate([0, 0, 0]) dpipe(20, void=true);
+          }
+          translate([0, 0, 20]) switch_dpipe(sync_frame_l, roofonly=true, void=true); 
+          //translate([0, 0, 20+sync_frame_l]) kick_and_sink_dpipe(35, 55, 7, void=true);
+          
+        }
+    translate([0, -ss_offset, mid_h])
+      rotate([0, 90, 0])
+        pipe(gate_l, void=true);
+    // "inspection hatches"
+    translate([110, -5, h/2]) cylinder(r=r, h=h); // Routes to sink
   }
 }
 
@@ -863,6 +944,13 @@ module kick_frame() {
   }
 }
 
+module assembly() {
+    full_gate_ng();
+    translate([sync_frame_pos + gate_x, w/2, mid_h + wheel_offset_z])
+      double_wheels();
+}
+
+assembly();
 
 //kick_dpipe(30, 7, void=true);
 //kick_dpipe(30, 7);
@@ -883,15 +971,15 @@ module kick_frame() {
 //translate([gate_l, 0, 0])
 //connector(level=0, output=true);
 
-rotate([0, -90, 0])
+//rotate([0, -90, 0])
 //rotate([0, slope, 0])
-difference() {
-    full_gate();
-    translate([62, w/2+2, 10]) cube([150, 150, 50]);
-    translate([-1, -50, 0]) cube([15+1, 150, 50]);
+//difference() {
+//    full_gate();
+//    translate([62, w/2+2, 10]) cube([150, 150, 50]);
+//    translate([-1, -50, 0]) cube([15+1, 150, 50]);
 //full_repeater();
 //sync_frame(all_parts=true);
-}
+//}
 //rotate([90, 0, 0]) 
 //{
 //wheel(part1=false);
