@@ -374,6 +374,13 @@ ratchet_arm_release_angle = -45;
 
 sync_frame_l = 50;
 
+// Logic part parameters
+
+follower_l = 20; // Total length of the follower arm from wheel shaft centerline
+follower_arm_w = 4; // Width of the main follower arm
+follower_arm_t = 3; // Thickness of the main follower arm
+follower_shaft_holder_t = 3; // Thickness of the follower's holder around wheel shaft
+
 // Ratchet arm. Origin is in the center of the rotating shaft.
 module ratchet_arm() {
    rotate([90, 0, 0])
@@ -453,7 +460,7 @@ module double_wheels() {
                             cylinder(r=r, 
                                      h=wheel_max_y-wheel_min_y+2, $fn=24);
             translate([0, 0, -ratchet_arm_w/2-wheel_void_tol])
-               cylinder(r=wheel_r, h=ratchet_arm_w+wheel_void_tol*2, $fn=24);
+               cylinder(r=wheel_r+0.01, h=ratchet_arm_w+wheel_void_tol*2, $fn=24);
         }
         difference() {
          for (a = [0, 90, 180, 270])
