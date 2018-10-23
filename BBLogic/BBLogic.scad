@@ -322,6 +322,32 @@ module shaft_holder(r, h, $fn=$fn) {
     cube([r*2, r*2, h]);
 }
 
+/* Partially open ring that snaps around a cylindrical shaft. */
+module snap_in(inner_r, outer_r, opening, h) {
+  rotate([90, 0, 180]) rotate([0, 0, -opening/2]) {
+    difference() {
+      cylinder(r=outer_r, h=h, $fn=32);
+      cylinder(r=inner_r, h=h, $fn=32);
+      cube([outer_r, outer_r, h]);
+      rotate([0, 0, opening-90]) cube([outer_r, outer_r, h]);
+    }
+    _r = (outer_r-inner_r)/2;
+    translate([inner_r+_r, 0, 0])
+      cylinder(r=_r, h=h, $fn=16);
+    rotate([0, 0, opening])
+      translate([inner_r+_r, 0, 0])
+        cylinder(r=_r, h=h, $fn=16);
+  }   
+}
+
+
+/* Partial void equivalent for the snap_in module */
+module snap_in_void(inner_r, outer_r, opening, h) {
+  rotate([90, 0, 180]) rotate([0, 0, -opening/2]) {
+      cylinder(r=inner_r, h=h, $fn=32);
+  }
+}
+
 // Sync part parameters
 
 gate_x = 36; // Gate positioning (wheel shaft offset inside frame)
@@ -376,10 +402,79 @@ sync_frame_l = 50;
 
 // Logic part parameters
 
-follower_l = 20; // Total length of the follower arm from wheel shaft centerline
+follower_l = 30; // Total length of the follower arm from wheel shaft centerline
+follower_shaft_holder_w = 8; // Width of the pivot attachment
+follower_shaft_holder_opening = 120; // Degrees of opening for the pivot attachment
+follower_shaft_holder_t = 2; // Thickness of the follower's holder around wheel shaft
 follower_arm_w = 4; // Width of the main follower arm
 follower_arm_t = 3; // Thickness of the main follower arm
-follower_shaft_holder_t = 3; // Thickness of the follower's holder around wheel shaft
+follower_rest_angle = 10; // Rest position for the follower
+
+// Trigger parameters
+trigger_w = 3; // Trigger wedge thickness
+trigger_l = 18; // Length of the trigger wedge
+trigger_h = 8; // How far the trigger contact surface start extends from follower arm origin in z
+trigger_angle = 20; // Angling of the contact surface of the trigger
+
+// Kicker side parameters
+kicker_outer_offset = 11; // Kicker part outer edge offset from double track centerline
+kicker_t = 4; // Kicker thickness
+kicker_l = 7; // Kicker length (in x)
+kicker_h = 10; // How far kicker extend from follower arm origin in z
+
+module follower_arm() {
+  difference() {
+    union() {
+      // Shaft holder  
+      translate([0, -follower_shaft_holder_w/2, 0])
+        rotate([0, 90, 0])
+          snap_in(wheel_shaft_r+tol*2, wheel_shaft_r+follower_shaft_holder_t, 
+                  follower_shaft_holder_opening, follower_shaft_holder_w);
+      // Main arm
+      translate([0, -follower_arm_w/2, -wheel_shaft_r-follower_shaft_holder_t])
+        cube([follower_l, follower_arm_w, follower_arm_t]);
+      // Cross-arm
+      translate([follower_l-follower_arm_w, -R2R/2 - kicker_outer_offset, 
+                -wheel_shaft_r-follower_shaft_holder_t])
+        cube([follower_arm_w, R2R + wheel_max_y + kicker_outer_offset, follower_arm_t]);
+      // Trigger
+      translate([follower_l-trigger_l, R2R/2 + wheel_max_y - trigger_w, 
+                -wheel_shaft_r-follower_shaft_holder_t])
+        difference() {
+          cube([trigger_l, trigger_w, trigger_h*2]);
+          translate([0, -0.01, trigger_h])
+            rotate([0, -trigger_angle, 0])
+              cube([trigger_l*2, trigger_w+0.02, trigger_h]);  
+        }
+      // Kicker
+      translate([follower_l-kicker_l, -R2R/2 - kicker_outer_offset, 
+                -wheel_shaft_r-follower_shaft_holder_t/4]) {
+        // Support / printing help
+        translate([0, 0, -follower_shaft_holder_t*0.75])
+          cube([kicker_l, kicker_t, kicker_t]);
+        rotate([0, follower_rest_angle, 0])
+          difference() {
+            cube([kicker_l, kicker_t, wheel_shaft_r + follower_shaft_holder_t/4 + kicker_h]);  
+            translate([0, kicker_t, 0])
+              cylinder(r=kicker_t, h=kicker_h*2, $fn=16);
+          }
+      }
+    }
+    translate([0, -follower_shaft_holder_w/2, 0])
+        rotate([0, 90, 0])
+          snap_in_void(wheel_shaft_r+tol, wheel_shaft_r+follower_shaft_holder_t, 
+                        follower_shaft_holder_opening, follower_shaft_holder_w, void=true);
+    
+    // Main void for rotation
+    translate([0, -w/2, 0])
+      rotate([-90, 0, 0])
+        difference() {
+          cylinder(r=follower_l*2, h=w, $fn=64);
+          cylinder(r=follower_l, h=w, $fn=64);
+ 
+        }
+  }
+}
 
 // Ratchet arm. Origin is in the center of the rotating shaft.
 module ratchet_arm() {
@@ -507,6 +602,13 @@ module sync_void() {
                cube([ratchet_arm_l, (ratchet_shaft_holder_r+wheel_void_tol)*2,
                      ratchet_arm_w+wheel_void_tol*2]);
          }
+      if (mirror == true)
+        translate([gate_x, R2R/2-wheel_max_y-wheel_void_tol, 0])
+          cube([follower_l+wheel_void_tol, wheel_max_y-wheel_min_y+wheel_void_tol*2, h]);
+      else
+        translate([sync_frame_l, R2R/2-kicker_outer_offset-wheel_void_tol, 0])
+          cube([follower_l-(sync_frame_l-gate_x)+wheel_void_tol, 
+                kicker_outer_offset*2+wheel_void_tol*2, h]);
     }
 }
 
@@ -673,7 +775,8 @@ module full_gate_ng(invert_c=false) {
         rotate([0, 90, 0]) {
           translate([0, 0, 0]) dpipe(5, void=true);
           translate([0, 0, sync_frame_pos]) switch_dpipe(sync_frame_l, roofonly=true, void=true);
-          translate([0, 0, 5+sync_frame_l]) switch_dpipe(40, roofonly=true, void=true); 
+          translate([0, 0, 5+sync_frame_l]) switch_dpipe(20, void=true); 
+          translate([0, 0, 5+sync_frame_l+20]) dpipe(20, void=true); 
           //translate([0, 0, 20+sync_frame_l]) switch_dpipe(35, void=true);
           //translate([0, 0, 20+sync_frame_l+35]) dpipe(5, void=true); 
           if (invert_c) {
@@ -938,9 +1041,15 @@ module assembly() {
     full_gate_ng();
     translate([sync_frame_pos + gate_x, w/2, mid_h + wheel_offset_z])
       double_wheels();
+    translate([sync_frame_pos + gate_x, w/2, mid_h + wheel_offset_z])
+      rotate([0, follower_rest_angle, 0])
+        rotate([180, 0, 0])
+          follower_arm();
 }
 
-assembly();
+//assembly();
+
+follower_arm();
 
 //kick_dpipe(30, 7, void=true);
 //kick_dpipe(30, 7);
@@ -964,7 +1073,7 @@ assembly();
 //rotate([0, -90, 0])
 //rotate([0, slope, 0])
 //difference() {
-//    full_gate();
+//    full_gate_ng();
 //    translate([62, w/2+2, 10]) cube([150, 150, 50]);
 //    translate([-1, -50, 0]) cube([15+1, 150, 50]);
 //full_repeater();
