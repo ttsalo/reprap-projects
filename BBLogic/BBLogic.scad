@@ -24,7 +24,7 @@ R2R = 26;      // Track separation
 r_tol = 1;   // Ball track tolerance
 r_t = 1.8;       // Ball track wall thickness
 mid_h = r+r_tol+r_t; // Pipe vertical midpoint - as low as possible to make room on top
-sync_frame_pos = 20; // Sync frame start
+sync_frame_pos = 5; // Sync frame start
 
 switch_ramp_l = r + 0.5; // Length of the ramp in the switch section
 roof_cut = r*2; // Width of the cut in open-roof pipe sections
@@ -638,54 +638,42 @@ module full_gate(invert_a=false, invert_b=false, invert_c=false) {
 
 /* Full gate NG organization:
    0-5 mm straight section in input
-   5-20 mm switch section
-   20-70 mm sync section
-   70-105 mm kick section
+   5-? mm sync section
    105-110 mm straight intermediate section
    110-125 mm switch section
    125-130 mm straight section in output
 */
-module full_gate_ng(invert_a=false, invert_b=false, invert_c=false) {
+module full_gate_ng(invert_c=false) {
   difference() {
     union() {
       translate([0, w/2+R2R/2, mid_h])
         rotate([0, 90, 0]) {
-          dpipe(invert_a ? 5 : 20);
-          if (invert_a)
-            translate([0, 0, 5]) switch_dpipe(15, inverter=true); 
-          translate([0, 0, 20]) switch_dpipe(sync_frame_l, roofonly=true);
-          translate([0, 0, 20+sync_frame_l]) dpipe(40);
-          //translate([0, 0, 20+sync_frame_l]) switch_dpipe(35);
-          //translate([0, 0, 20+sync_frame_l+35]) dpipe(5);
-          if (invert_c)
+          translate([0, 0, sync_frame_pos-5]) switch_dpipe(sync_frame_l+5, roofonly=true);
+          translate([0, 0, sync_frame_pos+sync_frame_l]) switch_dpipe(40);
+          /* if (invert_c)
             translate([0, 0, gate_l-20]) switch_dpipe(15, inverter=false);
-          translate([0, 0, gate_l-(invert_c ? 5 : 20)]) dpipe(invert_c ? 5 : 20); 
+          translate([0, 0, gate_l-(invert_c ? 5 : 20)]) dpipe(invert_c ? 5 : 20);  */
        }
       translate([0, w/2-R2R/2, mid_h])
         rotate([0, 90, 0]) {
-          dpipe(invert_b ? 5 : 20);
-          if (invert_b)          
-            translate([0, 0, 5]) switch_dpipe(15, inverter=true);
-          translate([0, 0, 20]) switch_dpipe(sync_frame_l, roofonly=true);   
+          translate([0, 0, sync_frame_pos-5]) switch_dpipe(sync_frame_l+5, roofonly=true);
+          translate([0, 0, sync_frame_pos+sync_frame_l]) dpipe(40);
           //translate([0, 0, 20+sync_frame_l]) kick_and_sink_dpipe(35, 55, 7);
         }
       translate([sync_frame_pos, w/2, mid_h])
           sync_frame_parts();
-      translate([0, -ss_offset, mid_h])
+      // SS channel
+      /* translate([0, -ss_offset, mid_h])
         rotate([0, 90, 0])
-          pipe(gate_l);
+          pipe(gate_l); */
     }
     translate([sync_frame_pos, w/2, mid_h])
       sync_void();
     translate([0, w/2+R2R/2, mid_h])
         rotate([0, 90, 0]) {
-          dpipe(0.1, void=true);
-          if (invert_a)
-            translate([0, 0, 0]) switch_dpipe(20, inverter=false, void=true);
-          else
-            translate([0, 0, 0]) dpipe(20, void=true);
-          translate([0, 0, 20]) switch_dpipe(sync_frame_l, roofonly=true, void=true);
-          translate([0, 0, 20+sync_frame_l]) dpipe(40, void=true); 
+          translate([0, 0, 0]) dpipe(5, void=true);
+          translate([0, 0, sync_frame_pos]) switch_dpipe(sync_frame_l, roofonly=true, void=true);
+          translate([0, 0, 5+sync_frame_l]) switch_dpipe(40, roofonly=true, void=true); 
           //translate([0, 0, 20+sync_frame_l]) switch_dpipe(35, void=true);
           //translate([0, 0, 20+sync_frame_l+35]) dpipe(5, void=true); 
           if (invert_c) {
@@ -697,15 +685,10 @@ module full_gate_ng(invert_a=false, invert_b=false, invert_c=false) {
         }
     translate([0, w/2-R2R/2, mid_h])
         rotate([0, 90, 0]) {
-          if (invert_b) {
-            dpipe(0.1, void=true);
-            translate([0, 0, 0]) switch_dpipe(20, inverter=false, void=true);
-          } else {
-            translate([0, 0, 0]) dpipe(20, void=true);
-          }
-          translate([0, 0, 20]) switch_dpipe(sync_frame_l, roofonly=true, void=true); 
+          translate([0, 0, 0]) dpipe(5, void=true);
+          translate([0, 0, sync_frame_pos]) switch_dpipe(sync_frame_l, roofonly=true, void=true); 
+          translate([0, 0, 5+sync_frame_l]) dpipe(40, void=true);   
           //translate([0, 0, 20+sync_frame_l]) kick_and_sink_dpipe(35, 55, 7, void=true);
-          
         }
     translate([0, -ss_offset, mid_h])
       rotate([0, 90, 0])
