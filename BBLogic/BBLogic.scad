@@ -29,134 +29,6 @@ sync_frame_pos = 5; // Sync frame start
 switch_ramp_l = r + 0.5; // Length of the ramp in the switch section
 roof_cut = r*2; // Width of the cut in open-roof pipe sections
 
-pin_r = 3;
-pin_h = 3;
-
-frame_t = 3;
-corner_t = 12;
-
-module corner() {
-  polyhedron(points=[[0, 0, 0], [corner_t, 0, 0], [0, corner_t, 0], [0, 0, corner_t]],
-             triangles=[[3, 1, 0], [1, 3, 2], [0, 1, 2], [2, 3, 0]]);
-}
-
-module pins(pin_tol=0) {
-  for (i = [0, l])
-    for (j = [0, w])
-      translate([i, j, 0])
-        cylinder(r=pin_r+pin_tol, h=pin_h+pin_tol, $fn=24);
-}
-
-module frame_no_pins(bars=true, cross_supports=false, midsupport=0) {
-//  cube(c);
-
-  if (bars) {
-  for (i = [0, w-frame_t])
-    for (j = [0, h-frame_t])
-      translate([0, i, j])
-        cube([l, frame_t, frame_t]);
-  for (i = [0, l-frame_t])
-    for (j = [0, h-frame_t])
-      translate([i, 0, j])
-        cube([frame_t, w, frame_t]);
-  for (i = [0, (l/2-frame_t/2)*midsupport, l-frame_t])
-    for (j = [0, (w/2-frame_t/2)*midsupport, w-frame_t])
-      translate([i, j, 0])
-        if (i == (mid_h-frame_t/2) || j == (mid_h-frame_t/2)) {
-          cube([frame_t, frame_t, mid_h]);
-        } else {
-          cube([frame_t, frame_t, h]); }
-      }
-  // Cross supports for ends
-  if (cross_supports) {
-        translate([l/2, w/2, mid_h])
-    for (i = [0, 1])
-      for (j = [0, 1])
-        for (k = [0, 1])
-          mirror([i, 0, 0])
-            mirror([0, j, 0])
-              mirror([0, 0, k])
-                translate([-l/2, -w/2, -mid_h])
-      rotate([-45, 0, 0])
-        translate([0, -frame_t/2, 0])
-            cube([frame_t, frame_t, h/1.41]);
-  }
-  // Printability supports for far end
-  if (cross_supports) {
-        translate([l/2, w/2, mid_h])
-    for (i = [1])
-      for (j = [0, 1])
-        for (k = [0, 1])
-          mirror([i, 0, 0])
-            mirror([0, j, 0])
-              mirror([0, 0, k])
-                translate([-l/2, -w/2, -mid_h])
-        translate([corner_t-frame_t, 0, 0])
-      rotate([-45, 45, 0])
-        translate([0, -frame_t/2, 0])
-            cube([frame_t, frame_t, h/1.41]);
-  }
-  if (midsupport) {
-    translate([0, w/2-frame_t/2, mid_h])
-      cube([l, frame_t, frame_t]);
-    translate([l/2-frame_t/2, 0, mid_h])
-      cube([frame_t, w, frame_t]);
-  } 
-  translate([l/2, w/2, mid_h])
-    for (i = [0, 1])
-      for (j = [0, 1])
-        for (k = [0, 1])
-          mirror([i, 0, 0])
-            mirror([0, j, 0])
-              mirror([0, 0, k])
-                translate([-l/2, -w/2, -mid_h])
-                  corner();
-}
-
-module frame(midsupport=0, omit_pin_sockets=false) {
-  difference() {
-    frame_no_pins(midsupport=midsupport);
-    if (!omit_pin_sockets)
-      pins(tol);
-  }
-  intersection() {
-    cube([l, w, h*2]);
-    translate([0, 0, h]) pins();
-  }
-}
-
-module light_frame() {
-    difference() {
-        intersection() {
-            frame_no_pins(bars=false, cross_supports=true);
-            cube([l, w, h]);
-        }
-        pins(tol);
-    }
-  intersection() {
-    cube([l, w, h*2]);
-    translate([0, 0, h]) pins();
-  }
-}
-
-module small_frame(fl=20) {
-  for (i = [0, w-frame_t])
-    for (j = [0, h-frame_t])
-      translate([0, i, j])
-        cube([fl, frame_t, frame_t]);
-  for (i = [0, fl-frame_t])
-    for (j = [0, h-frame_t])
-      translate([i, 0, j])
-        cube([frame_t, w, frame_t]);
-  for (i = [0, fl-frame_t])
-    for (j = [0, w-frame_t])
-      translate([i, j, 0])
-        if (i == (mid_h-frame_t/2) || j == (mid_h-frame_t/2)) {
-          cube([frame_t, frame_t, mid_h]);
-        } else {
-          cube([frame_t, frame_t, h]); }
-}
-
 // Basic divided 2D double track
 module dpipe_2d(void=false, openroof=false, r_extra=0) {
     difference() {
@@ -811,74 +683,6 @@ module source_route(l, void=false) {
   translate([0, r2r/2, 5+25]) pipe(35, void=void);
 }
 
-/* Full repeater organization:
-   0-5 mm straight section in input
-   5-20 mm switch section
-   20-40 mm straight section
-   40-90 mm sync section
-   90-125 mm kick section
-   125-130 mm straight section in output
-*/
-module full_repeater() {
-  difference() {
-    union() {
-      translate([0, w/2+R2R/2, mid_h])
-        rotate([0, 90, 0]) {
-          dpipe(5);          
-          translate([0, 0, 5]) switch_dpipe(15, inverter=true);
-          translate([0, 0, 20]) dpipe(20);
-          translate([0, 0, 40]) switch_dpipe(sync_frame_l, roofonly=true);          
-          translate([0, 0, 40+sync_frame_l]) mirror([0, 1, 0]) kick_dpipe(35, 6);
-          translate([0, 0, 40+sync_frame_l+35]) dpipe(5); 
-       }
-      translate([0, w/2-R2R/2, mid_h])
-        rotate([0, 90, 0]) {
-          source_route();
-          difference() {
-            translate([0, 0, 40]) switch_dpipe(sync_frame_l, roofonly=true);   
-            translate([0, 0, 40]) switch_dpipe(sync_frame_l, roofonly=true, void=true); 
-          }
-          translate([0, 0, 40+sync_frame_l]) switch_dpipe(35);
-          translate([0, 0, 40+sync_frame_l+35]) dpipe(5); 
-        }
-      translate([90, w/2, mid_h])
-        mirror([1, 0, 0])
-          sync_frame_parts();
-      translate([0, -ss_offset, mid_h])
-        rotate([0, 90, 0])
-          difference() {
-            pipe(gate_l);
-            pipe(gate_l, void=true);
-          }
-    }
-    translate([90, w/2, mid_h])
-      mirror([1, 0, 0])
-        sync_void();
-    translate([0, w/2+R2R/2, mid_h])
-        rotate([0, 90, 0]) {
-          dpipe(0.1, void=true);
-          translate([0, 0, 0]) switch_dpipe(20, inverter=true, void=true);
-          translate([0, 0, 20]) dpipe(20, void=true);
-          translate([0, 0, 40]) switch_dpipe(sync_frame_l, roofonly=true, void=true);          
-          translate([0, 0, 40+sync_frame_l]) mirror([0, 1, 0]) kick_dpipe(35, 6, void=true);
-          translate([0, 0, 40+sync_frame_l+35]) dpipe(5, void=true); 
-        }
-    translate([0, w/2-R2R/2, mid_h])
-        rotate([0, 90, 0]) {
-          source_route(void=true);
-          translate([0, 0, 40+20]) switch_dpipe(sync_frame_l-20, roofonly=true, void=true); 
-          translate([0, 0, 40+sync_frame_l]) switch_dpipe(35, void=true);
-          translate([0, 0, 40+sync_frame_l+35]) dpipe(5, void=true); 
-          
-        }
-    //translate([0, -ss_offset, mid_h])
-    //  rotate([0, 90, 0])
-    //    pipe(gate_l, void=true);
-    // "inspection hatches"
-    translate([48, -6, h/2]) cylinder(r=r*.8, h=h); // Route to sink
-  }
-}
-
 connector_l = 10;
 leg_l = 4;
 leg_d = 8;
@@ -1009,34 +813,6 @@ module invert_frame() {
   }
 }
 
-module kick_frame() {
-  small_frame(fl=40);
-  difference() {
-    union() {
-      translate([0, w/2+R2R/2, mid_h])
-        rotate([0, 90, 0]) {
-          switch_dpipe(35);
-          translate([0, 0, 35]) dpipe(5); 
-       }
-      translate([0, w/2-R2R/2, mid_h])
-        rotate([0, 90, 0]) {
-          kick_dpipe(35, 7);
-          translate([0, 0, 35]) dpipe(5); 
-        }
-    }
-    translate([0, w/2+R2R/2, mid_h])
-        rotate([0, 90, 0]) {
-          switch_dpipe(35, void=true);
-          translate([0, 0, 35]) dpipe(5, void=true); 
-        }
-    translate([0, w/2-R2R/2, mid_h])
-        rotate([0, 90, 0]) {
-          kick_dpipe(35, 7, void=true);
-          translate([0, 0, 35]) dpipe(5, void=true); 
-        }
-  }
-}
-
 module assembly() {
     full_gate_ng();
     translate([sync_frame_pos + gate_x, w/2, mid_h + wheel_offset_z])
@@ -1047,9 +823,9 @@ module assembly() {
           follower_arm();
 }
 
-//assembly();
+assembly();
 
-follower_arm();
+//follower_arm();
 
 //kick_dpipe(30, 7, void=true);
 //kick_dpipe(30, 7);
@@ -1076,7 +852,6 @@ follower_arm();
 //    full_gate_ng();
 //    translate([62, w/2+2, 10]) cube([150, 150, 50]);
 //    translate([-1, -50, 0]) cube([15+1, 150, 50]);
-//full_repeater();
 //sync_frame(all_parts=true);
 //}
 //rotate([90, 0, 0]) 
@@ -1087,9 +862,4 @@ follower_arm();
 //}
 //double_wheels();
 //ratchet_arm();
-//repeater_frame();
-//rotate([0, 180, 0]) sync_bar();
 //invert_frame();
-//kick_frame();
-//clip();
-//light_frame();
