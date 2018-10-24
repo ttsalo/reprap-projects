@@ -302,12 +302,12 @@ module follower_arm() {
       // Shaft holder  
       translate([0, -follower_shaft_holder_w/2, 0])
         rotate([0, 90, 0])
-          snap_in(wheel_shaft_r+tol*2, wheel_shaft_r+follower_shaft_holder_t, 
+          snap_in(wheel_shaft_r+wheel_void_tol, wheel_shaft_r+follower_shaft_holder_t, 
                   follower_shaft_holder_opening, follower_shaft_holder_w);
       // Secondary shaft holder  
       translate([0, R2R/2+wheel_shaft_max_y+wheel_void_tol, 0])
         rotate([0, 90, 0])
-          snap_in(wheel_shaft_r+tol*2, wheel_shaft_r+follower_shaft_holder_t, 
+          snap_in(wheel_shaft_r+wheel_void_tol, wheel_shaft_r+follower_shaft_holder_t, 
                   follower_shaft_holder_opening, wheel_shaft_rh_extra - wheel_void_tol);
       // Main arm
       translate([0, -follower_arm_w/2, -wheel_shaft_r-follower_shaft_holder_t])
@@ -347,11 +347,11 @@ module follower_arm() {
     // Additional shaft holder voids to cut other components
     translate([0, -follower_shaft_holder_w/2, 0])
         rotate([0, 90, 0])
-          snap_in_void(wheel_shaft_r+tol*2, wheel_shaft_r+follower_shaft_holder_t, 
+          snap_in_void(wheel_shaft_r+wheel_void_tol, wheel_shaft_r+follower_shaft_holder_t, 
                         follower_shaft_holder_opening, follower_shaft_holder_w);
     translate([0, R2R/2+wheel_shaft_max_y+wheel_void_tol, 0])
         rotate([0, 90, 0])
-          snap_in_void(wheel_shaft_r+tol*2, wheel_shaft_r+follower_shaft_holder_t, 
+          snap_in_void(wheel_shaft_r+wheel_void_tol, wheel_shaft_r+follower_shaft_holder_t, 
                         follower_shaft_holder_opening, wheel_shaft_rh_extra - wheel_void_tol);
 
     // Main void for rotation
@@ -686,13 +686,13 @@ module full_gate_ng(invert_c=false) {
         rotate([0, 90, 0]) {
           translate([0, 0, 0]) dpipe(5, void=true);
           translate([0, 0, sync_frame_pos]) switch_dpipe(sync_frame_l, roofonly=true, void=true);
-          translate([0, 0, 5+sync_frame_l]) dpipe(4, void=true); 
+          //translate([0, 0, 5+sync_frame_l]) dpipe(4, void=true); 
             
           // Crossover section
-          translate([0, 0, 5+sync_frame_l+4]) switch_dpipe(16, inverter=true, void=true); 
-          translate([0, 0, 5+sync_frame_l+4]) dpipe(16, void=true); 
+          translate([0, 0, 5+sync_frame_l]) switch_dpipe(16, inverter=true, void=true); 
+          //translate([0, 0, 5+sync_frame_l]) dpipe(16, void=true); 
             
-          translate([0, 0, 5+sync_frame_l+20]) dpipe(20, void=true); 
+          translate([0, 0, 5+sync_frame_l+20-4]) dpipe(4+20, void=true); 
           //translate([0, 0, 20+sync_frame_l]) switch_dpipe(35, void=true);
           //translate([0, 0, 20+sync_frame_l+35]) dpipe(5, void=true); 
           if (invert_c) {
@@ -830,8 +830,8 @@ module invert_frame() {
       translate([0, w/2+R2R/2, mid_h])
         rotate([0, 90, 0]) {
           dpipe(5);          
-          translate([0, 0, 5]) switch_dpipe(15, inverter=true);
-          translate([0, 0, 20]) dpipe(5); 
+          translate([0, 0, 5]) switch_dpipe(35, inverter=true);
+          translate([0, 0, 40]) dpipe(5); 
        }
       translate([0, w/2-R2R/2, mid_h])
         rotate([0, 90, 0]) {
@@ -844,8 +844,8 @@ module invert_frame() {
         rotate([0, 90, 0]) {
           dpipe(5, void=true);
           translate([0, 0, 5]) 
-            switch_dpipe(25, inverter=true, void=true);
-          translate([0, 0, 20]) dpipe(5, void=true); 
+            switch_dpipe(45, inverter=true, void=true);
+          translate([0, 0, 40]) dpipe(5, void=true); 
         }
     translate([0, w/2-R2R/2, mid_h]) {
         rotate([0, 90, 0]) {
@@ -869,8 +869,8 @@ module assembly() {
     //follower_arm();
 }
 
-//assembly();
-full_gate_ng();
+assembly();
+//full_gate_ng();
 //follower_arm();
 
 //kick_dpipe(30, 7, void=true);

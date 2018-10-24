@@ -637,7 +637,7 @@ Logic ideas:
      - Testing 23.10.2018:
       - Implemented the moving follower kick idea and looks like it's a workable concept with some
         tuning.
-      - TODO:
+      - DONE:
        - Constrain the follower movement better - add shaft holders on one or both sides of
          the wheel. (Requires extending wheel shaft) DONE
        - Fix the gate cutout printability DONE
@@ -646,9 +646,23 @@ Logic ideas:
        - Make the follower shaft holder bigger, requires cutout in the main body DONE
        - Maybe add a crossover floor section at the kicker part DONE
        - Add a little bit of slope to the design, the original seems a little bit marginal. DONE
-       - Reimplement directing channel B to source/sink (later)
-       - Add back the output inverter - or can we actually replace that with different followers? (later)
 
-      - TODO after second iteration:
-       - Evaluate whether the trigger/kicker geometry is right (requires better constraining)
+      - Testing 24.10.2018:
+       - TODO after second iteration:
+        - Evaluate whether the trigger/kicker geometry is right (requires better constraining)
+	  Working pretty good! Constraining is fine, no major glitches. Tuning required:
+	 - The crossover is actually too far forward. The kicker deflects the ball into the central
+	   divider which slows it down. DONE, moved 4 mm back, length still 16 mm.
+        - Reimplement directing channel B to source/sink (later)
+        - Add back the output inverter - required for NAND and NOR (and plain NOT). Different followers
+	  can handle AND, OR and XOR plus B channel input inversion by switching the trigger side.
+       - Other notes:
+        - We need a double kicker for the XOR gate. Implementing it as a basic gate would save a lot
+	  of hardware. This requires each kicker to not interfere with the ball that is entering
+	  the channel on that side. Looking at the crossover geometry, the 16 mm long section leaves
+	  quite a little space for this. 25 mm leaves a lot more. After that there are lessening
+	  benefits.
+	- TODO: Redesign the crossover to 25 mm long. Redesign a double sided kicker that performs
+	  the inversion smoothly for each channel. It should be pretty much front-to-back symmetric.
+	  
 
