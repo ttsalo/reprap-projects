@@ -639,7 +639,7 @@ Logic ideas:
         tuning.
       - TODO:
        - Constrain the follower movement better - add shaft holders on one or both sides of
-         the wheel. (Requires extending wheel shaft)
+         the wheel. (Requires extending wheel shaft) DONE
        - Fix the gate cutout printability
        - Fix gate ends
        - Make bigger input/output trays for repeatability testing

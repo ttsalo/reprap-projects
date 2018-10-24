@@ -236,9 +236,11 @@ wheel_shaft_square = 4;
 
 wheel_void_tol = 1; // Tolerance for forming the void for the wheel
 
-// Wheel shaft positioning in y
+// Wheel shaft positioning in y (from shaft end to shaft end for single channel)
 wheel_shaft_min_y = -12;
 wheel_shaft_max_y = 12;
+
+wheel_shaft_rh_extra = 6; // Extra extension for the double wheel shaft on the right hand side
 
 // Wheel ratchet parameters
 wheel_ratchet_min_y = -13.5;
@@ -277,7 +279,7 @@ sync_frame_l = 50;
 follower_l = 30; // Total length of the follower arm from wheel shaft centerline
 follower_shaft_holder_w = 8; // Width of the pivot attachment
 follower_shaft_holder_opening = 120; // Degrees of opening for the pivot attachment
-follower_shaft_holder_t = 2; // Thickness of the follower's holder around wheel shaft
+follower_shaft_holder_t = 3; // Thickness of the follower's holder around wheel shaft
 follower_arm_w = 4; // Width of the main follower arm
 follower_arm_t = 3; // Thickness of the main follower arm
 follower_rest_angle = 10; // Rest position for the follower
@@ -302,13 +304,23 @@ module follower_arm() {
         rotate([0, 90, 0])
           snap_in(wheel_shaft_r+tol*2, wheel_shaft_r+follower_shaft_holder_t, 
                   follower_shaft_holder_opening, follower_shaft_holder_w);
+      // Secondary shaft holder  
+      translate([0, R2R/2+wheel_shaft_max_y+wheel_void_tol, 0])
+        rotate([0, 90, 0])
+          snap_in(wheel_shaft_r+tol*2, wheel_shaft_r+follower_shaft_holder_t, 
+                  follower_shaft_holder_opening, wheel_shaft_rh_extra - wheel_void_tol);
       // Main arm
       translate([0, -follower_arm_w/2, -wheel_shaft_r-follower_shaft_holder_t])
         cube([follower_l, follower_arm_w, follower_arm_t]);
       // Cross-arm
       translate([follower_l-follower_arm_w, -R2R/2 - kicker_outer_offset, 
                 -wheel_shaft_r-follower_shaft_holder_t])
-        cube([follower_arm_w, R2R + wheel_max_y + kicker_outer_offset, follower_arm_t]);
+        cube([follower_arm_w, R2R + wheel_shaft_max_y + kicker_outer_offset + wheel_shaft_rh_extra,
+              follower_arm_t]);
+      // Secondary main arm
+      translate([0, R2R/2-follower_arm_w+wheel_shaft_max_y+wheel_shaft_rh_extra, 
+                 -wheel_shaft_r-follower_shaft_holder_t])
+        cube([follower_l, follower_arm_w, follower_arm_t]);
       // Trigger
       translate([follower_l-trigger_l, R2R/2 + wheel_max_y - trigger_w, 
                 -wheel_shaft_r-follower_shaft_holder_t])
@@ -328,22 +340,26 @@ module follower_arm() {
           difference() {
             cube([kicker_l, kicker_t, wheel_shaft_r + follower_shaft_holder_t/4 + kicker_h]);  
             translate([0, kicker_t, 0])
-              cylinder(r=kicker_t, h=kicker_h*2, $fn=16);
+              cylinder(r=kicker_t, h=kicker_h*2, $fn=24);
           }
       }
     }
+    // Additional shaft holder voids to cut other components
     translate([0, -follower_shaft_holder_w/2, 0])
         rotate([0, 90, 0])
-          snap_in_void(wheel_shaft_r+tol, wheel_shaft_r+follower_shaft_holder_t, 
-                        follower_shaft_holder_opening, follower_shaft_holder_w, void=true);
-    
+          snap_in_void(wheel_shaft_r+tol*2, wheel_shaft_r+follower_shaft_holder_t, 
+                        follower_shaft_holder_opening, follower_shaft_holder_w);
+    translate([0, R2R/2+wheel_shaft_max_y+wheel_void_tol, 0])
+        rotate([0, 90, 0])
+          snap_in_void(wheel_shaft_r+tol*2, wheel_shaft_r+follower_shaft_holder_t, 
+                        follower_shaft_holder_opening, wheel_shaft_rh_extra - wheel_void_tol);
+
     // Main void for rotation
     translate([0, -w/2, 0])
       rotate([-90, 0, 0])
         difference() {
           cylinder(r=follower_l*2, h=w, $fn=64);
           cylinder(r=follower_l, h=w, $fn=64);
- 
         }
   }
 }
@@ -442,8 +458,9 @@ module double_wheels() {
    }
    }         
    rotate([-90, 0, 0])
-        translate([0, 0, -R2R/2+wheel_shaft_min_y])
-          cylinder(r=wheel_shaft_r, h=wheel_shaft_max_y-wheel_shaft_min_y+R2R, $fn=24);
+        translate([0, 0, -R2R/2+wheel_shaft_min_y-wheel_shaft_rh_extra])
+          cylinder(r=wheel_shaft_r, 
+                   h=wheel_shaft_max_y-wheel_shaft_min_y+R2R+wheel_shaft_rh_extra, $fn=24);
 }
 
 // Synchronization part void
@@ -482,6 +499,12 @@ module sync_void() {
           cube([follower_l-(sync_frame_l-gate_x)+wheel_void_tol, 
                 kicker_outer_offset*2+wheel_void_tol*2, h]);
     }
+    // Shaft middle extra cutout
+   translate([gate_x, -follower_shaft_holder_w/2-wheel_void_tol, wheel_offset_z])
+       rotate([-90, 0, 0])
+         cylinder(r=wheel_shaft_r+follower_shaft_holder_t+wheel_void_tol, 
+                 h=follower_shaft_holder_w+wheel_void_tol*2, $fn=24);
+
 }
 
 // Synchronization part frame
@@ -821,6 +844,7 @@ module assembly() {
       rotate([0, follower_rest_angle, 0])
         rotate([180, 0, 0])
           follower_arm();
+    follower_arm();
 }
 
 assembly();
