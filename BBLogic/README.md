@@ -640,14 +640,14 @@ Logic ideas:
       - TODO:
        - Constrain the follower movement better - add shaft holders on one or both sides of
          the wheel. (Requires extending wheel shaft) DONE
-       - Fix the gate cutout printability
-       - Fix gate ends
-       - Make bigger input/output trays for repeatability testing
-       - Make the follower shaft holder bigger, requires cutout in the main body
-       - Maybe add a crossover floor section at the kicker part
-       - Add a little bit of slope to the design, the original seems a little bit marginal.
-       - Reimplement directing channel B to source/sink
-       - Add back the output inverter - or can we actually replace that with different followers?
+       - Fix the gate cutout printability DONE
+       - Fix gate ends DONE
+       - Make bigger input/output trays for repeatability testing DONE
+       - Make the follower shaft holder bigger, requires cutout in the main body DONE
+       - Maybe add a crossover floor section at the kicker part DONE
+       - Add a little bit of slope to the design, the original seems a little bit marginal. DONE
+       - Reimplement directing channel B to source/sink (later)
+       - Add back the output inverter - or can we actually replace that with different followers? (later)
 
       - TODO after second iteration:
        - Evaluate whether the trigger/kicker geometry is right (requires better constraining)

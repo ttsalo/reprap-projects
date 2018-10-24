@@ -12,7 +12,7 @@ ss_offset = 8; // How far the source/sink channel is offset from the main module
 
 tol = 0.2;     // Fit tolerance
 
-slope = 7; 
+slope = 10; 
 
 angle = -atan((h+tol)/(l+tol));
 l_pitch = sqrt(pow((l+tol), 2)+pow((h+tol), 2));
@@ -491,19 +491,30 @@ module sync_void() {
                cube([ratchet_arm_l, (ratchet_shaft_holder_r+wheel_void_tol)*2,
                      ratchet_arm_w+wheel_void_tol*2]);
          }
-      if (mirror == true)
-        translate([gate_x, R2R/2-wheel_max_y-wheel_void_tol, 0])
-          cube([follower_l+wheel_void_tol, wheel_max_y-wheel_min_y+wheel_void_tol*2, h]);
-      else
-        translate([sync_frame_l, R2R/2-kicker_outer_offset-wheel_void_tol, 0])
-          cube([follower_l-(sync_frame_l-gate_x)+wheel_void_tol, 
-                kicker_outer_offset*2+wheel_void_tol*2, h]);
+      intersection() {
+        if (mirror == true)
+          translate([gate_x, R2R/2-wheel_max_y-wheel_void_tol, 0])
+            cube([follower_l+wheel_void_tol, wheel_max_y-wheel_min_y+wheel_void_tol*2, h]);
+        else
+          translate([sync_frame_l, R2R/2-kicker_outer_offset-wheel_void_tol, 0])
+            cube([follower_l-(sync_frame_l-gate_x)+wheel_void_tol, 
+                  kicker_outer_offset*2+wheel_void_tol*2, h]);
+        translate([gate_x, 0, wheel_offset_z])
+          rotate([-90, 0, 0])
+            cylinder(r=follower_l+wheel_void_tol, h=w/2, $fn=64);
+      }
     }
     // Shaft middle extra cutout
    translate([gate_x, -follower_shaft_holder_w/2-wheel_void_tol, wheel_offset_z])
        rotate([-90, 0, 0])
          cylinder(r=wheel_shaft_r+follower_shaft_holder_t+wheel_void_tol, 
                  h=follower_shaft_holder_w+wheel_void_tol*2, $fn=24);
+    // Shaft RH side extra cutout
+   translate([gate_x, -R2R/2-wheel_shaft_max_y-wheel_shaft_rh_extra-wheel_void_tol, 
+               wheel_offset_z])
+       rotate([-90, 0, 0])
+         cylinder(r=wheel_shaft_r+follower_shaft_holder_t+wheel_void_tol, 
+                 h=wheel_shaft_rh_extra+wheel_void_tol, $fn=24);
 
 }
 
@@ -645,22 +656,27 @@ module full_gate_ng(invert_c=false) {
     union() {
       translate([0, w/2+R2R/2, mid_h])
         rotate([0, 90, 0]) {
-          translate([0, 0, sync_frame_pos-5]) switch_dpipe(sync_frame_l+5, roofonly=true);
-          translate([0, 0, sync_frame_pos+sync_frame_l]) switch_dpipe(40);
-          /* if (invert_c)
+          translate([0, 0, sync_frame_pos-5]) dpipe(5);
+          translate([0, 0, sync_frame_pos]) switch_dpipe(sync_frame_l, roofonly=true);
+          translate([0, 0, sync_frame_pos+sync_frame_l]) switch_dpipe(20);
+          translate([0, 0, sync_frame_pos+sync_frame_l+20]) switch_dpipe(15, roofonly=true);
+          translate([0, 0, sync_frame_pos+sync_frame_l+35]) dpipe(5);
+         /* if (invert_c)
             translate([0, 0, gate_l-20]) switch_dpipe(15, inverter=false);
           translate([0, 0, gate_l-(invert_c ? 5 : 20)]) dpipe(invert_c ? 5 : 20);  */
        }
       translate([0, w/2-R2R/2, mid_h])
         rotate([0, 90, 0]) {
-          translate([0, 0, sync_frame_pos-5]) switch_dpipe(sync_frame_l+5, roofonly=true);
-          translate([0, 0, sync_frame_pos+sync_frame_l]) dpipe(40);
+          translate([0, 0, sync_frame_pos-5]) dpipe(5);
+          translate([0, 0, sync_frame_pos]) switch_dpipe(sync_frame_l, roofonly=true);
+          translate([0, 0, sync_frame_pos+sync_frame_l]) switch_dpipe(35, roofonly=true);
+          translate([0, 0, sync_frame_pos+sync_frame_l+35]) dpipe(5);
           //translate([0, 0, 20+sync_frame_l]) kick_and_sink_dpipe(35, 55, 7);
         }
       translate([sync_frame_pos, w/2, mid_h])
           sync_frame_parts();
       // SS channel
-      /* translate([0, -ss_offset, mid_h])
+     /*  translate([0, -ss_offset, mid_h])
         rotate([0, 90, 0])
           pipe(gate_l); */
     }
@@ -670,7 +686,12 @@ module full_gate_ng(invert_c=false) {
         rotate([0, 90, 0]) {
           translate([0, 0, 0]) dpipe(5, void=true);
           translate([0, 0, sync_frame_pos]) switch_dpipe(sync_frame_l, roofonly=true, void=true);
-          translate([0, 0, 5+sync_frame_l]) switch_dpipe(20, void=true); 
+          translate([0, 0, 5+sync_frame_l]) dpipe(4, void=true); 
+            
+          // Crossover section
+          translate([0, 0, 5+sync_frame_l+4]) switch_dpipe(16, inverter=true, void=true); 
+          translate([0, 0, 5+sync_frame_l+4]) dpipe(16, void=true); 
+            
           translate([0, 0, 5+sync_frame_l+20]) dpipe(20, void=true); 
           //translate([0, 0, 20+sync_frame_l]) switch_dpipe(35, void=true);
           //translate([0, 0, 20+sync_frame_l+35]) dpipe(5, void=true); 
@@ -685,7 +706,8 @@ module full_gate_ng(invert_c=false) {
         rotate([0, 90, 0]) {
           translate([0, 0, 0]) dpipe(5, void=true);
           translate([0, 0, sync_frame_pos]) switch_dpipe(sync_frame_l, roofonly=true, void=true); 
-          translate([0, 0, 5+sync_frame_l]) dpipe(40, void=true);   
+          translate([0, 0, 5+sync_frame_l]) switch_dpipe(35, roofonly=true, void=true);   
+          translate([0, 0, 5+sync_frame_l+35]) dpipe(5, void=true);   
           //translate([0, 0, 20+sync_frame_l]) kick_and_sink_dpipe(35, 55, 7, void=true);
         }
     translate([0, -ss_offset, mid_h])
@@ -709,8 +731,8 @@ module source_route(l, void=false) {
 connector_l = 10;
 leg_l = 4;
 leg_d = 8;
-input_l = 15;
-output_l = 15;
+input_l = 80;
+output_l = 80;
 
 module connector(level=0, input=false, output=false) {
   translate([0, 0, mid_h])
@@ -844,11 +866,11 @@ module assembly() {
       rotate([0, follower_rest_angle, 0])
         rotate([180, 0, 0])
           follower_arm();
-    follower_arm();
+    //follower_arm();
 }
 
-assembly();
-
+//assembly();
+full_gate_ng();
 //follower_arm();
 
 //kick_dpipe(30, 7, void=true);
@@ -864,11 +886,11 @@ assembly();
 
 //rotate([0, slope, 0])
 //rotate([0, -90, 0])
-//connector(level=1, input=true);
+//connector(level=2, input=true);
 
 //rotate([0, slope, 0])
 //translate([gate_l, 0, 0])
-//connector(level=0, output=true);
+//connector(level=1, output=true);
 
 //rotate([0, -90, 0])
 //rotate([0, slope, 0])
