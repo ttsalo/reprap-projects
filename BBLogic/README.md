@@ -664,5 +664,18 @@ Logic ideas:
 	  benefits.
 	- TODO: Redesign the crossover to 25 mm long. Redesign a double sided kicker that performs
 	  the inversion smoothly for each channel. It should be pretty much front-to-back symmetric.
-	  
+
+      - GEOMETRY issues.
+       - Arranging the modules back-to-back is problematic. This takes a lot of real estate and makes
+         any kind of back-propagation hard.
+       - Also a mostly linear helix-type arrangement makes changes hard. To change something at the
+         lower levels requires splitting everything up and then 
+
+      - Repeater optimization:
+       - In the basic gate the B signal doesn't change. Instead of routing it to the SS channel and
+         losing the value, it is possible to route it to the second output and reuse it for a second
+         (or more) gate(s), eliminating a lot of hardware which would be required to replicate the value
+         before the first gate and route it to the second gate.
+
+
 

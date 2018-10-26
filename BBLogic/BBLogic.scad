@@ -293,7 +293,7 @@ trigger_angle = 20; // Angling of the contact surface of the trigger
 // Kicker side parameters
 kicker_outer_offset = 11; // Kicker part outer edge offset from double track centerline
 kicker_t = 4; // Kicker thickness
-kicker_l = 7; // Kicker length (in x)
+kicker_l = 8; // Kicker length (in x)
 kicker_h = 10; // How far kicker extend from follower arm origin in z
 
 module follower_arm() {
@@ -340,6 +340,8 @@ module follower_arm() {
           difference() {
             cube([kicker_l, kicker_t, wheel_shaft_r + follower_shaft_holder_t/4 + kicker_h]);  
             translate([0, kicker_t, 0])
+              cylinder(r=kicker_t, h=kicker_h*2, $fn=24);
+            translate([kicker_l, kicker_t, 0])
               cylinder(r=kicker_t, h=kicker_h*2, $fn=24);
           }
       }
@@ -658,9 +660,9 @@ module full_gate_ng(invert_c=false) {
         rotate([0, 90, 0]) {
           translate([0, 0, sync_frame_pos-5]) dpipe(5);
           translate([0, 0, sync_frame_pos]) switch_dpipe(sync_frame_l, roofonly=true);
-          translate([0, 0, sync_frame_pos+sync_frame_l]) switch_dpipe(20);
-          translate([0, 0, sync_frame_pos+sync_frame_l+20]) switch_dpipe(15, roofonly=true);
-          translate([0, 0, sync_frame_pos+sync_frame_l+35]) dpipe(5);
+          translate([0, 0, sync_frame_pos+sync_frame_l]) switch_dpipe(25);
+          translate([0, 0, sync_frame_pos+sync_frame_l+25]) switch_dpipe(15, roofonly=true);
+          //translate([0, 0, sync_frame_pos+sync_frame_l+40]) dpipe(5);
          /* if (invert_c)
             translate([0, 0, gate_l-20]) switch_dpipe(15, inverter=false);
           translate([0, 0, gate_l-(invert_c ? 5 : 20)]) dpipe(invert_c ? 5 : 20);  */
@@ -689,10 +691,10 @@ module full_gate_ng(invert_c=false) {
           //translate([0, 0, 5+sync_frame_l]) dpipe(4, void=true); 
             
           // Crossover section
-          translate([0, 0, 5+sync_frame_l]) switch_dpipe(16, inverter=true, void=true); 
-          //translate([0, 0, 5+sync_frame_l]) dpipe(16, void=true); 
+          translate([0, 0, 5+sync_frame_l]) switch_dpipe(25, inverter=true, void=true); 
+          translate([0, 0, 5+sync_frame_l]) dpipe(25, void=true); 
             
-          translate([0, 0, 5+sync_frame_l+20-4]) dpipe(4+20, void=true); 
+          translate([0, 0, 5+sync_frame_l+25]) dpipe(15, void=true); 
           //translate([0, 0, 20+sync_frame_l]) switch_dpipe(35, void=true);
           //translate([0, 0, 20+sync_frame_l+35]) dpipe(5, void=true); 
           if (invert_c) {
@@ -869,8 +871,9 @@ module assembly() {
     //follower_arm();
 }
 
-assembly();
-//full_gate_ng();
+//rotate([0, -90, 0])
+//assembly();
+full_gate_ng();
 //follower_arm();
 
 //kick_dpipe(30, 7, void=true);
@@ -892,7 +895,6 @@ assembly();
 //translate([gate_l, 0, 0])
 //connector(level=1, output=true);
 
-//rotate([0, -90, 0])
 //rotate([0, slope, 0])
 //difference() {
 //    full_gate_ng();
