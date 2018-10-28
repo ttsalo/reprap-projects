@@ -302,12 +302,12 @@ module follower_arm() {
       // Shaft holder  
       translate([0, -follower_shaft_holder_w/2, 0])
         rotate([0, 90, 0])
-          snap_in(wheel_shaft_r+wheel_void_tol, wheel_shaft_r+follower_shaft_holder_t, 
+          snap_in(wheel_shaft_r+tol*2, wheel_shaft_r+follower_shaft_holder_t, 
                   follower_shaft_holder_opening, follower_shaft_holder_w);
       // Secondary shaft holder  
       translate([0, R2R/2+wheel_shaft_max_y+wheel_void_tol, 0])
         rotate([0, 90, 0])
-          snap_in(wheel_shaft_r+wheel_void_tol, wheel_shaft_r+follower_shaft_holder_t, 
+          snap_in(wheel_shaft_r+tol*2, wheel_shaft_r+follower_shaft_holder_t, 
                   follower_shaft_holder_opening, wheel_shaft_rh_extra - wheel_void_tol);
       // Main arm
       translate([0, -follower_arm_w/2, -wheel_shaft_r-follower_shaft_holder_t])
@@ -330,7 +330,7 @@ module follower_arm() {
             rotate([0, -trigger_angle, 0])
               cube([trigger_l*2, trigger_w+0.02, trigger_h]);  
         }
-      // Kicker
+      // Outer kicker
       translate([follower_l-kicker_l, -R2R/2 - kicker_outer_offset, 
                 -wheel_shaft_r-follower_shaft_holder_t/4]) {
         // Support / printing help
@@ -345,15 +345,30 @@ module follower_arm() {
               cylinder(r=kicker_t, h=kicker_h*2, $fn=24);
           }
       }
+      // Inner kicker
+      translate([follower_l-kicker_l, -R2R/2 + kicker_outer_offset - kicker_t, 
+                -wheel_shaft_r-follower_shaft_holder_t/4]) {
+        // Support / printing help
+        translate([0, 0, -follower_shaft_holder_t*0.75])
+          cube([kicker_l, kicker_t, kicker_t]);
+        rotate([0, follower_rest_angle, 0])
+          difference() {
+            cube([kicker_l, kicker_t, wheel_shaft_r + follower_shaft_holder_t/4 + kicker_h]);  
+            translate([0, 0, 0])
+              cylinder(r=kicker_t, h=kicker_h*2, $fn=24);
+            translate([kicker_l, 0, 0])
+              cylinder(r=kicker_t, h=kicker_h*2, $fn=24);
+          }
+      }
     }
     // Additional shaft holder voids to cut other components
     translate([0, -follower_shaft_holder_w/2, 0])
         rotate([0, 90, 0])
-          snap_in_void(wheel_shaft_r+wheel_void_tol, wheel_shaft_r+follower_shaft_holder_t, 
+          snap_in_void(wheel_shaft_r+tol*2, wheel_shaft_r+follower_shaft_holder_t, 
                         follower_shaft_holder_opening, follower_shaft_holder_w);
     translate([0, R2R/2+wheel_shaft_max_y+wheel_void_tol, 0])
         rotate([0, 90, 0])
-          snap_in_void(wheel_shaft_r+wheel_void_tol, wheel_shaft_r+follower_shaft_holder_t, 
+          snap_in_void(wheel_shaft_r+tol*2, wheel_shaft_r+follower_shaft_holder_t, 
                         follower_shaft_holder_opening, wheel_shaft_rh_extra - wheel_void_tol);
 
     // Main void for rotation
@@ -496,14 +511,14 @@ module sync_void() {
       intersection() {
         if (mirror == true)
           translate([gate_x, R2R/2-wheel_max_y-wheel_void_tol, 0])
-            cube([follower_l+wheel_void_tol, wheel_max_y-wheel_min_y+wheel_void_tol*2, h]);
+            cube([follower_l+wheel_void_tol*2, wheel_max_y-wheel_min_y+wheel_void_tol*2, h]);
         else
           translate([sync_frame_l, R2R/2-kicker_outer_offset-wheel_void_tol, 0])
-            cube([follower_l-(sync_frame_l-gate_x)+wheel_void_tol, 
+            cube([follower_l-(sync_frame_l-gate_x)+wheel_void_tol*2, 
                   kicker_outer_offset*2+wheel_void_tol*2, h]);
         translate([gate_x, 0, wheel_offset_z])
           rotate([-90, 0, 0])
-            cylinder(r=follower_l+wheel_void_tol, h=w/2, $fn=64);
+            cylinder(r=follower_l+wheel_void_tol*2, h=w/2, $fn=64);
       }
     }
     // Shaft middle extra cutout
@@ -661,8 +676,8 @@ module full_gate_ng(invert_c=false) {
           translate([0, 0, sync_frame_pos-5]) dpipe(5);
           translate([0, 0, sync_frame_pos]) switch_dpipe(sync_frame_l, roofonly=true);
           translate([0, 0, sync_frame_pos+sync_frame_l]) switch_dpipe(25);
-          translate([0, 0, sync_frame_pos+sync_frame_l+25]) switch_dpipe(15, roofonly=true);
-          //translate([0, 0, sync_frame_pos+sync_frame_l+40]) dpipe(5);
+          translate([0, 0, sync_frame_pos+sync_frame_l+25]) switch_dpipe(10, roofonly=true);
+          translate([0, 0, sync_frame_pos+sync_frame_l+35]) dpipe(5);
          /* if (invert_c)
             translate([0, 0, gate_l-20]) switch_dpipe(15, inverter=false);
           translate([0, 0, gate_l-(invert_c ? 5 : 20)]) dpipe(invert_c ? 5 : 20);  */
@@ -871,7 +886,7 @@ module assembly() {
     //follower_arm();
 }
 
-//rotate([0, -90, 0])
+rotate([0, -90, 0])
 //assembly();
 full_gate_ng();
 //follower_arm();

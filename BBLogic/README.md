@@ -677,5 +677,9 @@ Logic ideas:
          (or more) gate(s), eliminating a lot of hardware which would be required to replicate the value
          before the first gate and route it to the second gate.
 
-
+      - Testing 28.10.2018:
+       - XOR gate, tuned the tolerances a bit.
+       - Very promising, some glitches but nothing major. Works OK with the original
+         7 degree slope but it also seems that with a bit more slope the action is more definite.
+         (Sync gate at least). So it seems that the 10 degree slope is the way to go.
 
