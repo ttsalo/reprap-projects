@@ -665,12 +665,6 @@ Logic ideas:
 	- TODO: Redesign the crossover to 25 mm long. Redesign a double sided kicker that performs
 	  the inversion smoothly for each channel. It should be pretty much front-to-back symmetric.
 
-      - GEOMETRY issues.
-       - Arranging the modules back-to-back is problematic. This takes a lot of real estate and makes
-         any kind of back-propagation hard.
-       - Also a mostly linear helix-type arrangement makes changes hard. To change something at the
-         lower levels requires splitting everything up and then 
-
       - Repeater optimization:
        - In the basic gate the B signal doesn't change. Instead of routing it to the SS channel and
          losing the value, it is possible to route it to the second output and reuse it for a second
@@ -682,4 +676,22 @@ Logic ideas:
        - Very promising, some glitches but nothing major. Works OK with the original
          7 degree slope but it also seems that with a bit more slope the action is more definite.
          (Sync gate at least). So it seems that the 10 degree slope is the way to go.
+       - Testing the switch section by hand:
+        - There is just enough space with the kickers down for the ball to cross the tracks freely.
+          Tilting the gate back and forth shows quite consistent cross movement in all directions.
+        - The ball requires enough speed to get enough of a kick to move to the other side.
+          Meaning that the kickers with size dictated by the track configuration will in turn
+          dictate a minimum slope.
+
+      - Next: GEOMETRY design.
+       - Let's design a few building blocks which allow constructing more elaborate logic
+       - Some design goals:
+        - Two main modules, gates and interchanges. Gates are as expected, interchanges are
+          square modules which can potentially connect to four different gates at the same time.
+          They will also support dropping signals to lower levels for routing purposes.
+        - The framework connects the gates and interchanges in an extensible grid pattern.
+        - The framework allows assembling the gates and interchanges from top down without
+          taking apart more than a single stack of modules.
+        - 
+
 
