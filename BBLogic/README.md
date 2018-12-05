@@ -692,6 +692,11 @@ Logic ideas:
         - The framework connects the gates and interchanges in an extensible grid pattern.
         - The framework allows assembling the gates and interchanges from top down without
           taking apart more than a single stack of modules.
-        - 
-
+       - Idea: 
+        - A lot of time the signals will need to bypass a lot of modules. This is inconvenient
+          in a linear arrangement (a sloping plane or a helix)
+        - Instead, let's make a central interconnection area and have the gates loop back to it.
+        - The interconnection area contains a grid of vertical signals. Different pieces allow
+          diverting signals into gates and receiving them back. Other pieces allow switching
+          signals laterally between the different channels.
 
