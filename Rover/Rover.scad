@@ -27,6 +27,7 @@
    - Drivetrain is minimal and offers a cradle with a bolt pattern for the payload.
    - Drivetrain does not have to be rigid enough to run independently,
      it can rely on the rigidity of the payload once assembled.
+   - 
 */
 
 use <../PyramidSpaceTruss/PyramidSpaceTruss.scad>;
@@ -53,46 +54,97 @@ wheel_flange_c = 2; // Wheel mounting flange clearance
 wheel_flange_d = 20; // Wheel mounting flange diameter
 
 bogey_bar_w = 10; // Bogey bar width
-bogey_bar_t = 10; // Bogey bar thickness
+bogey_bar_t = 8; // Bogey bar thickness
 bogey_pivot_d = 8; // Bogey pivot shaft diameter
 bogey_pivot_D = 12; // Bogey pivot shaft holder diameter
-bogey_pivot_l = 10; // Bogey pivot shaft length
+bogey_pivot_l = bogey_bar_t; // Bogey pivot shaft length
 bogey_zero_x = track_w/2 - wheel_w/2 - wheel_flange_c - bogey_pivot_l;
 bogey_bar1_l = sqrt(pow(bogey_h, 2) + pow(wheel1-bogey_pivot, 2));
 bogey_bar2_l = sqrt(pow(bogey_h, 2) + pow(wheel2-bogey_pivot, 2));
+bogey_pivot_bolt_d = 3;
+bogey_pivot_bolt_l = 14;
 
 rocker_bar_w = 12; // Bogey bar width
-rocker_bar_t = 10; // Bogey bar thickness
+rocker_bar_t = 8; // Bogey bar thickness
 rocker_pivot_d = 8; // Rocker pivot shaft diameter
 rocker_pivot_D = 12; // Rocker pivot shaft holder diameter
-rocker_pivot_l = 20; // Rocker pivot shaft length
+rocker_pivot_l = rocker_bar_t*2; // Rocker pivot shaft length
 rocker_zero_x = track_w/2 - wheel_w/2 - wheel_flange_c - rocker_pivot_l;
 rocker_bar1_l = sqrt(pow(bogey_h-rocker_h, 2) + pow(bogey_pivot, 2));
 rocker_bar2_l = sqrt(pow(rocker_h, 2) + pow(wheel3, 2));
 rocker_pivot_tooth_h = 3; // Rocker pivot connection tooth height
 rocker_pivot_tooth_n = 5; // Rocker pivot connection number of teeth
+rocker_pivot_bolt_d = 3;
+rocker_pivot_bolt_l = 14;
+
+frame_rocker_c = 2; // Frame-rocker clearance
+/* Frame width is derived from track width and drivetrain parameters */
+frame_w = track_w - wheel_w - 2*wheel_flange_c - 2*rocker_pivot_l - 2*frame_rocker_c;
+frame_bolt_pattern_d = 25; // Frame bolt pattern diameter
+frame_bolt_plate_d = 30; // Frame bolt plate diameter
+frame_bolt_n = 3; // Number of frame bolts per side
+frame_bolt_d = 3; // Diameter of frame bolts
+frame_h = 20; // Height of frame bottom (from wheel axis level)
+frame_t = 2; // Frame wall thickness
+
+echo("Frame width: ", frame_w);
 
 $fn=32;
 
-module toothed_cylinder(d, h, n, t_h, tol) {
-  tol_angle = 360 / ((PI*d) / tol);
-  echo("Tol:", tol);
-  echo("Tol angle:", tol_angle);
+module rocker_washer() {
   difference() {
-    cylinder(d=d, h=h);
-    translate([0, 0, h-t_h])
-      for (i = [0:n]) {
-        rotate([0, 0, 360/n*i])
-        difference() {
-          cube([d, d, t_h+1]);
-          rotate([0, 0, 360/n/2-tol_angle*2])
-            cube([d, d, t_h+2]);
-        }
-      }
+    union() {
+      translate([frame_w/2+frame_rocker_c+rocker_pivot_l, 0, rocker_h-frame_h]) rotate([0, 90, 0])
+        cylinder(d=rocker_pivot_D, h=frame_t);
+    }
+    translate([frame_w/2+frame_rocker_c+rocker_pivot_l-rocker_pivot_bolt_l, 
+               0, rocker_h-frame_h]) rotate([0, 90, 0])
+      cylinder(d=rocker_pivot_bolt_d+fit*2, h=rocker_pivot_bolt_l+frame_t+1);
   }  
 }
 
-//toothed_cylinder(20, 20, 4, 20, 0.5);
+module bogey_washer() {
+  difference() {
+    union() {
+      translate([frame_w/2+frame_rocker_c+rocker_pivot_l, 
+                 bogey_pivot, bogey_h-frame_h]) rotate([0, 90, 0])
+        cylinder(d=bogey_pivot_D, h=frame_t);
+    }
+    translate([frame_w/2+frame_rocker_c+rocker_pivot_l-bogey_pivot_bolt_l, 
+               bogey_pivot, bogey_h-frame_h]) rotate([0, 90, 0])
+      cylinder(d=bogey_pivot_bolt_d+fit*2, h=bogey_pivot_bolt_l+frame_t+1);
+  }  
+}
+
+/* Mounting plate for the rocker arm. Same coordinates as the frame. */
+module frame_plate() {
+  difference() {
+    union() {
+      translate([frame_w/2-frame_t, 0, rocker_h-frame_h]) rotate([0, 90, 0])
+        cylinder(d=frame_bolt_plate_d, h=frame_t+frame_rocker_c);
+      translate([frame_w/2, 0, rocker_h-frame_h]) rotate([0, 90, 0])
+        cylinder(d=rocker_pivot_d, h=frame_rocker_c+rocker_pivot_l);
+    }
+    translate([frame_w/2+frame_rocker_c+rocker_pivot_l-rocker_pivot_bolt_l, 
+               0, rocker_h-frame_h]) rotate([0, 90, 0])
+      cylinder(d=rocker_pivot_bolt_d, h=rocker_pivot_bolt_l+1);
+  }
+}
+
+/* Frame module for connecting the drivetrain and the payload.
+   X, Y zero are the global origin, Z zero is the bottom of the frame. */
+module frame() {
+  difference() {
+    union() {
+      translate([-frame_w/2, -frame_bolt_plate_d/2, 0])
+        cube([frame_w, frame_bolt_plate_d, rocker_h-frame_h]);
+      frame_plate();
+      mirror([1, 0, 0]) frame_plate();
+    }
+    translate([-frame_w/2+frame_t, -frame_bolt_plate_d/2-1, frame_t])
+      cube([frame_w-frame_t*2, frame_bolt_plate_d+2, rocker_h-frame_h-frame_t+1]);
+  }
+}
 
 /* Rocker module. Zero point is the rocker pivot, base of the shaft.
    Rocker has the shaft holder, the frame the pivot shaft. */
@@ -119,6 +171,8 @@ module rocker_arm1() {
       translate([0, 0, rocker_pivot_l/2-rocker_pivot_tooth_h/2])
         toothed_cylinder(d=rocker_pivot_D+tol, h=rocker_pivot_tooth_h,
                           n=rocker_pivot_tooth_n, t_h=rocker_pivot_tooth_h, tol=tol); 
+      translate([rocker_h-bogey_h, bogey_pivot, rocker_pivot_l-bogey_pivot_bolt_l])
+        cylinder(d=bogey_pivot_bolt_d, h=bogey_pivot_bolt_l+1);
     }
   }
 }
@@ -175,12 +229,37 @@ module wheel_flange() {
   }    
 }
 
-module wheel() {
-  color("lightgrey")
-  rotate([0, 90, 0])
-    translate([0, 0, -wheel_w/2])
-      cylinder(d=wheel_d, h=wheel_w);
+module wheel(mockup=true) {
+  if (mockup) {
+    color("lightgrey")
+    rotate([0, 90, 0])
+      translate([0, 0, -wheel_w/2])
+        cylinder(d=wheel_d, h=wheel_w);
+  } else {
+    rotate([0, 90, 0])
+      translate([0, 0, -wheel_w/2])
+        cylinder(d=wheel_d, h=wheel_w);  
+  }
 }
+
+module toothed_cylinder(d, h, n, t_h, tol) {
+  tol_angle = 360 / ((PI*d) / tol);
+//  echo("Tol angle:", tol_angle);
+  difference() {
+    cylinder(d=d, h=h);
+    translate([0, 0, h-t_h])
+      for (i = [0:n]) {
+        rotate([0, 0, 360/n*i])
+        difference() {
+          cube([d, d, t_h+1]);
+          rotate([0, 0, 360/n/2-tol_angle*2])
+            cube([d, d, t_h+2]);
+        }
+      }
+  }  
+}
+
+//toothed_cylinder(20, 20, 4, 20, 0.5);
 
 module assembly() {
   translate([-track_w/2, wheel1, 0]) wheel();
@@ -188,9 +267,12 @@ module assembly() {
   translate([-track_w/2, wheel3, 0]) wheel();
   translate([track_w/2, wheel1, 0]) wheel();
   translate([track_w/2, wheel2, 0]) wheel();
-  translate([track_w/2, wheel3, 0]) wheel();
+  translate([track_w/2, wheel3, 0]) wheel(mockup=false);
   translate([bogey_zero_x, bogey_pivot, bogey_h]) bogey();
   translate([rocker_zero_x, 0, rocker_h]) rocker();
+  translate([0, 0, frame_h]) frame();
+  translate([0, 0, frame_h]) rocker_washer();
+  translate([0, 0, frame_h]) bogey_washer();
 }
 
 assembly();
