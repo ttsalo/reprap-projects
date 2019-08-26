@@ -114,7 +114,7 @@ diff_bar_l = (frame_w/2 + frame_t + frame_rocker_c + diff_lever_t + fit)*2; // D
 
 echo("Frame width: ", frame_w);
 
-use_truss = true;
+use_truss = false;
 
 $fn=32;
 
@@ -251,7 +251,7 @@ module rocker_arm2() {
         rotate([0, 0, 360/rocker_pivot_tooth_n/2])
           toothed_cylinder(d=rocker_pivot_D+tol, h=rocker_pivot_tooth_h,
                             n=rocker_pivot_tooth_n, t_h=rocker_pivot_tooth_h, tol=tol);
-#      translate([rocker_h, wheel3, rocker_pivot_l - wheel_flange_t])
+      translate([rocker_h, wheel3, rocker_pivot_l - wheel_flange_t])
         wheel_flange_void();
 
     }
@@ -341,6 +341,10 @@ module bogey() {
          }
       }
       translate([0, 0, -0.05]) cylinder(d=bogey_pivot_d+fit*2, h=bogey_pivot_l+0.1);
+      translate([bogey_h, wheel1-bogey_pivot, bogey_pivot_l - wheel_flange_t])
+        wheel_flange_void();
+      translate([bogey_h, wheel2-bogey_pivot, bogey_pivot_l - wheel_flange_t])
+        wheel_flange_void();
     }
   }
 }
@@ -431,8 +435,8 @@ module assembly() {
   translate([-track_w/2, wheel1, 0]) wheel();
   translate([-track_w/2, wheel2, 0]) wheel();
   translate([-track_w/2, wheel3, 0]) wheel();
-  translate([track_w/2, wheel1, 0]) wheel();
-  translate([track_w/2, wheel2, 0]) wheel();
+  translate([track_w/2, wheel1, 0]) mirror([-1, 0, 0]) wheel(mockup=false);
+  translate([track_w/2, wheel2, 0]) mirror([-1, 0, 0]) wheel(mockup=false);
   translate([track_w/2, wheel3, 0]) mirror([-1, 0, 0]) wheel(mockup=false);
   translate([bogey_zero_x, bogey_pivot, bogey_h]) bogey();
   color("lightgreen") translate([rocker_zero_x, 0, rocker_h]) rocker();
