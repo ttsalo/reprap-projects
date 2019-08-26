@@ -63,6 +63,7 @@ bogey_bar1_l = sqrt(pow(bogey_h, 2) + pow(wheel1-bogey_pivot, 2));
 bogey_bar2_l = sqrt(pow(bogey_h, 2) + pow(wheel2-bogey_pivot, 2));
 bogey_pivot_bolt_d = 3;
 bogey_pivot_bolt_l = 14;
+bogey_truss_t = 2;
 
 rocker_bar_w = 12; // Bogey bar width
 rocker_bar_t = 8; // Bogey bar thickness
@@ -76,6 +77,7 @@ rocker_pivot_tooth_h = 3; // Rocker pivot connection tooth height
 rocker_pivot_tooth_n = 5; // Rocker pivot connection number of teeth
 rocker_pivot_bolt_d = 3;
 rocker_pivot_bolt_l = 14;
+rocker_truss_t = 2;
 
 frame_rocker_c = 2; // Frame-rocker clearance
 /* Frame width is derived from track width and drivetrain parameters */
@@ -87,7 +89,11 @@ frame_bolt_d = 3; // Diameter of frame bolts
 frame_h = 20; // Height of frame bottom (from wheel axis level)
 frame_t = 2; // Frame wall thickness
 
+diff_offset = 50; // Diff bar pivot to rocker pivot distance
+
 echo("Frame width: ", frame_w);
+
+use_truss = false;
 
 $fn=32;
 
@@ -161,7 +167,15 @@ module rocker_arm1() {
         cylinder(d=rocker_pivot_D, h=rocker_pivot_l/2+rocker_pivot_tooth_h/2);
       rotate([0, 0, atan2(bogey_h-rocker_h, bogey_pivot)])
         translate([-rocker_bar_w/2, 0, 0])
-          cube([rocker_bar_w, rocker_bar1_l, rocker_bar_t]);
+          if (use_truss) {
+            pyramid_box_truss(rocker_bar_w, rocker_bar1_l, rocker_bar_t,
+                      1, 3, 2,
+                      rocker_truss_t, rocker_truss_t, rocker_truss_t, 
+                      rocker_truss_t, rocker_truss_t,
+                      true, true, $16);
+          } else {
+            cube([rocker_bar_w, rocker_bar1_l, rocker_bar_t]);
+          }
       translate([rocker_h-bogey_h, bogey_pivot, 0])
         cylinder(d=bogey_pivot_D, h=rocker_bar_t);
       translate([rocker_h-bogey_h, bogey_pivot, rocker_pivot_l-bogey_pivot_l])
@@ -188,7 +202,15 @@ module rocker_arm2() {
           wheel_flange();
        rotate([0, 0, atan2(-rocker_h, wheel3)])
         translate([-rocker_bar_w/2, 0, rocker_pivot_l-rocker_bar_t])
-          cube([rocker_bar_w, rocker_bar2_l+wheel_flange_d/4, rocker_bar_t]);
+          if (use_truss) {
+            pyramid_box_truss(rocker_bar_w, rocker_bar2_l+wheel_flange_d/4, rocker_bar_t,
+                      1, 3, 2,
+                      rocker_truss_t, rocker_truss_t, rocker_truss_t, 
+                      rocker_truss_t, rocker_truss_t,
+                      true, true, $16);
+          } else {
+            cube([rocker_bar_w, rocker_bar2_l+wheel_flange_d/4, rocker_bar_t]);
+          }
       }
       translate([0, 0, -0.05]) cylinder(d=rocker_pivot_d+fit*2, h=rocker_pivot_l+0.1);
       translate([0, 0, rocker_pivot_l/2-rocker_pivot_tooth_h/2])
@@ -197,6 +219,11 @@ module rocker_arm2() {
                             n=rocker_pivot_tooth_n, t_h=rocker_pivot_tooth_h, tol=tol);
     }
   }
+}
+
+/* Diff bar. Zero point is the pivot axis, lowest Z position */
+module diff_bar() {
+    
 }
 
 /* Bogey module. Zero point is the bogey pivot, base of the shaft.
@@ -212,10 +239,26 @@ module bogey() {
           wheel_flange();
       rotate([0, 0, atan2(-bogey_h, wheel1-bogey_pivot)])
         translate([-bogey_bar_w/2, 0, 0])
-          cube([bogey_bar_w, bogey_bar1_l+wheel_flange_d/4, bogey_bar_t]);
+          if (use_truss) {
+            pyramid_box_truss(bogey_bar_w, bogey_bar1_l+wheel_flange_d/4, bogey_bar_t,
+                      1, 3, 2,
+                      bogey_truss_t, bogey_truss_t, bogey_truss_t, 
+                      bogey_truss_t, bogey_truss_t,
+                      true, true, $16);
+          } else {
+            cube([bogey_bar_w, bogey_bar1_l+wheel_flange_d/4, bogey_bar_t]);
+          }
       rotate([0, 0, atan2(-bogey_h, wheel2-bogey_pivot)])
         translate([-bogey_bar_w/2, 0, 0])
-          cube([bogey_bar_w, bogey_bar2_l+wheel_flange_d/4, bogey_bar_t]);
+         if (use_truss) {
+            pyramid_box_truss(bogey_bar_w, bogey_bar2_l+wheel_flange_d/4, bogey_bar_t,
+                      1, 3, 2,
+                      bogey_truss_t, bogey_truss_t, bogey_truss_t, 
+                      bogey_truss_t, bogey_truss_t,
+                      true, true, $16);
+         } else {
+           cube([bogey_bar_w, bogey_bar2_l+wheel_flange_d/4, bogey_bar_t]);
+         }
       }
       translate([0, 0, -0.05]) cylinder(d=bogey_pivot_d+fit*2, h=bogey_pivot_l+0.1);
     }
@@ -276,4 +319,7 @@ module assembly() {
 }
 
 assembly();
-//rocker_arm1();
+//rotate([0, -90, 0]) rocker_arm1();
+//rotate([0, 90, 0]) rocker_arm2();
+//rotate([0, 90, 0]) bogey();
+//rotate([0, 90, 0]) bogey_washer();
