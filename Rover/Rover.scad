@@ -13,6 +13,8 @@
    Total wheelbase 320mm
    Max speed 100mm/s -> Wheel RPM 23.4
    Motor ZGY370 30 RPM 2.7 kg.cm -> 6.6 N/wheel -> 39.4 N tot
+   Motor GA37RG 30 RPM 3.5 kg.cm -> 8.5 N/wheel -> 51 N tot
+   Motor JGY37-520
    Tank steering
    
    Project plan:
@@ -27,7 +29,8 @@
    - Drivetrain is minimal and offers a cradle with a bolt pattern for the payload.
    - Drivetrain does not have to be rigid enough to run independently,
      it can rely on the rigidity of the payload once assembled.
-   - 
+   - Snap-on diff rod connections
+   
 */
 
 use <../PyramidSpaceTruss/PyramidSpaceTruss.scad>;
@@ -90,6 +93,21 @@ frame_h = 20; // Height of frame bottom (from wheel axis level)
 frame_t = 2; // Frame wall thickness
 
 diff_offset = 50; // Diff bar pivot to rocker pivot distance
+diff_bar_t = 2; // Diff bar thickness
+diff_bar_w = 8; // Diff bar width
+diff_bar_c = 2; // Diff bar clearance from frame
+diff_bar_bolt_d = 3; // Diff bar bolt diameter
+diff_bar_end_d = 4; // Diff bar end connection bar diameter
+
+
+diff_lever_w = 8; // Diff lever width
+diff_lever_t = 3; // Diff lever thickness
+
+diff_rod_t = 4; // Diff rod thickness
+
+/* Calculated parameters */
+diff_lever_l = 20; // Diff lever (attached to rocker arm, driving the diff rod) length
+diff_bar_l = 50; // Diff bar length
 
 echo("Frame width: ", frame_w);
 
@@ -146,9 +164,15 @@ module frame() {
         cube([frame_w, frame_bolt_plate_d, rocker_h-frame_h]);
       frame_plate();
       mirror([1, 0, 0]) frame_plate();
+      translate([-diff_bar_w/2, -diff_offset, 0])
+        cube([diff_bar_w, diff_offset, frame_t]);
+      translate([0, -diff_offset, 0])
+        cylinder(d=diff_bar_w, h=frame_t);      
     }
     translate([-frame_w/2+frame_t, -frame_bolt_plate_d/2-1, frame_t])
       cube([frame_w-frame_t*2, frame_bolt_plate_d+2, rocker_h-frame_h-frame_t+1]);
+    translate([0, -diff_offset, -1])
+      cylinder(d=diff_bar_bolt_d, h=frame_t+2);
   }
 }
 
@@ -223,7 +247,34 @@ module rocker_arm2() {
 
 /* Diff bar. Zero point is the pivot axis, lowest Z position */
 module diff_bar() {
-    
+  difference() {
+    union() {
+      translate([-diff_bar_l/2, -diff_bar_w/2, 0])
+        cube([diff_bar_l, diff_bar_w, diff_bar_t]);
+      cylinder(d=diff_bar_w, h=diff_bar_t+diff_bar_c);
+      translate([diff_bar_l/2, 0, 0])
+        cylinder(d=diff_bar_w, h=diff_bar_t);
+      translate([-diff_bar_l/2, 0, 0])
+        cylinder(d=diff_bar_w, h=diff_bar_t);
+    }
+    translate([0, 0, -1])
+      cylinder(d=diff_bar_bolt_d, h=diff_bar_t+diff_bar_c+2);
+    translate([diff_bar_l/2, 0, -1])
+      cylinder(d=diff_bar_end_d+fit*2, h=diff_bar_t+2);
+    translate([-diff_bar_l/2, 0, -1])
+      cylinder(d=diff_bar_end_d+fit*2, h=diff_bar_t+2);
+    translate([diff_bar_l/2, -(diff_bar_end_d-fit*2)/2, -1])
+      cube([diff_bar_w, diff_bar_end_d-fit*2, diff_bar_t+2]);
+  }
+}
+
+/* Diff rod (connects diff bar to rocker arm). Origin is the center of pivot in the diff bar. */
+module diff_rod() {
+  difference() {
+    union() {
+  
+    }
+  } 
 }
 
 /* Bogey module. Zero point is the bogey pivot, base of the shaft.
@@ -316,6 +367,8 @@ module assembly() {
   translate([0, 0, frame_h]) frame();
   translate([0, 0, frame_h]) rocker_washer();
   translate([0, 0, frame_h]) bogey_washer();
+  translate([0, -diff_offset, frame_h-diff_bar_c-diff_bar_t]) diff_bar();
+  translate([diff_bar_l/2, -diff_offset, frame_h-diff_bar_c-diff_bar_t]) diff_rod();
 }
 
 assembly();
