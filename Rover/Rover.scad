@@ -99,15 +99,17 @@ diff_bar_c = 2; // Diff bar clearance from frame
 diff_bar_bolt_d = 3; // Diff bar bolt diameter
 diff_bar_end_d = 4; // Diff bar end connection bar diameter
 
-
 diff_lever_w = 8; // Diff lever width
 diff_lever_t = 3; // Diff lever thickness
+diff_lever_end_d = 4; // Diff lever end connection diameter
 
-diff_rod_t = 4; // Diff rod thickness
+diff_rod_w = 3; // Diff rod width
+diff_rod_t = 8; // Diff rod thickness
 
 /* Calculated parameters */
-diff_lever_l = 20; // Diff lever (attached to rocker arm, driving the diff rod) length
-diff_bar_l = 50; // Diff bar length
+diff_lever_l = rocker_h - frame_h + diff_bar_c + 
+   diff_bar_t/2; // Diff lever (attached to rocker arm, driving the diff rod) length
+diff_bar_l = (frame_w/2 + frame_t + frame_rocker_c + diff_lever_t + fit)*2; // Diff bar length
 
 echo("Frame width: ", frame_w);
 
@@ -204,6 +206,13 @@ module rocker_arm1() {
         cylinder(d=bogey_pivot_D, h=rocker_bar_t);
       translate([rocker_h-bogey_h, bogey_pivot, rocker_pivot_l-bogey_pivot_l])
         cylinder(d=bogey_pivot_d, h=bogey_pivot_l);
+      translate([0, -diff_lever_w/2, 0])
+        cube([diff_lever_l, diff_lever_w, diff_lever_t]);
+      translate([diff_lever_l, 0, 0])
+         cylinder(d=diff_lever_w, h=diff_lever_t);
+      translate([diff_lever_l, 0, 0])
+        rotate([0, 0, 90])
+          pin(diff_lever_end_d, diff_lever_t + diff_rod_w + fit*2, diff_lever_end_d+fit*2, diff_lever_end_d, fit*2);
       }
       translate([0, 0, -0.05]) cylinder(d=rocker_pivot_d+fit*2, h=rocker_pivot_l+0.1);
       translate([0, 0, rocker_pivot_l/2-rocker_pivot_tooth_h/2])
@@ -258,13 +267,16 @@ module diff_bar() {
         cylinder(d=diff_bar_w, h=diff_bar_t);
     }
     translate([0, 0, -1])
-      cylinder(d=diff_bar_bolt_d, h=diff_bar_t+diff_bar_c+2);
+      cylinder(d=diff_bar_bolt_d+fit*2, h=diff_bar_t+diff_bar_c+2);
     translate([diff_bar_l/2, 0, -1])
       cylinder(d=diff_bar_end_d+fit*2, h=diff_bar_t+2);
     translate([-diff_bar_l/2, 0, -1])
       cylinder(d=diff_bar_end_d+fit*2, h=diff_bar_t+2);
     translate([diff_bar_l/2, -(diff_bar_end_d-fit*2)/2, -1])
       cube([diff_bar_w, diff_bar_end_d-fit*2, diff_bar_t+2]);
+    mirror([-1, 0, 0])
+      translate([diff_bar_l/2, -(diff_bar_end_d-fit*2)/2, -1])
+        cube([diff_bar_w, diff_bar_end_d-fit*2, diff_bar_t+2]);
   }
 }
 
@@ -272,8 +284,21 @@ module diff_bar() {
 module diff_rod() {
   difference() {
     union() {
-  
+      difference() {
+        translate([-diff_rod_w/2, 0, -diff_rod_t/2])
+            cube([diff_rod_w, diff_offset, diff_rod_t]);
+      translate([-diff_rod_w/2, -diff_bar_w/2, -diff_bar_t/2-fit])
+        cube([diff_rod_w, diff_bar_w*1.5, diff_bar_t+fit*2]);      
+      }
+      translate([0, 0, -diff_rod_t/2])
+        cylinder(d=diff_bar_end_d, h=diff_rod_t);
+      translate([-diff_rod_w/2, diff_offset, 0])
+        rotate([0, 90, 0])
+          cylinder(d=diff_rod_t, h=diff_rod_w);
     }
+    translate([-diff_rod_t/2-1, diff_offset, 0])
+      rotate([0, 90, 0])
+        cylinder(d=diff_lever_end_d+fit*2, h=diff_rod_t+2);
   } 
 }
 
@@ -336,6 +361,25 @@ module wheel(mockup=true) {
   }
 }
 
+module pin(d, cyl_h, top_d, top_h, gap) {
+  r_diff = (top_d-d)/2;
+  top_str = top_h - r_diff*2;
+  intersection() {
+    difference() {
+      union() {
+        cylinder(d=d, h=cyl_h+top_h);
+        translate([0, 0, cyl_h]) cylinder(d1=d, d2=top_d, h=r_diff);
+        translate([0, 0, cyl_h+r_diff]) cylinder(d=top_d, h=top_h-r_diff*2);
+        translate([0, 0, cyl_h+top_h-r_diff]) cylinder(d1=top_d, d2=d, h=r_diff);
+      }
+      translate([-top_d, -gap/2, -0.5])
+        cube([top_d*2, gap, cyl_h+top_h+1]);
+    }
+    translate([-d/2, -top_d, 0])
+      cube([d, top_d*2, cyl_h+top_h]);
+  }
+}
+
 module toothed_cylinder(d, h, n, t_h, tol) {
   tol_angle = 360 / ((PI*d) / tol);
 //  echo("Tol angle:", tol_angle);
@@ -363,12 +407,12 @@ module assembly() {
   translate([track_w/2, wheel2, 0]) wheel();
   translate([track_w/2, wheel3, 0]) wheel(mockup=false);
   translate([bogey_zero_x, bogey_pivot, bogey_h]) bogey();
-  translate([rocker_zero_x, 0, rocker_h]) rocker();
-  translate([0, 0, frame_h]) frame();
+  color("lightgreen") translate([rocker_zero_x, 0, rocker_h]) rocker();
+  color("lightblue") translate([0, 0, frame_h]) frame();
   translate([0, 0, frame_h]) rocker_washer();
   translate([0, 0, frame_h]) bogey_washer();
   translate([0, -diff_offset, frame_h-diff_bar_c-diff_bar_t]) diff_bar();
-  translate([diff_bar_l/2, -diff_offset, frame_h-diff_bar_c-diff_bar_t]) diff_rod();
+  translate([diff_bar_l/2, -diff_offset, frame_h-diff_bar_c-diff_bar_t/2]) diff_rod();
 }
 
 assembly();
@@ -376,3 +420,5 @@ assembly();
 //rotate([0, 90, 0]) rocker_arm2();
 //rotate([0, 90, 0]) bogey();
 //rotate([0, 90, 0]) bogey_washer();
+//diff_bar();
+//diff_rod();
