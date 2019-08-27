@@ -247,7 +247,7 @@ module payload() {
       translate([0, 0, -frame_t])
         bolt_pattern_support();
     }
-    translate([-payload_w/2+payload_t, -payload_l/2+payload_offset+payload_t, payload_t+1])
+    translate([-payload_w/2+payload_t, -payload_l/2+payload_offset+payload_t, payload_t])
       cube([payload_w-payload_t*2, payload_l-payload_t*2, payload_h]);
     translate([0, 0, -frame_t]) bolt_pattern();
   }
@@ -663,4 +663,4 @@ assembly();
 //rotate([0, 90, 0]) bogey_washer();
 //diff_bar();
 //diff_rod();
-//rotate([0, -90, 0]) wheel(type=4);
+//rotate([0, -90, 0]) wheel(type=3);
