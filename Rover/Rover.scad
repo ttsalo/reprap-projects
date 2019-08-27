@@ -363,13 +363,21 @@ module wheel_flange_void() {
   }    
 }
 
-module wheel(mockup=true) {
-  if (mockup) {
+/* Wheel. Zero point is the center of the wheel.
+   Types: 
+   0: Simple mockup
+   1: Smooth cylinder with three spokes
+   2: Patterned cylinder with three spokes
+   3: Partial sphere with three spokes
+   4: Patterned partial sphere with three spokes
+*/
+module wheel(type=0) {
+  if (type == 0) {
     color("lightgrey")
     rotate([0, 90, 0])
       translate([0, 0, -wheel_w/2])
         cylinder(d=wheel_d, h=wheel_w);
-  } else {
+  } else if (type == 1) {
     rotate([0, 90, 0])
       translate([0, 0, -wheel_w/2]) {
         difference() {
@@ -387,10 +395,134 @@ module wheel(mockup=true) {
             }
           }
         }
-        pin(wheel_axis_d, wheel_w+wheel_flange_c+wheel_flange_t+fit*2, wheel_axis_d+fit*2, 5, fit*2);
-        cylinder(d=wheel_axis_d, h=wheel_w+wheel_flange_c);
+        pin(wheel_axis_d, wheel_w+wheel_flange_c+wheel_flange_t+fit*2, wheel_axis_d+fit*2, 2, fit*2);
+        cylinder(d=wheel_axis_d+fit*2, h=wheel_w+wheel_flange_c);
     }
+  } else if (type == 2) {
+    rotate([0, 90, 0])
+      translate([0, 0, -wheel_w/2]) {
+        difference() {
+          wheel_tread(d=wheel_d);
+          difference() {
+            translate([0, 0, 0])
+              wheel_tread(d=wheel_d-4);
+            for (i = [0, 120, 240]) {
+              rotate([0, 0, i])
+                translate([0, -3/2, 0])
+                  cube([wheel_d, 3, 3]);
+              rotate([0, 0, i])
+                translate([0, -3/2, wheel_w-3])
+                  cube([wheel_d, 3, 3]);
+            }
+          }
+        }
+        pin(wheel_axis_d, wheel_w+wheel_flange_c+wheel_flange_t+fit*2, wheel_axis_d+fit*2, 2, fit*2);
+        cylinder(d=wheel_axis_d+fit*2, h=wheel_w+wheel_flange_c);
+    }
+  } else if (type == 3) {
+    rotate([0, 90, 0])
+      translate([0, 0, -wheel_w/2]) {
+        difference() {
+          intersection() {
+            translate([0, 0, wheel_w/2])
+              sphere(d=wheel_d);
+            cylinder(d=wheel_d, h=wheel_w);
+          }
+          difference() {
+            translate([0, 0, wheel_w/2])
+              sphere(d=wheel_d-4);
+            for (i = [0, 120, 240]) {
+              rotate([0, 0, i])
+                translate([0, -3/2, 0])
+                  cube([wheel_d, 3, 3]);
+              rotate([0, 0, i])
+                translate([0, -3/2, wheel_w-3])
+                  cube([wheel_d, 3, 3]);
+            }
+          }
+        }
+        pin(wheel_axis_d, wheel_w+wheel_flange_c+wheel_flange_t+fit*2, wheel_axis_d+fit*2, 2, fit*2);
+        cylinder(d=wheel_axis_d+fit*2, h=wheel_w+wheel_flange_c);
+    }      
+  } else if (type == 4) {
+    rotate([0, 90, 0])
+      translate([0, 0, -wheel_w/2]) {
+        difference() {
+          intersection() {
+            translate([0, 0, wheel_w/2])
+              sphere(d=wheel_d);
+            union() {
+              difference() {
+                cylinder(d=wheel_d, h=wheel_w);
+                intersection() {
+                  for (i = [0:15:360])
+                    rotate([0, 0, i])
+                      rotate([45, 0, 0])
+                        translate([0, -2/2, -4])
+                          cube([wheel_d, 2, wheel_w]);
+                  cylinder(d=wheel_d, h=wheel_w/2);
+                }
+                translate([0, 0, wheel_w])
+                  mirror([0, 0, -1])
+                  intersection() {
+                    for (i = [0:15:360])
+                      rotate([0, 0, i])
+                        rotate([45, 0, 0])
+                          translate([0, -2/2, -4])
+                            cube([wheel_d, 2, wheel_w]);
+                    cylinder(d=wheel_d, h=wheel_w/2);
+                  }
+              }
+              intersection() {
+                translate([0, 0, wheel_w/2])
+                  sphere(d=wheel_d-2);
+                cylinder(d=wheel_d-2, h=wheel_w);
+              }
+            }
+          }
+          difference() {
+            translate([0, 0, wheel_w/2])
+              sphere(d=wheel_d-4);
+            for (i = [0, 120, 240]) {
+              rotate([0, 0, i])
+                translate([0, -3/2, 0])
+                  cube([wheel_d, 3, 3]);
+              rotate([0, 0, i])
+                translate([0, -3/2, wheel_w-3])
+                  cube([wheel_d, 3, 3]);
+            }
+          }
+        }
+        pin(wheel_axis_d, wheel_w+wheel_flange_c+wheel_flange_t+fit*2, wheel_axis_d+fit*2, 2, fit*2);
+        cylinder(d=wheel_axis_d+fit*2, h=wheel_w+wheel_flange_c);
+    }    
   }
+}
+
+module wheel_tread_2d(d) {
+    difference() {
+      circle(d=d);
+      for (i=[0: 10: 360]) {
+        rotate([0, 0, i])
+          translate([d/2, 0, 0])
+            rotate([0, 0, 45])
+              square(3, center=true);
+      }
+    } 
+}
+
+module wheel_tread(d) {
+  linear_extrude(height=wheel_w/4, twist=45/4, convexity=4)
+    wheel_tread_2d(d=d);
+  translate([0, 0, wheel_w/4]) rotate([0, 0, -45/4])
+    linear_extrude(height=wheel_w/4, twist=-45/4, convexity=4)
+      wheel_tread_2d(d=d); 
+  translate([0, 0, wheel_w/2])
+    linear_extrude(height=wheel_w/4, twist=45/4, convexity=4)
+      wheel_tread_2d(d=d);
+  translate([0, 0, wheel_w/4*3]) rotate([0, 0, -45/4])
+    linear_extrude(height=wheel_w/4, twist=-45/4, convexity=4)
+      wheel_tread_2d(d=d);  
 }
 
 module pin(d, cyl_h, top_d, top_h, gap) {
@@ -435,9 +567,9 @@ module assembly() {
   translate([-track_w/2, wheel1, 0]) wheel();
   translate([-track_w/2, wheel2, 0]) wheel();
   translate([-track_w/2, wheel3, 0]) wheel();
-  translate([track_w/2, wheel1, 0]) mirror([-1, 0, 0]) wheel(mockup=false);
-  translate([track_w/2, wheel2, 0]) mirror([-1, 0, 0]) wheel(mockup=false);
-  translate([track_w/2, wheel3, 0]) mirror([-1, 0, 0]) wheel(mockup=false);
+  translate([track_w/2, wheel1, 0]) mirror([-1, 0, 0]) wheel(type=3);
+  translate([track_w/2, wheel2, 0]) mirror([-1, 0, 0]) wheel(type=3);
+  translate([track_w/2, wheel3, 0]) mirror([-1, 0, 0]) wheel(type=4);
   translate([bogey_zero_x, bogey_pivot, bogey_h]) bogey();
   color("lightgreen") translate([rocker_zero_x, 0, rocker_h]) rocker();
   color("lightblue") translate([0, 0, frame_h]) frame();
@@ -454,4 +586,4 @@ assembly();
 //rotate([0, 90, 0]) bogey_washer();
 //diff_bar();
 //diff_rod();
-//rotate([0, -90, 0]) wheel(mockup=false);
+//rotate([0, -90, 0]) wheel(type=4);
