@@ -93,6 +93,13 @@ frame_bolt_d = 3; // Diameter of frame bolts
 frame_h = 20; // Height of frame bottom (from wheel axis level)
 frame_t = 2; // Frame wall thickness
 
+payload_l = 100; // Payload length
+payload_offset = -7; // Payload center offset lengthwise
+payload_h = 35; // Payload height
+payload_w = frame_w - frame_t*2 - tol*2; // Payload width, derived from other parameters
+payload_t = 2; // Payload wall thickness
+payload_truss_t = 2; // Payload truss thickness
+
 diff_offset = 50; // Diff bar pivot to rocker pivot distance
 diff_bar_t = 2; // Diff bar thickness
 diff_bar_w = 8; // Diff bar width
@@ -112,7 +119,7 @@ diff_lever_l = rocker_h - frame_h + diff_bar_c +
    diff_bar_t/2; // Diff lever (attached to rocker arm, driving the diff rod) length
 diff_bar_l = (frame_w/2 + frame_t + frame_rocker_c + diff_lever_t + fit)*2; // Diff bar length
 
-echo("Frame width: ", frame_w);
+echo("Payload width: ", payload_w);
 
 use_truss = false;
 
@@ -174,8 +181,75 @@ module frame() {
     }
     translate([-frame_w/2+frame_t, -frame_bolt_plate_d/2-1, frame_t])
       cube([frame_w-frame_t*2, frame_bolt_plate_d+2, rocker_h-frame_h-frame_t+1]);
-    translate([0, -diff_offset, -1])
-      cylinder(d=diff_bar_bolt_d, h=frame_t+2);
+    //translate([0, -diff_offset, -1])
+    //  cylinder(d=diff_bar_bolt_d, h=frame_t+2);
+    bolt_pattern();
+  }
+}
+
+/* Frame to payload bolt pattern. In frame coordinate system. */
+module bolt_pattern() {
+  translate([0, -diff_offset, -1])
+    cylinder(d=frame_bolt_d, h=frame_t+payload_t+2);
+  translate([frame_w/4, 0, -1])
+    cylinder(d=frame_bolt_d, h=frame_t+payload_t+2);
+  translate([-frame_w/4, 0, -1])
+    cylinder(d=frame_bolt_d, h=frame_t+payload_t+2);
+  translate([frame_w/2-frame_t-payload_t-1, 0, rocker_h-frame_h])
+    rotate([45, 0, 0])
+      translate([0, 0, frame_bolt_plate_d/3])
+        rotate([0, 90, 0])
+          cylinder(d=frame_bolt_d, h=frame_t+frame_rocker_c+payload_t+2);
+  mirror([-1, 0, 0])
+  translate([frame_w/2-frame_t-payload_t-1, 0, rocker_h-frame_h])
+    rotate([45, 0, 0])
+      translate([0, 0, frame_bolt_plate_d/3])
+        rotate([0, 90, 0])
+          cylinder(d=frame_bolt_d, h=frame_t+frame_rocker_c+payload_t+2);
+}
+
+/* Frame to payload bolt pattern supports. In frame coordinate system. */
+module bolt_pattern_support() {
+  translate([0, -diff_offset, frame_t])
+    cylinder(d=frame_bolt_d*4, h=payload_t);
+  translate([frame_w/4, 0, frame_t])
+    cylinder(d=frame_bolt_d*4, h=payload_t);
+  translate([-frame_w/4, 0, frame_t])
+    cylinder(d=frame_bolt_d*4, h=payload_t);
+  translate([payload_w/2-payload_t, 0, rocker_h-frame_h])
+    rotate([45, 0, 0])
+      translate([0, 0, frame_bolt_plate_d/3])
+        rotate([0, 90, 0])
+          cylinder(d=frame_bolt_d*4, h=payload_t);
+  mirror([-1, 0, 0])
+  translate([payload_w/2-payload_t, 0, rocker_h-frame_h])
+    rotate([45, 0, 0])
+      translate([0, 0, frame_bolt_plate_d/3])
+        rotate([0, 90, 0])
+          cylinder(d=frame_bolt_d*4, h=payload_t);
+}
+
+/* Payload module. Bolts to the drivetrain frame. 
+   X, Y zero are the global origin, Z zero is the bottom of the payload. */
+module payload() {
+  difference() {
+    union() {
+      translate([-payload_w/2, -payload_l/2+payload_offset, 0])
+        if (use_truss) {
+          pyramid_box_truss(payload_w, payload_l, payload_h,
+                      2, 4, 2,
+                      payload_truss_t, payload_truss_t, payload_truss_t, 
+                      payload_truss_t, payload_truss_t,
+                      true, true, 16);
+        } else {
+          cube([payload_w, payload_l, payload_h]);
+        }
+      translate([0, 0, -frame_t])
+        bolt_pattern_support();
+    }
+    translate([-payload_w/2+payload_t, -payload_l/2+payload_offset+payload_t, payload_t+1])
+      cube([payload_w-payload_t*2, payload_l-payload_t*2, payload_h]);
+    translate([0, 0, -frame_t]) bolt_pattern();
   }
 }
 
@@ -199,7 +273,7 @@ module rocker_arm1() {
                       1, 3, 2,
                       rocker_truss_t, rocker_truss_t, rocker_truss_t, 
                       rocker_truss_t, rocker_truss_t,
-                      true, true, $16);
+                      true, true, 16);
           } else {
             cube([rocker_bar_w, rocker_bar1_l, rocker_bar_t]);
           }
@@ -241,7 +315,7 @@ module rocker_arm2() {
                       1, 3, 2,
                       rocker_truss_t, rocker_truss_t, rocker_truss_t, 
                       rocker_truss_t, rocker_truss_t,
-                      true, true, $16);
+                      true, true, 16);
           } else {
             cube([rocker_bar_w, rocker_bar2_l+wheel_flange_d/4, rocker_bar_t]);
           }
@@ -324,7 +398,7 @@ module bogey() {
                       1, 3, 2,
                       bogey_truss_t, bogey_truss_t, bogey_truss_t, 
                       bogey_truss_t, bogey_truss_t,
-                      true, true, $16);
+                      true, true, 16);
           } else {
             cube([bogey_bar_w, bogey_bar1_l+wheel_flange_d/4, bogey_bar_t]);
           }
@@ -335,7 +409,7 @@ module bogey() {
                       1, 3, 2,
                       bogey_truss_t, bogey_truss_t, bogey_truss_t, 
                       bogey_truss_t, bogey_truss_t,
-                      true, true, $16);
+                      true, true, 16);
          } else {
            cube([bogey_bar_w, bogey_bar2_l+wheel_flange_d/4, bogey_bar_t]);
          }
@@ -573,6 +647,7 @@ module assembly() {
   translate([bogey_zero_x, bogey_pivot, bogey_h]) bogey();
   color("lightgreen") translate([rocker_zero_x, 0, rocker_h]) rocker();
   color("lightblue") translate([0, 0, frame_h]) frame();
+  color("moccasin") translate([0, 0, frame_h+frame_t]) payload();
   translate([0, 0, frame_h]) rocker_washer();
   translate([0, 0, frame_h]) bogey_washer();
   translate([0, -diff_offset, frame_h-diff_bar_c-diff_bar_t]) diff_bar();
@@ -580,6 +655,8 @@ module assembly() {
 }
 
 assembly();
+//payload();
+//frame();
 //rotate([0, -90, 0]) rocker_arm1();
 //rotate([0, 90, 0]) rocker_arm2();
 //rotate([0, 90, 0]) bogey();
