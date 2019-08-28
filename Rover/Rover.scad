@@ -14,12 +14,13 @@
    Max speed 100mm/s -> Wheel RPM 23.4
    Motor ZGY370 30 RPM 2.7 kg.cm -> 6.6 N/wheel -> 39.4 N tot
    Motor GA37RG 30 RPM 3.5 kg.cm -> 8.5 N/wheel -> 51 N tot
-   Motor JGY37-520
+   Motor JGA25-370 30 RPM 4 kg.cm
    Tank steering
    
    Project plan:
    1. Develop unpowered half scale model to verify the geometry, joints etc.
    2. Develop final model drivetrain with interchangeable chassis
+    2.1 Develop motor-wheel-arm assembly
    3. Develop chassis for all the electronics
    
    Design features:
@@ -31,6 +32,13 @@
      it can rely on the rigidity of the payload once assembled.
    - Snap-on diff rod connections
    
+   Prototyping ideas:
+   - The rocker wheel is going to have some trouble clearing the diff bar. Solutions:
+    - Shorten the diff rod (figure out how short it can feasibly be)
+    - Move the diff to the top of the rover. This is not a great for the interchangeable
+      payloads.
+    - Widen the track. This is not great either, the payload width to track width
+      ratio is not that great as it is.
 */
 
 use <../PyramidSpaceTruss/PyramidSpaceTruss.scad>;
@@ -40,7 +48,7 @@ tol = 0.2;  // tight tolerance
 fit = 0.4;  // loose fit tolerance
 
 /* Half-scale parameters */
-
+/*
 track_w = 120;
 bogey_pivot = 50; // Bogey pivot offset from rocker pivot
 rocker_h = 40; // Rocker pivot height from wheel axis
@@ -84,7 +92,7 @@ rocker_pivot_bolt_l = 14;
 rocker_truss_t = 2;
 
 frame_rocker_c = 2; // Frame-rocker clearance
-/* Frame width is derived from track width and drivetrain parameters */
+// Frame width is derived from track width and drivetrain parameters
 frame_w = track_w - wheel_w - 2*wheel_flange_c - 2*rocker_pivot_l - 2*frame_rocker_c;
 frame_bolt_pattern_d = 25; // Frame bolt pattern diameter
 frame_bolt_plate_d = 30; // Frame bolt plate diameter
@@ -114,16 +122,122 @@ diff_lever_end_d = 4; // Diff lever end connection diameter
 diff_rod_w = 3; // Diff rod width
 diff_rod_t = 8; // Diff rod thickness
 
-/* Calculated parameters */
+// Calculated parameters
 diff_lever_l = rocker_h - frame_h + diff_bar_c + 
    diff_bar_t/2; // Diff lever (attached to rocker arm, driving the diff rod) length
 diff_bar_l = (frame_w/2 + frame_t + frame_rocker_c + diff_lever_t + fit)*2; // Diff bar length
+*/
+
+/* Full-scale parameters (overrides half-scale) */
+track_w = 240;
+bogey_pivot = 100; // Bogey pivot offset from rocker pivot
+rocker_h = 80; // Rocker pivot height from wheel axis
+bogey_h = 60; // Bogey pivot height from wheel axis
+
+wheel1 = 160; // Front wheel offset from rocker pivot
+wheel2 = 50; // Middle wheel offset from rocker pivot
+wheel3 = -80; // Back wheel offset from rocker pivot
+
+wheel_d = 80; // Wheel outer diameter
+wheel_w = 40; // Wheel width
+wheel_axis_d = 6; // Wheel axis diameter
+wheel_flange_t = 8; // Wheel mounting flange thickness
+wheel_flange_c = 2; // Wheel mounting flange clearance
+wheel_flange_d = wheel_axis_d + 2*2; // Wheel mounting flange diameter
+
+bogey_bar_w = 20; // Bogey bar width
+bogey_bar_t = 16; // Bogey bar thickness
+bogey_pivot_d = 12; // Bogey pivot shaft diameter
+bogey_pivot_D = 20; // Bogey pivot shaft holder diameter
+bogey_pivot_l = bogey_bar_t; // Bogey pivot shaft length
+bogey_zero_x = track_w/2 - wheel_w/2 - wheel_flange_c - bogey_pivot_l;
+bogey_bar1_l = sqrt(pow(bogey_h, 2) + pow(wheel1-bogey_pivot, 2));
+bogey_bar2_l = sqrt(pow(bogey_h, 2) + pow(wheel2-bogey_pivot, 2));
+bogey_pivot_bolt_d = 3;
+bogey_pivot_bolt_l = 14;
+bogey_truss_t = 3;
+
+rocker_bar_w = 24; // Bogey bar width
+rocker_bar_t = 16; // Bogey bar thickness
+rocker_pivot_d = 12; // Rocker pivot shaft diameter
+rocker_pivot_D = 24; // Rocker pivot shaft holder diameter
+rocker_pivot_l = rocker_bar_t*2; // Rocker pivot shaft length
+rocker_zero_x = track_w/2 - wheel_w/2 - wheel_flange_c - rocker_pivot_l;
+rocker_bar1_l = sqrt(pow(bogey_h-rocker_h, 2) + pow(bogey_pivot, 2));
+rocker_bar2_l = sqrt(pow(rocker_h, 2) + pow(wheel3, 2));
+rocker_pivot_tooth_h = 3; // Rocker pivot connection tooth height
+rocker_pivot_tooth_n = 5; // Rocker pivot connection number of teeth
+rocker_pivot_bolt_d = 3;
+rocker_pivot_bolt_l = 14;
+rocker_truss_t = 3;
+
+frame_rocker_c = 1; // Frame-rocker clearance
+// Frame width is derived from track width and drivetrain parameters
+frame_w = track_w - wheel_w - 2*wheel_flange_c - 2*rocker_pivot_l - 2*frame_rocker_c;
+frame_bolt_pattern_d = 25; // Frame bolt pattern diameter
+frame_bolt_plate_d = 30; // Frame bolt plate diameter
+frame_bolt_n = 3; // Number of frame bolts per side
+frame_bolt_d = 3; // Diameter of frame bolts
+frame_h = 30; // Height of frame bottom (from wheel axis level)
+frame_t = 3; // Frame wall thickness
+
+payload_l = 100; // Payload length
+payload_offset = -7; // Payload center offset lengthwise
+payload_h = 60; // Payload height
+payload_w = frame_w - frame_t*2 - tol*2; // Payload width, derived from other parameters
+payload_t = 3; // Payload wall thickness
+payload_truss_t = 3; // Payload truss thickness
+
+diff_offset = 50; // Diff bar pivot to rocker pivot distance
+diff_bar_t = 3; // Diff bar thickness
+diff_bar_w = 12; // Diff bar width
+diff_bar_c = 2; // Diff bar clearance from frame
+diff_bar_bolt_d = 3; // Diff bar bolt diameter
+diff_bar_end_d = 5; // Diff bar end connection bar diameter
+
+diff_lever_w = 12; // Diff lever width
+diff_lever_t = 4; // Diff lever thickness
+diff_lever_end_d = 6; // Diff lever end connection diameter
+
+diff_rod_w = 4; // Diff rod width
+diff_rod_t = 12; // Diff rod thickness
+
+// Calculated parameters
+diff_lever_l = rocker_h - frame_h + diff_bar_c + 
+   diff_bar_t/2; // Diff lever (attached to rocker arm, driving the diff rod) length
+diff_bar_l = (frame_w/2 + frame_t + frame_rocker_c + diff_lever_t + fit)*2; // Diff bar length  
 
 echo("Payload width: ", payload_w);
 
 use_truss = false;
 
 $fn=32;
+
+/* JGY25-370 motor mockup */
+motor_shaft_l = 9.5;
+motor_shaft_d = 4;
+motor_shaft_collar_h = 2.5;
+motor_shaft_collar_d = 7;
+motor_l = 30.8 + 25;
+motor_d = 24.4;
+motor_mounting_d = 17;
+motor_mounting_bolt_d = 3;
+motor_mounting_bolt_n = 2;
+
+/* Motor mockup. Origin is the base of the output shaft */
+module motor() {
+  cylinder(d=motor_shaft_d, h=motor_shaft_l);
+  translate([0, 0, -motor_shaft_collar_h])
+    cylinder(d=motor_shaft_collar_d, h=motor_shaft_collar_h);
+  translate([0, 0, -motor_shaft_collar_h-motor_l])
+    difference() {
+      cylinder(d=motor_d, h=motor_l);
+      for (i = [1:motor_mounting_bolt_n])
+        rotate([0, 0, 360/motor_mounting_bolt_n*i])
+          translate([motor_mounting_d/2, 0, motor_l-10])
+            cylinder(d=motor_mounting_bolt_d, h=11);
+    }
+}
 
 module rocker_washer() {
   difference() {
@@ -437,7 +551,7 @@ module wheel_flange_void() {
   }    
 }
 
-/* Wheel. Zero point is the center of the wheel.
+/* Unpowered wheel. Zero point is the center of the wheel.
    Types: 
    0: Simple mockup
    1: Smooth cylinder with three spokes
@@ -573,6 +687,67 @@ module wheel(type=0) {
   }
 }
 
+/* Powered wheel. Zero point is the center of the wheel.
+   Types: 
+   0: Patterned partial sphere with three spokes
+*/
+module powered_wheel(type=0) {
+  if (type == 0) {
+    rotate([0, 90, 0])
+      translate([0, 0, -wheel_w/2]) {
+        difference() {
+          intersection() {
+            translate([0, 0, wheel_w/2])
+              sphere(d=wheel_d);
+            union() {
+              difference() {
+                cylinder(d=wheel_d, h=wheel_w);
+                intersection() {
+                  for (i = [0:15:360])
+                    rotate([0, 0, i])
+                      rotate([45, 0, 0])
+                        translate([0, -4/2, -4])
+                          cube([wheel_d, 4, wheel_w]);
+                  cylinder(d=wheel_d, h=wheel_w/2);
+                }
+                translate([0, 0, wheel_w])
+                  mirror([0, 0, -1])
+                  intersection() {
+                    for (i = [0:15:360])
+                      rotate([0, 0, i])
+                        rotate([45, 0, 0])
+                          translate([0, -4/2, -4])
+                            cube([wheel_d, 4, wheel_w]);
+                    cylinder(d=wheel_d, h=wheel_w/2);
+                  }
+              }
+              intersection() {
+                translate([0, 0, wheel_w/2])
+                  sphere(d=wheel_d-2);
+                cylinder(d=wheel_d-2, h=wheel_w);
+              }
+            }
+          }
+          difference() {
+            translate([0, 0, wheel_w/2])
+              sphere(d=wheel_d-4);
+            for (i = [0, 120, 240]) {
+              rotate([0, 0, i])
+                translate([0, -3/2, 0])
+                  cube([wheel_d, 3, 3]);
+              rotate([0, 0, i])
+                translate([0, -3/2, wheel_w-3])
+                  cube([wheel_d, 3, 3]);
+            }
+          }
+          
+        }
+        pin(wheel_axis_d, wheel_w+wheel_flange_c+wheel_flange_t+fit*2, wheel_axis_d+fit*2, 2, fit*2);
+        cylinder(d=wheel_axis_d+fit*2, h=wheel_w+wheel_flange_c);
+    }    
+  }
+}
+
 module wheel_tread_2d(d) {
     difference() {
       circle(d=d);
@@ -643,7 +818,7 @@ module assembly() {
   translate([-track_w/2, wheel3, 0]) wheel();
   translate([track_w/2, wheel1, 0]) mirror([-1, 0, 0]) wheel(type=3);
   translate([track_w/2, wheel2, 0]) mirror([-1, 0, 0]) wheel(type=3);
-  translate([track_w/2, wheel3, 0]) mirror([-1, 0, 0]) wheel(type=4);
+  translate([track_w/2, wheel3, 0]) mirror([-1, 0, 0]) powered_wheel(type=0);
   translate([bogey_zero_x, bogey_pivot, bogey_h]) bogey();
   color("lightgreen") translate([rocker_zero_x, 0, rocker_h]) rocker();
   color("lightblue") translate([0, 0, frame_h]) frame();
@@ -654,7 +829,13 @@ module assembly() {
   translate([diff_bar_l/2, -diff_offset, frame_h-diff_bar_c-diff_bar_t/2]) diff_rod();
 }
 
-assembly();
+module single_wheel_assembly() {
+  translate([track_w/2, wheel3, 0]) mirror([-1, 0, 0]) powered_wheel(type=0);
+  color("lightgreen") translate([rocker_zero_x, 0, rocker_h]) rocker_arm2();
+}
+
+single_wheel_assembly();
+//assembly();
 //payload();
 //frame();
 //rotate([0, -90, 0]) rocker_arm1();
