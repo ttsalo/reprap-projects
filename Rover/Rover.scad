@@ -155,7 +155,7 @@ bogey_bar1_l = sqrt(pow(bogey_h, 2) + pow(wheel1-bogey_pivot, 2));
 bogey_bar2_l = sqrt(pow(bogey_h, 2) + pow(wheel2-bogey_pivot, 2));
 bogey_pivot_bolt_d = 3;
 bogey_pivot_bolt_l = 14;
-bogey_truss_t = 3;
+bogey_truss_t = 2.6;
 
 rocker_bar_w = 24; // Bogey bar width
 rocker_bar_t = 16; // Bogey bar thickness
@@ -169,7 +169,7 @@ rocker_pivot_tooth_h = 3; // Rocker pivot connection tooth height
 rocker_pivot_tooth_n = 5; // Rocker pivot connection number of teeth
 rocker_pivot_bolt_d = 3;
 rocker_pivot_bolt_l = 14;
-rocker_truss_t = 3;
+rocker_truss_t = 2.6;
 
 frame_rocker_c = 1; // Frame-rocker clearance
 // Frame width is derived from track width and drivetrain parameters
@@ -384,7 +384,7 @@ module rocker_arm1() {
         translate([-rocker_bar_w/2, 0, 0])
           if (use_truss) {
             pyramid_box_truss(rocker_bar_w, rocker_bar1_l, rocker_bar_t,
-                      1, 3, 2,
+                      1, 5, 2,
                       rocker_truss_t, rocker_truss_t, rocker_truss_t, 
                       rocker_truss_t, rocker_truss_t,
                       true, true, 16);
@@ -426,7 +426,7 @@ module rocker_arm2() {
         translate([-rocker_bar_w/2, 0, rocker_pivot_l-rocker_bar_t])
           if (use_truss) {
             pyramid_box_truss(rocker_bar_w, rocker_bar2_l+wheel_flange_d/4, rocker_bar_t,
-                      1, 3, 2,
+                      1, 5, 2,
                       rocker_truss_t, rocker_truss_t, rocker_truss_t, 
                       rocker_truss_t, rocker_truss_t,
                       true, true, 16);
@@ -509,7 +509,7 @@ module bogey() {
         translate([-bogey_bar_w/2, 0, 0])
           if (use_truss) {
             pyramid_box_truss(bogey_bar_w, bogey_bar1_l+wheel_flange_d/4, bogey_bar_t,
-                      1, 3, 2,
+                      1, 4, 2,
                       bogey_truss_t, bogey_truss_t, bogey_truss_t, 
                       bogey_truss_t, bogey_truss_t,
                       true, true, 16);
@@ -520,7 +520,7 @@ module bogey() {
         translate([-bogey_bar_w/2, 0, 0])
          if (use_truss) {
             pyramid_box_truss(bogey_bar_w, bogey_bar2_l+wheel_flange_d/4, bogey_bar_t,
-                      1, 3, 2,
+                      1, 4, 2,
                       bogey_truss_t, bogey_truss_t, bogey_truss_t, 
                       bogey_truss_t, bogey_truss_t,
                       true, true, 16);
