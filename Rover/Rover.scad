@@ -145,6 +145,8 @@ wheel_flange_t = 8; // Wheel mounting flange thickness
 wheel_flange_c = 2; // Wheel mounting flange clearance
 wheel_flange_d = wheel_axis_d + 2*2; // Wheel mounting flange diameter
 
+motor_offset = 10; // Motor zero point (base of shaft) offset from center of wheel
+
 bogey_bar_w = 20; // Bogey bar width
 bogey_bar_t = 16; // Bogey bar thickness
 bogey_pivot_d = 12; // Bogey pivot shaft diameter
@@ -819,6 +821,7 @@ module assembly() {
   translate([track_w/2, wheel1, 0]) mirror([-1, 0, 0]) wheel(type=3);
   translate([track_w/2, wheel2, 0]) mirror([-1, 0, 0]) wheel(type=3);
   translate([track_w/2, wheel3, 0]) mirror([-1, 0, 0]) powered_wheel(type=0);
+  color("salmon") translate([track_w/2+motor_offset, wheel3, 0]) rotate([0, 90, 0]) motor();
   translate([bogey_zero_x, bogey_pivot, bogey_h]) bogey();
   color("lightgreen") translate([rocker_zero_x, 0, rocker_h]) rocker();
   color("lightblue") translate([0, 0, frame_h]) frame();
@@ -832,10 +835,11 @@ module assembly() {
 module single_wheel_assembly() {
   translate([track_w/2, wheel3, 0]) mirror([-1, 0, 0]) powered_wheel(type=0);
   color("lightgreen") translate([rocker_zero_x, 0, rocker_h]) rocker_arm2();
+  color("salmon") translate([track_w/2+motor_offset, wheel3, 0]) rotate([0, 90, 0]) motor();
 }
 
-single_wheel_assembly();
-//assembly();
+//single_wheel_assembly();
+assembly();
 //payload();
 //frame();
 //rotate([0, -90, 0]) rocker_arm1();
