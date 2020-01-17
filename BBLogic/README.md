@@ -699,4 +699,12 @@ Logic ideas:
         - The interconnection area contains a grid of vertical signals. Different pieces allow
           diverting signals into gates and receiving them back. Other pieces allow switching
           signals laterally between the different channels.
-
+        - Idea 2:
+         - Let's base the signal routing on a regular grid which is then
+           built out of rectangular interlocking blocks.
+         - Let's also simplify the routing by using a combination of 
+           horizontal lines and drops instead of steady slope. This
+           allows routing in every direction within one interconnection
+           area. Just need to take care of getting enough speed from a
+           drop to reach the next element.
+         - Implement the whole gate as two modules in the grid system?
