@@ -886,9 +886,76 @@ module assembly() {
     //follower_arm();
 }
 
-rotate([0, -90, 0])
+// Grid elements
+
+grid_xy = 36; // Grid horizontal pitch
+grid_z = 24; // Grid vertical pitch (including connectors)
+grid_base_t = 4; // Grid block base thickness
+
+grid_conn_z = 3; // Connector thickness
+grid_conn_pole_h = 3; // Connector pole height
+grid_conn_pole_d = 3; // Connector pole diameter
+
+module grid_block_base(void=false) {
+  if (!void) {
+    translate([-grid_xy/2+tol, -grid_xy/2+tol, 0])
+      cube([grid_xy-tol*2, grid_xy-tol*2, grid_base_t]);
+    translate([-grid_xy/2+tol, -grid_xy/4, 0])
+      cube([grid_xy-tol*2, grid_xy/2, grid_z-grid_conn_z-tol]);
+  } else {
+    for (rot = [0, 90, 180, 270]) {
+      rotate([0, 0, rot])
+        for (y = [grid_xy/4, -grid_xy/4]) {
+          translate([grid_xy/2-grid_conn_pole_d*1.5, y, -1])
+            cylinder(d=grid_conn_pole_d+tol*2, h=grid_conn_pole_h+1+tol, $fn=16);
+        }
+    }
+  }
+}
+
+module grid_connector() {
+  translate([-grid_xy/8, -grid_xy/4, 0])
+    cube([grid_xy/4, grid_xy/2, grid_conn_z]);
+  for (x = [grid_conn_pole_d*1.5, -grid_conn_pole_d*1.5]) {
+    for (y = [grid_xy/4, -grid_xy/4]) {
+      translate([x, y, 0])
+        cylinder(d=grid_conn_pole_d, h=grid_conn_z + grid_conn_pole_h - tol, $fn=16);
+    }
+  }  
+}
+
+module grid_block_signal() {
+  difference() {
+    union() {
+      grid_block_base();  
+      translate([-grid_xy/2+tol, 0, grid_base_t+r]) rotate([0, 90, 0]) 
+        switch_dpipe(grid_xy-tol*2);
+    }
+    grid_block_base(void=true);  
+    translate([-grid_xy/2, 0, grid_base_t+r]) rotate([0, 90, 0]) 
+      switch_dpipe(grid_xy, void=true, roofonly=true);
+    translate([-grid_xy/8*3, -grid_xy/4, r])
+      cube([grid_xy/4*3, grid_xy/2, grid_z-grid_conn_z-r]);
+
+  }
+}
+
+module grid_assembly() {
+  grid_block_signal();
+  translate([grid_xy, 0, 0]) grid_block_base();
+  translate([grid_xy/2, 0, -grid_conn_z]) grid_connector();
+  translate([-grid_xy/2, 0, -grid_conn_z]) grid_connector();
+  translate([grid_xy/2, 0, -grid_conn_z+grid_z]) grid_connector();
+  translate([-grid_xy/2, 0, -grid_conn_z+grid_z]) grid_connector();
+}
+
+//grid_block_signal();
+grid_connector();
+
+//rotate([0, -90, 0])
+//rotate([0, slope, 0])
 //assembly();
-full_gate_ng();
+//full_gate_ng();
 //follower_arm();
 
 //kick_dpipe(30, 7, void=true);
@@ -915,7 +982,7 @@ full_gate_ng();
 //    full_gate_ng();
 //    translate([62, w/2+2, 10]) cube([150, 150, 50]);
 //    translate([-1, -50, 0]) cube([15+1, 150, 50]);
-//sync_frame(all_parts=true);
+//  sync_frame(all_parts=true);
 //}
 //rotate([90, 0, 0]) 
 //{
