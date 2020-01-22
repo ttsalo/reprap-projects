@@ -928,15 +928,23 @@ module grid_block_signal(invert=false) {
   difference() {
     union() {
       grid_block_base();  
-      translate([-grid_xy/2+tol, 0, grid_base_t+r]) rotate([0, 90, 0]) 
-        switch_dpipe(grid_xy-tol*2, inverter=invert);
+      translate([-grid_xy/2+tol, 0, grid_base_t+r]) rotate([0, 90, 0])
+        if (invert) 
+          switch_dpipe(grid_xy-tol*2, inverter=invert);
+        else
+          dpipe(grid_xy-tol*2);
     }
     grid_block_base(void=true);  
-    translate([-grid_xy/2, 0, grid_base_t+r]) rotate([0, 90, 0]) 
-      switch_dpipe(grid_xy, void=true, roofonly=true, inverter=invert);
-    translate([-grid_xy/8*3, -grid_xy/4, r*2])
-      cube([grid_xy/4*3, grid_xy/2, grid_z-grid_conn_z-r*2]);
-
+    translate([-grid_xy/2, 0, grid_base_t+r]) rotate([0, 90, 0])
+      if (invert)
+        switch_dpipe(grid_xy, void=true, inverter=invert);
+      else
+        switch_dpipe(grid_xy, void=true, roofonly=true);
+      translate([0, 0, r*3])
+        sphere(r=grid_xy/3);
+     translate([grid_xy/8, -grid_xy/8*3/sqrt(2), r*2])
+      rotate([0, -45, 0])
+        cube([grid_xy/4*3/sqrt(2), grid_xy/4*3/sqrt(2), grid_z-grid_conn_z-r*2]);
   }
 }
 
@@ -947,9 +955,12 @@ module grid_assembly() {
   translate([-grid_xy/2, 0, -grid_conn_z]) grid_connector();
   translate([grid_xy/2, 0, -grid_conn_z+grid_z]) grid_connector();
   translate([-grid_xy/2, 0, -grid_conn_z+grid_z]) grid_connector();
+
 }
 
+rotate([0, -90, 0])
 //grid_block_signal();
+//translate([grid_xy, 0, 0]) 
 grid_block_signal(invert=true);
 //grid_connector();
 
