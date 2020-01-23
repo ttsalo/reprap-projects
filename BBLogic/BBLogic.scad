@@ -894,7 +894,8 @@ grid_base_t = 4; // Grid block base thickness
 
 grid_conn_z = 3; // Connector thickness
 grid_conn_pole_h = 3; // Connector pole height
-grid_conn_pole_d = 3; // Connector pole diameter
+grid_conn_pole_d = 4; // Connector pole diameter
+grid_conn_pole_tol = 0.3; // Connector pole tolerance
 
 module grid_block_base(void=false) {
   if (!void) {
@@ -906,8 +907,8 @@ module grid_block_base(void=false) {
     for (rot = [0, 90, 180, 270]) {
       rotate([0, 0, rot])
         for (y = [grid_xy/4, -grid_xy/4]) {
-          translate([grid_xy/2-grid_conn_pole_d*1.5, y, -1])
-            cylinder(d=grid_conn_pole_d+tol*2, h=grid_conn_pole_h+1+tol, $fn=16);
+          translate([grid_xy/2-grid_conn_pole_d, y, -1])
+            cylinder(d=grid_conn_pole_d+grid_conn_pole_tol*2, h=grid_conn_pole_h+1+tol, $fn=16);
         }
     }
   }
@@ -916,7 +917,7 @@ module grid_block_base(void=false) {
 module grid_connector() {
   translate([-grid_xy/8, -grid_xy/4, 0])
     cube([grid_xy/4, grid_xy/2, grid_conn_z]);
-  for (x = [grid_conn_pole_d*1.5, -grid_conn_pole_d*1.5]) {
+  for (x = [grid_conn_pole_d, -grid_conn_pole_d]) {
     for (y = [grid_xy/4, -grid_xy/4]) {
       translate([x, y, 0])
         cylinder(d=grid_conn_pole_d, h=grid_conn_z + grid_conn_pole_h - tol, $fn=16);
@@ -928,14 +929,14 @@ module grid_block_signal(invert=false) {
   difference() {
     union() {
       grid_block_base();  
-      translate([-grid_xy/2+tol, 0, grid_base_t+r]) rotate([0, 90, 0])
+      translate([-grid_xy/2+tol, 0, grid_base_t+r+r_tol]) rotate([0, 90, 0])
         if (invert) 
           switch_dpipe(grid_xy-tol*2, inverter=invert);
         else
           dpipe(grid_xy-tol*2);
     }
     grid_block_base(void=true);  
-    translate([-grid_xy/2, 0, grid_base_t+r]) rotate([0, 90, 0])
+    translate([-grid_xy/2, 0, grid_base_t+r+r_tol]) rotate([0, 90, 0])
       if (invert)
         switch_dpipe(grid_xy, void=true, inverter=invert);
       else
