@@ -39,6 +39,26 @@
       payloads.
     - Widen the track. This is not great either, the payload width to track width
       ratio is not that great as it is.
+      
+   Half-scale testing 3.9.2019:
+   - Seems to work pretty good.
+   - Clearances fine for 45mm rectangular obstacles.
+    - Bogey has clearance to turn completely vertical when going up.
+    - Rocker (back) wheel has clearance to rise at least as high (as long as the motor clears
+      the diff bar and payload)
+    - However, going down from an obstacle the bogey can't turn nearly as far in the other
+      direction. It can turn about 45 degrees which is the limiting factor for an (rectangular)
+      obstacle clearance of 45mm. Then it hits the rocker arm and/or pivot.
+    - 45mm applies to vertical walls which are not really the design goal.
+    - If the max rotation is about the same in the powered version, the obstacle capability
+      should be fine.
+    - Some other designs (sawppy, martian rover) can rotate a bit more, but even if the
+      middle wheel can clear the rocker pivot, then the frame bottoming out starts to
+      become a problem.
+   - The diff rod rotation is pretty minimal. The shortening in the full scale model probably
+     not a problem at all.
+   - Can check the clearances by copying the max rocker and bogey rotations from the real
+     world half-scale model, since the proportions are the same in the full scale one.
 */
 
 use <../PyramidSpaceTruss/PyramidSpaceTruss.scad>;
