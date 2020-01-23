@@ -966,16 +966,18 @@ module grid_block_signal(invert=false) {
 module grid_block_fabric() {
   difference() {
     union() {
-      grid_block_base(height=2);  
+      grid_block_base(height=2);
+      translate([-grid_xy/2+tol, -grid_xy/2+tol, 0]) // Printing help
+        cube([grid_xy/4.5, grid_xy/2, grid_z-grid_conn_z-tol]);
       translate([-grid_xy/2+tol, 0, grid_base_t+r+r_tol+grid_z]) rotate([0, 90, 0]) {
-        dpipe(grid_xy/2-grid_z/2-r2r/2-tol);
+        dpipe(grid_xy/2-grid_z/2-r2r/2-tol+0.01);
         translate([0, r2r/2, 0])
-          pipe(grid_xy/2-grid_z/2+r2r/2-tol); 
+          pipe(grid_xy/2-grid_z/2+r2r/2-tol+0.01); 
       }
       translate([0, -grid_xy/2+tol, grid_base_t+r+r_tol]) rotate([0, 90, 90]) {
-        dpipe(grid_xy/2-grid_z/2-r2r/2-tol);
+        dpipe(grid_xy/2-grid_z/2-r2r/2-tol+0.01);
         translate([0, -r2r/2, 0])
-          pipe(grid_xy/2-grid_z/2+r2r/2-tol); 
+          pipe(grid_xy/2-grid_z/2+r2r/2-tol+0.01); 
       }
       translate([-grid_z/2+r2r/2, r2r/2, grid_base_t+r+r_tol+grid_z])
         rotate([-90, 0, 0])
@@ -992,14 +994,14 @@ module grid_block_fabric() {
     }
     grid_block_base(height=2, void=true);
     translate([-grid_xy/2, 0, grid_base_t+r+r_tol+grid_z]) rotate([0, 90, 0]) {
-      switch_dpipe(grid_xy/2-grid_z/2-r2r/2, void=true, roofonly=true);
+      dpipe(grid_xy/2-grid_z/2-r2r/2+0.1, void=true);
       translate([0, r2r/2, 0])
-        pipe(grid_xy/2-grid_z/2+r2r/2, void=true); 
+        pipe(grid_xy/2-grid_z/2+r2r/2+0.1, void=true); 
     }
     translate([0, -grid_xy/2, grid_base_t+r+r_tol]) rotate([0, 90, 90]) {
-      switch_dpipe(grid_xy/2-grid_z/2-r2r/2, void=true, roofonly=true);
+      dpipe(grid_xy/2-grid_z/2-r2r/2+0.1, void=true);
       translate([0, -r2r/2, 0])
-        pipe(grid_xy/2-grid_z/2+r2r/2, void=true); 
+        pipe(grid_xy/2-grid_z/2+r2r/2+0.1, void=true); 
  
     }
       translate([-grid_z/2+r2r/2, r2r/2, grid_base_t+r+r_tol+grid_z])
@@ -1031,7 +1033,7 @@ module grid_assembly() {
 
 }
 
-//rotate([0, -90, 0])
+rotate([0, -90, 0])
 grid_block_fabric();
 //translate([-grid_xy/2, 0, -grid_conn_z+grid_z]) grid_connector_slot();
 //grid_block_signal();
