@@ -896,13 +896,14 @@ grid_conn_z = 3; // Connector thickness
 grid_conn_pole_h = 3; // Connector pole height
 grid_conn_pole_d = 4; // Connector pole diameter
 grid_conn_pole_tol = 0.3; // Connector pole tolerance
+grid_conn_slot_tol = 0.3; // Connector slot tolerance
 
-module grid_block_base(void=false) {
+module grid_block_base(height=1, void=false) {
   if (!void) {
     translate([-grid_xy/2+tol, -grid_xy/2+tol, 0])
       cube([grid_xy-tol*2, grid_xy-tol*2, grid_base_t]);
     translate([-grid_xy/2+tol, -grid_xy/4, 0])
-      cube([grid_xy-tol*2, grid_xy/2, grid_z-grid_conn_z-tol]);
+      cube([grid_xy-tol*2, grid_xy/2, grid_z*height-grid_conn_z-tol]);
   } else {
     for (rot = [0, 90, 180, 270]) {
       rotate([0, 0, rot])
@@ -923,6 +924,17 @@ module grid_connector() {
         cylinder(d=grid_conn_pole_d, h=grid_conn_z + grid_conn_pole_h - tol, $fn=16);
     }
   }  
+}
+
+module grid_connector_slot() {
+  translate([-grid_xy/8, -grid_xy/4, 0])
+    cube([grid_xy/8-grid_conn_slot_tol, grid_xy/2, grid_conn_z]);
+  translate([-grid_xy/8, -grid_xy/6, 0])
+    cube([grid_xy/4, grid_xy/3, grid_conn_z]);
+  for (y = [grid_xy/4, -grid_xy/4]) {
+    translate([-grid_conn_pole_d, y, 0])
+      cylinder(d=grid_conn_pole_d, h=grid_conn_z + grid_conn_pole_h - tol, $fn=16);
+  }
 }
 
 module grid_block_signal(invert=false) {
@@ -949,20 +961,82 @@ module grid_block_signal(invert=false) {
   }
 }
 
+/* Switch fabric element. Takes signal, drops it one level and turns it 
+90 degrees to the side. */
+module grid_block_fabric() {
+  difference() {
+    union() {
+      grid_block_base(height=2);  
+      translate([-grid_xy/2+tol, 0, grid_base_t+r+r_tol+grid_z]) rotate([0, 90, 0]) {
+        dpipe(grid_xy/2-grid_z/2-r2r/2-tol);
+        translate([0, r2r/2, 0])
+          pipe(grid_xy/2-grid_z/2+r2r/2-tol); 
+      }
+      translate([0, -grid_xy/2+tol, grid_base_t+r+r_tol]) rotate([0, 90, 90]) {
+        dpipe(grid_xy/2-grid_z/2-r2r/2-tol);
+        translate([0, -r2r/2, 0])
+          pipe(grid_xy/2-grid_z/2+r2r/2-tol); 
+      }
+      translate([-grid_z/2+r2r/2, r2r/2, grid_base_t+r+r_tol+grid_z])
+        rotate([-90, 0, 0])
+          pipe_curve(grid_z/2, 90.1);
+      translate([r2r/2, r2r/2, grid_base_t+r+r_tol+grid_z/2])
+        rotate([0, 90, 180])
+          pipe_curve(grid_z/2, 90);
+      translate([-grid_z/2-r2r/2, -r2r/2, grid_base_t+r+r_tol+grid_z])
+        rotate([-90, 0, 0])
+          pipe_curve(grid_z/2, 90.1);
+      translate([-r2r/2, -r2r/2, grid_base_t+r+r_tol+grid_z/2])
+        rotate([0, 90, 180])
+          pipe_curve(grid_z/2, 90);
+    }
+    grid_block_base(height=2, void=true);
+    translate([-grid_xy/2, 0, grid_base_t+r+r_tol+grid_z]) rotate([0, 90, 0]) {
+      switch_dpipe(grid_xy/2-grid_z/2-r2r/2, void=true, roofonly=true);
+      translate([0, r2r/2, 0])
+        pipe(grid_xy/2-grid_z/2+r2r/2, void=true); 
+    }
+    translate([0, -grid_xy/2, grid_base_t+r+r_tol]) rotate([0, 90, 90]) {
+      switch_dpipe(grid_xy/2-grid_z/2-r2r/2, void=true, roofonly=true);
+      translate([0, -r2r/2, 0])
+        pipe(grid_xy/2-grid_z/2+r2r/2, void=true); 
+ 
+    }
+      translate([-grid_z/2+r2r/2, r2r/2, grid_base_t+r+r_tol+grid_z])
+        rotate([-90, 0, 0])
+          pipe_curve(grid_z/2, 90.1, void=true);
+      translate([r2r/2, r2r/2, grid_base_t+r+r_tol+grid_z/2])
+        rotate([0, 90, 180])
+          pipe_curve(grid_z/2, 90, void=true);
+      translate([-grid_z/2-r2r/2, -r2r/2, grid_base_t+r+r_tol+grid_z])
+        rotate([-90, 0, 0])
+          pipe_curve(grid_z/2, 90.1, void=true);
+      translate([-r2r/2, -r2r/2, grid_base_t+r+r_tol+grid_z/2])
+        rotate([0, 90, 180])
+          pipe_curve(grid_z/2, 90, void=true);
+      translate([-grid_xy/8-grid_xy/2, -grid_xy/6-grid_conn_slot_tol, 
+                 -grid_conn_z+grid_z-grid_conn_slot_tol])
+        cube([grid_xy/4+grid_conn_slot_tol, grid_xy/3+grid_conn_slot_tol*2, 
+              grid_conn_z+grid_conn_slot_tol*2]);
+  }    
+}
+
 module grid_assembly() {
   grid_block_signal();
   translate([grid_xy, 0, 0]) grid_block_base();
   translate([grid_xy/2, 0, -grid_conn_z]) grid_connector();
-  translate([-grid_xy/2, 0, -grid_conn_z]) grid_connector();
+  translate([-grid_xy/2, 0, -grid_conn_z]) grid_connector();translate([-grid_xy/2, 0, -grid_conn_z+grid_z]) grid_connector();
   translate([grid_xy/2, 0, -grid_conn_z+grid_z]) grid_connector();
   translate([-grid_xy/2, 0, -grid_conn_z+grid_z]) grid_connector();
 
 }
 
-rotate([0, -90, 0])
+//rotate([0, -90, 0])
+grid_block_fabric();
+//translate([-grid_xy/2, 0, -grid_conn_z+grid_z]) grid_connector_slot();
 //grid_block_signal();
 //translate([grid_xy, 0, 0]) 
-grid_block_signal(invert=true);
+//grid_block_signal(invert=true);
 //grid_connector();
 
 //rotate([0, -90, 0])
