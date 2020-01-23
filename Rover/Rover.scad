@@ -140,10 +140,16 @@ wheel3 = -80; // Back wheel offset from rocker pivot
 
 wheel_d = 80; // Wheel outer diameter
 wheel_w = 40; // Wheel width
+
+// Unpowered wheel parameters
 wheel_axis_d = 6; // Wheel axis diameter
 wheel_flange_t = 8; // Wheel mounting flange thickness
 wheel_flange_c = 2; // Wheel mounting flange clearance
 wheel_flange_d = wheel_axis_d + 2*2; // Wheel mounting flange diameter
+
+// Powered wheel parameters
+wheel_hub_d = 12; // Wheel hub diameter
+wheel_spoke_w = 4; // Wheel spoke width
 
 motor_offset = 10; // Motor zero point (base of shaft) offset from center of wheel
 
@@ -691,7 +697,7 @@ module wheel(type=0) {
 
 /* Powered wheel. Zero point is the center of the wheel.
    Types: 
-   0: Patterned partial sphere with three spokes
+   0: Patterned partial sphere with spokes
 */
 module powered_wheel(type=0) {
   if (type == 0) {
@@ -733,19 +739,18 @@ module powered_wheel(type=0) {
           difference() {
             translate([0, 0, wheel_w/2])
               sphere(d=wheel_d-4);
-            for (i = [0, 120, 240]) {
+            for (i = [0, 72, 144, 216, 288]) {
               rotate([0, 0, i])
-                translate([0, -3/2, 0])
-                  cube([wheel_d, 3, 3]);
+                translate([0, -wheel_spoke_w/2, 0])
+                  cube([wheel_d, wheel_spoke_w, 3]);
               rotate([0, 0, i])
-                translate([0, -3/2, wheel_w-3])
-                  cube([wheel_d, 3, 3]);
+                translate([0, -wheel_spoke_w/2, wheel_w-3])
+                  cube([wheel_d, wheel_spoke_w, 3]);
             }
           }
           
         }
-        pin(wheel_axis_d, wheel_w+wheel_flange_c+wheel_flange_t+fit*2, wheel_axis_d+fit*2, 2, fit*2);
-        cylinder(d=wheel_axis_d+fit*2, h=wheel_w+wheel_flange_c);
+        cylinder(d=wheel_hub_d, h=wheel_w+wheel_flange_c);
     }    
   }
 }
@@ -820,7 +825,7 @@ module assembly() {
   translate([-track_w/2, wheel3, 0]) wheel();
   translate([track_w/2, wheel1, 0]) mirror([-1, 0, 0]) wheel(type=3);
   translate([track_w/2, wheel2, 0]) mirror([-1, 0, 0]) wheel(type=3);
-  translate([track_w/2, wheel3, 0]) mirror([-1, 0, 0]) powered_wheel(type=0);
+//  translate([track_w/2, wheel3, 0]) mirror([-1, 0, 0]) powered_wheel(type=0);
   color("salmon") translate([track_w/2+motor_offset, wheel3, 0]) rotate([0, 90, 0]) motor();
   translate([bogey_zero_x, bogey_pivot, bogey_h]) bogey();
   color("lightgreen") translate([rocker_zero_x, 0, rocker_h]) rocker();
