@@ -24,7 +24,7 @@ R2R = 26;      // Track separation
 r_tol = 1;   // Ball track tolerance
 r_t = 1.8;       // Ball track wall thickness
 mid_h = r+r_tol+r_t; // Pipe vertical midpoint - as low as possible to make room on top
-sync_frame_pos = 5; // Sync frame start
+sync_frame_pos = 15; // Sync frame start
 
 switch_ramp_l = r + 0.5; // Length of the ramp in the switch section
 roof_cut = r*2; // Width of the cut in open-roof pipe sections
@@ -1023,6 +1023,62 @@ module grid_block_fabric() {
   }    
 }
 
+module grid_gate() 
+{
+  difference() {
+    union() {
+      translate([0, grid_xy, mid_h])
+        rotate([0, 90+slope, 0]) {
+          translate([0, 0, sync_frame_pos-5]) dpipe(5);
+          translate([0, 0, sync_frame_pos]) switch_dpipe(sync_frame_l, roofonly=true);
+          translate([0, 0, sync_frame_pos+sync_frame_l]) switch_dpipe(25);
+          translate([0, 0, sync_frame_pos+sync_frame_l+25]) switch_dpipe(10, roofonly=true);
+          translate([0, 0, sync_frame_pos+sync_frame_l+35]) dpipe(5);
+       }
+      translate([0, 0, mid_h])
+        rotate([0, 90+slope, 0]) {
+          translate([0, 0, sync_frame_pos-5]) dpipe(5);
+          translate([0, 0, sync_frame_pos]) switch_dpipe(sync_frame_l, roofonly=true);
+          translate([0, 0, sync_frame_pos+sync_frame_l]) switch_dpipe(35, roofonly=true);
+          translate([0, 0, sync_frame_pos+sync_frame_l+35]) dpipe(5);
+        }
+      translate([sync_frame_pos, grid_xy/2, mid_h])
+        rotate([0, slope, 0])
+          sync_frame_parts();
+      translate([grid_xy/2, 0, -grid_z])
+        grid_block_base(height=2);
+      translate([grid_xy*2.5, 0, -grid_z])
+        grid_block_base();
+    }
+    translate([sync_frame_pos, w/2, mid_h])
+      rotate([0, slope, 0])
+        sync_void();
+    translate([0, grid_xy, mid_h])
+        rotate([0, 90+slope, 0]) {
+          translate([0, 0, 0]) dpipe(5, void=true);
+          translate([0, 0, sync_frame_pos]) switch_dpipe(sync_frame_l, roofonly=true, void=true);
+          //translate([0, 0, 5+sync_frame_l]) dpipe(4, void=true); 
+            
+          // Crossover section
+          translate([0, 0, 5+sync_frame_l]) switch_dpipe(25, inverter=true, void=true); 
+          translate([0, 0, 5+sync_frame_l]) dpipe(25, void=true); 
+            
+          translate([0, 0, 5+sync_frame_l+25]) dpipe(15, void=true); 
+          //translate([0, 0, 20+sync_frame_l]) switch_dpipe(35, void=true);
+          //translate([0, 0, 20+sync_frame_l+35]) dpipe(5, void=true); 
+          translate([0, 0, gate_l-20]) dpipe(20, void=true);
+        }
+    translate([0, 0, mid_h])
+        rotate([0, 90+slope, 0]) {
+          translate([0, 0, 0]) dpipe(5, void=true);
+          translate([0, 0, sync_frame_pos]) switch_dpipe(sync_frame_l, roofonly=true, void=true); 
+          translate([0, 0, 5+sync_frame_l]) switch_dpipe(35, roofonly=true, void=true);   
+          translate([0, 0, 5+sync_frame_l+35]) dpipe(5, void=true);   
+          //translate([0, 0, 20+sync_frame_l]) kick_and_sink_dpipe(35, 55, 7, void=true);
+        }
+  }
+}
+
 module grid_assembly() {
   grid_block_signal();
   translate([grid_xy, 0, 0]) grid_block_base();
@@ -1033,8 +1089,9 @@ module grid_assembly() {
 
 }
 
-rotate([0, -90, 0])
-grid_block_fabric();
+//rotate([0, -90, 0])
+//grid_block_fabric();
+grid_gate();
 //translate([-grid_xy/2, 0, -grid_conn_z+grid_z]) grid_connector_slot();
 //grid_block_signal();
 //translate([grid_xy, 0, 0]) 

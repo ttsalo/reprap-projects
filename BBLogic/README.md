@@ -708,3 +708,46 @@ Logic ideas:
            area. Just need to take care of getting enough speed from a
            drop to reach the next element.
          - Implement the whole gate as two modules in the grid system?
+	 - Implement the interlocking system along the ball route.
+	  - Dovetail joints?
+	  - Whole height dovetail joints problematic. Let's use partial height ones with the
+	    tail in the originating part and the slot in the accepting part. These should be
+	    feasible to print in either orientation.
+	   - No, this both won't support the accepting part and make building of the route hard
+	     (can't just drop in further sections, as they need to be pushed from below)
+	  - Let's instead use separate connectors and grid blocks only have slots.
+	   - Connectors have 4 round pins, grid blocks have two holes each. Connectors are laid
+	     down, grid blocks inserted from top, connectors will support and hold the alignment.
+	     For unsupported spans we can have longer and/or taller connector blocks that
+	     span multiple grid blocks.
+	   - Connectors don't need to connect to the blocks below, they can simply rest on them.
+	     This makes removing whole sections simple.
+	    - OTOH this means that the 
+	  - Grid sizing
+	   - The gates need to fit the grid so that they drop the signals one level
+	   - The interconnection plane needs to be able to take a double pipe signal, drop it
+	     and turn it 90 degrees in a 1x1x2 block.
+
+      - Testing 23.1.2020:
+       - Grid system idea seems sound. Testing with 36x36x24 grid (4 mm reserved for base,
+         3 for connector blocks)
+       - The fabric switch block works great, the one level drop gives enough speed for the
+         balls to travel 4 blocks (individual, 2 inverting). Just barely fits into the grid
+	 dimensions.
+       - The non-sloping travel design gives some restrictions on the design (the size of the
+         switching fabric from gate to switch to gate).
+	- Try longer blocks
+	- Go back to original print orientation so that balls don't travel across layers
+	- Otherwise the fabric will simply need more Z difference from input to output. The
+	  extra can be allocated to slopes in the signal routes. For example a signal travelling
+	  two times the whole dimension of the fabric would drop half a level halfway to
+	  switch block, then again another half on the way from switch block to the output.
+	  This can obviously continue, scaling the fabric as large as we need.
+	 - Same applies to longer signals, needs enough Z drop on the way.
+	 - But the placement flexibility is probably worth it compared to a sloping build plane.
+	- TODO:
+	 - Longer blocks
+	 - Source/sink signals (combine/diverge non-binary signals)
+	 - Obviously, the gate
+	 - Simpler ways of combining gates without building a whole switch fabric section
+	 
