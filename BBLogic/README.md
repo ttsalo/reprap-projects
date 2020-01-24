@@ -746,8 +746,13 @@ Logic ideas:
 	 - Same applies to longer signals, needs enough Z drop on the way.
 	 - But the placement flexibility is probably worth it compared to a sloping build plane.
 	- TODO:
-	 - Longer blocks
+	 - Longer blocks DONE
 	 - Source/sink signals (combine/diverge non-binary signals)
 	 - Obviously, the gate
-	 - Simpler ways of combining gates without building a whole switch fabric section
-	 
+	 - Simpler ways of combining gates without building a whole switch 
+           fabric section (one- or maybe two-level lateral movement between
+           rows of gates oriented the same way)
+         - Scaffolding for filling empty spaces
+	 - Multi-block connector setups. Since not everything has support
+           on every edge at the top, building over these requires longer
+           signal blocks or connectors that span over the gap.
