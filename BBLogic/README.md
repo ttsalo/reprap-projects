@@ -750,7 +750,9 @@ Logic ideas:
 	 - Multi-block connector setups. Since not everything has support
            on every edge at the top, building over these requires longer
            signal blocks or connectors that span over the gap. DONE
-         - Scaffolding for filling empty spaces
+         - Scaffolding for filling empty spaces.
+         - Some kind of slot (but not snap-in) system between block tops
+           and connectors.
 	 - Obviously, the gate
 	 - Source/sink signals (combine/diverge non-binary signals)
 	 - Simpler ways of combining gates without building a whole switch 

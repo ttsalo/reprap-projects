@@ -1,5 +1,7 @@
 /* Ball Bearing Logic by Tomi T. Salo <ttsalo@iki.fi> */
 
+use <../PyramidSpaceTruss/PyramidSpaceTruss.scad>;
+
 // Main parameters
 
 // Main module dimensions (l=x, w=y, h=z)
@@ -897,6 +899,7 @@ grid_conn_pole_h = 3; // Connector pole height
 grid_conn_pole_d = 4; // Connector pole diameter
 grid_conn_pole_tol = 0.3; // Connector pole tolerance
 grid_conn_slot_tol = 0.3; // Connector slot tolerance
+grid_spacer_truss_t = 4;
 
 module grid_block_base(height=1, length=1, void=false) {
   if (!void) {
@@ -948,7 +951,7 @@ module grid_connector_multi(length=1, width=1) {
        translate([grid_xy*l, grid_xy*w, 0])
          difference() {
            cylinder(d=grid_xy-tol*2, h=grid_conn_z, $fn=64);
-           cylinder(d=grid_xy-grid_xy/4, h=grid_conn_z, $fn=64);
+           translate([0, 0, -0.5]) cylinder(d=grid_xy-grid_xy/4, h=grid_conn_z+1, $fn=64);
          }
     }
   }
@@ -962,6 +965,24 @@ module grid_connector_slot() {
   for (y = [grid_xy/4, -grid_xy/4]) {
     translate([-grid_conn_pole_d, y, 0])
       cylinder(d=grid_conn_pole_d, h=grid_conn_z + grid_conn_pole_h - tol, $fn=16);
+  }
+}
+
+module grid_spacer(length=1, height=1) {
+  difference() {
+    union() {
+      translate([-grid_xy/2+tol, -grid_xy/2+tol, 0])
+        cube([grid_xy*length-tol*2, grid_xy-tol*2, grid_base_t]);
+      translate([-grid_xy/2+tol, -grid_xy/4, 0])
+        cube([grid_xy*length-tol*2, grid_xy/2, grid_z*height-grid_conn_z-tol]);
+    }
+    grid_block_base(length=length, height=height, void=true);
+    for (i = [0 : length-1]) {
+      translate([grid_xy*i-grid_xy/4, -grid_xy/2, grid_base_t]) {
+        cube([grid_xy/2, grid_xy, grid_z*height]);
+          
+      }
+    } 
   }
 }
 
@@ -1129,7 +1150,8 @@ module grid_assembly() {
 //translate([grid_xy, 0, 0]) 
 //grid_block_signal(invert=true);
 //grid_connector();
-translate([0,0 , -grid_conn_z]) color("salmon") grid_connector_multi(length=2, width=2);
+//translate([0,0 , -grid_conn_z]) color("salmon") grid_connector_multi(length=4, width=2);
+grid_spacer(length=4, height=2);
 
 //rotate([0, -90, 0])
 //rotate([0, slope, 0])
