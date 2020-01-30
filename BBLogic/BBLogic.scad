@@ -929,6 +929,31 @@ module grid_connector() {
   }  
 }
 
+module grid_connector_multi(length=1, width=1) {
+  for (l = [0 : length]) {
+    for (w = [0 : width-1]) {
+       translate([grid_xy*(l-0.5), grid_xy*w, 0])
+         grid_connector();
+    }
+  }
+  for (l = [0 : length-1]) {
+    for (w = [0 : width]) {
+       translate([grid_xy*l, grid_xy*(w-0.5), 0])
+         rotate([0, 0, 90])
+           grid_connector();
+    }
+  }
+  for (l = [0 : length-1]) {
+    for (w = [0 : width-1]) {
+       translate([grid_xy*l, grid_xy*w, 0])
+         difference() {
+           cylinder(d=grid_xy-tol*2, h=grid_conn_z, $fn=64);
+           cylinder(d=grid_xy-grid_xy/4, h=grid_conn_z, $fn=64);
+         }
+    }
+  }
+}
+
 module grid_connector_slot() {
   translate([-grid_xy/8, -grid_xy/4, 0])
     cube([grid_xy/8-grid_conn_slot_tol, grid_xy/2, grid_conn_z]);
@@ -1098,12 +1123,13 @@ module grid_assembly() {
 //grid_block_fabric();
 //grid_gate();
 //translate([-grid_xy/2, 0, -grid_conn_z+grid_z]) grid_connector_slot();
-grid_block_signal(length=3);
-translate([0, grid_xy, 0]) grid_block_signal(length=1);
-translate([0, -grid_xy, 0]) grid_block_signal(length=2, invert=true);
+//grid_block_signal(length=4);
+//translate([0, grid_xy, 0]) grid_block_signal(length=1);
+//translate([0, -grid_xy, 0]) grid_block_signal(length=2, invert=true);
 //translate([grid_xy, 0, 0]) 
 //grid_block_signal(invert=true);
 //grid_connector();
+translate([0,0 , -grid_conn_z]) color("salmon") grid_connector_multi(length=2, width=2);
 
 //rotate([0, -90, 0])
 //rotate([0, slope, 0])
