@@ -750,6 +750,14 @@ Logic ideas:
 	 - Multi-block connector setups. Since not everything has support
            on every edge at the top, building over these requires longer
            signal blocks or connectors that span over the gap. DONE
+
+      - Testing 29.1.2020:
+       - Tested longer blocks. Balls clear 4+3 blocks easily after 1 level drop, except if
+         there is crud on the ceiling, which is annoying to clean.
+	- Omit the intermediate ceilings altogether? And add supports on the sides for the
+	  upper levels instead.
+        - TODO:
+	 - Remove unnecessary roofs from longer blocks, add side supports
          - Scaffolding for filling empty spaces.
          - Some kind of slot (but not snap-in) system between block tops
            and connectors.
@@ -758,3 +766,4 @@ Logic ideas:
 	 - Simpler ways of combining gates without building a whole switch 
            fabric section (one- or maybe two-level lateral movement between
            rows of gates oriented the same way)
+	  
