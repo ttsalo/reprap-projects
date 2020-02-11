@@ -922,12 +922,12 @@ module grid_block_base(height=1, length=1, void=false) {
 }
 
 module grid_connector(void=false) {
-  translate([-grid_xy/8, -grid_xy/4, 0])
-    cube([grid_xy/4, grid_xy/2, grid_conn_z]);
+  translate([-grid_xy/8-(void?tol*2:0), -grid_xy/4-(void?tol*2:0), 0])
+    cube([grid_xy/4+(void?tol*4:0), grid_xy/2+(void?tol*4:0), grid_conn_z]);
   for (x = [grid_conn_pole_d, -grid_conn_pole_d]) {
     for (y = [grid_xy/4, -grid_xy/4]) {
       translate([x, y, 0])
-        cylinder(d=grid_conn_pole_d, h=grid_conn_z + grid_conn_pole_h - tol, $fn=16);
+        cylinder(d=grid_conn_pole_d+(void?tol*4:0), h=grid_conn_z + grid_conn_pole_h - tol, $fn=16);
     }
   }  
 }
@@ -953,7 +953,7 @@ module grid_connector_multi(length=1, width=1, void=false,
     for (w = [0 : width-1]) {
        translate([grid_xy*l, grid_xy*w, 0])
          difference() {
-           cylinder(d=grid_xy-tol*2, h=grid_conn_z, $fn=64);
+           cylinder(d=grid_xy-tol*2+(void?tol*4:0), h=grid_conn_z, $fn=64);
            difference() {
              translate([0, 0, -0.5]) cylinder(d=grid_xy-grid_xy/4-(void?tol*4:0), 
                                               h=grid_conn_z+1, $fn=64);
@@ -1162,8 +1162,8 @@ module grid_assembly() {
 //translate([0, -grid_xy, 0]) grid_block_signal(length=2, invert=true);
 //translate([grid_xy, 0, 0]) 
 //grid_block_signal(invert=true);
-//grid_connector();
-//translate([0,0 , -grid_conn_z]) color("salmon") grid_connector_multi(length=3, width=1);
+translate([-grid_xy/2, 0, grid_z-grid_conn_z]) color("salmon") grid_connector();
+translate([grid_xy, 0, grid_z-grid_conn_z]) color("salmon") grid_connector_multi(length=1, width=1);
 grid_spacer(length=2, height=1);
 //translate([0, -grid_xy, 0]) grid_spacer(length=1, height=1);
 //translate([-grid_xy/2, 0, grid_z*2-grid_conn_z]) grid_connector();

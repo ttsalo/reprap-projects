@@ -757,10 +757,10 @@ Logic ideas:
 	- Omit the intermediate ceilings altogether? And add supports on the sides for the
 	  upper levels instead.
         - TODO:
-	 - Remove unnecessary roofs from longer blocks, add side supports
-         - Scaffolding for filling empty spaces.
+         - Scaffolding for filling empty spaces. DONE
          - Some kind of slot (but not snap-in) system between block tops
-           and connectors.
+           and connectors. DONE
+	 - Remove unnecessary roofs from longer blocks, add side supports
 	 - Obviously, the gate
 	 - Source/sink signals (combine/diverge non-binary signals)
 	 - Simpler ways of combining gates without building a whole switch 
