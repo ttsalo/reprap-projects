@@ -891,90 +891,39 @@ module assembly() {
 // Grid elements
 
 grid_xy = 36; // Grid horizontal pitch
-grid_z = 24; // Grid vertical pitch (including connectors)
+grid_z = 24; // Grid vertical pitch
 grid_base_t = 4; // Grid block base thickness
 
-grid_conn_z = 3; // Connector thickness
-grid_conn_pole_h = 3; // Connector pole height
-grid_conn_pole_d = 4; // Connector pole diameter
-grid_conn_pole_tol = 0.3; // Connector pole tolerance
-grid_conn_slot_tol = 0.3; // Connector slot tolerance
 grid_spacer_truss_t = 3;
+
+// Grid alignment peg dimensions
+grid_peg_xy = 5;
+grid_peg_z = 2.5;
+grid_peg_tol = 0.3;
+
+module grid_peg(height=1, void=false) {
+  translate([-grid_peg_xy/2-(void?grid_peg_tol:0), 
+             -grid_peg_xy/2-(void?grid_peg_tol:0), 0])
+    cube([grid_peg_xy+(void?grid_peg_tol*2:0), 
+          grid_peg_xy+(void?grid_peg_tol*2:0), 
+          grid_z*height+grid_peg_z+(void?grid_peg_tol:0)]);
+  if (!void) {
+    translate([-grid_peg_xy, -grid_peg_xy, 0])
+      cube([grid_peg_xy*2, grid_peg_xy*2, grid_peg_z*2]);
+  }
+}
 
 module grid_block_base(height=1, length=1, void=false) {
   if (!void) {
-    translate([-grid_xy/2+tol, -grid_xy/2+tol, 0])
-      cube([grid_xy*length-tol*2, grid_xy-tol*2, grid_base_t]);
-    translate([-grid_xy/2+tol, -grid_xy/4, 0])
-      cube([grid_xy*length-tol*2, grid_xy/2, grid_z*height-grid_conn_z-tol]);
-  } else {
     for (i = [0 : length-1]) {
       translate([grid_xy*i, 0, 0])
-        for (rot = [0, 90, 180, 270]) {
-          rotate([0, 0, rot])
-            for (y = [grid_xy/4, -grid_xy/4]) {
-              translate([grid_xy/2-grid_conn_pole_d, y, -1])
-              cylinder(d=grid_conn_pole_d+grid_conn_pole_tol*2, h=grid_conn_pole_h+1+tol, $fn=16);
-            } 
-        }
+        grid_peg(height=height);
+    }
+  } else {
+    for (i = [0 : length-1]) {
+      translate([grid_xy*i, 0, -grid_z*height])
+        grid_peg(height=height, void=true);
      }
-  }
-}
-
-module grid_connector(void=false) {
-  translate([-grid_xy/8-(void?tol*2:0), -grid_xy/4-(void?tol*2:0), 0])
-    cube([grid_xy/4+(void?tol*4:0), grid_xy/2+(void?tol*4:0), grid_conn_z]);
-  for (x = [grid_conn_pole_d, -grid_conn_pole_d]) {
-    for (y = [grid_xy/4, -grid_xy/4]) {
-      translate([x, y, 0])
-        cylinder(d=grid_conn_pole_d+(void?tol*4:0), h=grid_conn_z + grid_conn_pole_h - tol, $fn=16);
-    }
-  }  
-}
-
-module grid_connector_multi(length=1, width=1, void=false, 
-  omit_start_x=false, omit_end_x=false, omit_start_y=false, omit_end_y=false) {
-  if ((omit_start_x ? 1 : 0) <= (omit_end_x ? (length - 1) : length))
-    for (l = [(omit_start_x ? 1 : 0) : (omit_end_x ? (length - 1) : length)]) {
-      for (w = [0 : width-1]) {
-         translate([grid_xy*(l-0.5), grid_xy*w, 0])
-           grid_connector(void=void);
-      }
-    }
-  if ((omit_start_y ? 1 : 0) <= (omit_end_y ? (width - 1) : width))
-    for (l = [0 : length-1]) {
-      for (w = [(omit_start_y ? 1 : 0) : (omit_end_y ? (width - 1) : width)]) {
-         translate([grid_xy*l, grid_xy*(w-0.5), 0])
-           rotate([0, 0, 90])
-             grid_connector(void=void);
-      }
-    }
-  for (l = [0 : length-1]) {
-    for (w = [0 : width-1]) {
-       translate([grid_xy*l, grid_xy*w, 0])
-         difference() {
-           cylinder(d=grid_xy-tol*2+(void?tol*4:0), h=grid_conn_z, $fn=64);
-           difference() {
-             translate([0, 0, -0.5]) cylinder(d=grid_xy-grid_xy/4-(void?tol*4:0), 
-                                              h=grid_conn_z+1, $fn=64);
-             if (void) {
-               translate([0, 0, -1]) cylinder(d=grid_xy-grid_xy/2, 
-                                              h=grid_conn_z+2, $fn=64);
-             }
-           }
-         }
-    }
-  }
-}
-
-module grid_connector_slot() {
-  translate([-grid_xy/8, -grid_xy/4, 0])
-    cube([grid_xy/8-grid_conn_slot_tol, grid_xy/2, grid_conn_z]);
-  translate([-grid_xy/8, -grid_xy/6, 0])
-    cube([grid_xy/4, grid_xy/3, grid_conn_z]);
-  for (y = [grid_xy/4, -grid_xy/4]) {
-    translate([-grid_conn_pole_d, y, 0])
-      cylinder(d=grid_conn_pole_d, h=grid_conn_z + grid_conn_pole_h - tol, $fn=16);
   }
 }
 
@@ -982,45 +931,94 @@ module grid_spacer(length=1, height=1) {
   difference() {
     union() {
       translate([-grid_xy/2+tol, -grid_xy/2+tol, 0])
-        cube([grid_xy*length-tol*2, grid_xy-tol*2, grid_base_t]);
-      translate([-grid_xy/2+tol, -grid_xy/2, grid_z*height-grid_base_t])
-        cube([grid_xy*length-tol*2, grid_xy-tol*2, grid_base_t]);
-      translate([-grid_xy/2+tol, -grid_xy/2+tol, grid_base_t-grid_spacer_truss_t])
-        pyramid_box_truss(grid_xy*length-tol*2, grid_xy-tol*2, grid_z*height-grid_base_t,
+        pyramid_box_truss(grid_xy*length-tol*2, grid_xy-tol*2, grid_z*height-tol,
                       length, 1, 2,
                       grid_spacer_truss_t, grid_spacer_truss_t, grid_spacer_truss_t, 
-                      grid_spacer_truss_t, grid_spacer_truss_t,
+                      (height==1?0:grid_spacer_truss_t), grid_spacer_truss_t,
                       false, false, 16);
+      grid_block_base(length=length, height=height);
     }
     grid_block_base(length=length, height=height, void=true);
-    translate([0, 0, height*grid_z-grid_conn_z])
-      grid_connector_multi(length=length, void=true);
   }
 }
 
+grid_signal_base_w = 20;  // The width of the signal base
+grid_signal_minimal_h = 9; // Total height of the minimal signal block
+grid_conn_wedge_y = 15; // Grid connector wedge width in y
+grid_conn_wedge_x = 4; // Grid connector wedge depth in x
+grid_conn_total_x = 7; // Grid connector total depth (extension into another block)
+grid_conn_tol = 0.2; // Grid connector fit tolerance
+
+/* Module for the positive and negative sides of the grid block connector.
+   The input connections of each module should have the negative side and the
+   outputs the positive. */
+module grid_connector(void=false) {
+  translate([grid_xy/2-1, -grid_conn_wedge_y/4-(void?grid_conn_tol:0), 0])
+    cube([grid_conn_total_x+1+(void?grid_conn_tol:0), 
+          grid_conn_wedge_y/2+(void?grid_conn_tol*2:0), 
+          void?grid_z/2:grid_z/2]);
+  linear_extrude(height=grid_z/2, scale=[1,0.5]) {
+    hull() {
+      translate([grid_xy/2+grid_conn_total_x-grid_conn_wedge_x/2,
+                 -grid_conn_wedge_y/2+grid_conn_wedge_x/2])
+        circle(d=grid_conn_wedge_x+(void?grid_conn_tol*2:0), $fn=16);
+      translate([grid_xy/2+grid_conn_total_x-grid_conn_wedge_x/2,
+                 grid_conn_wedge_y/2-grid_conn_wedge_x/2])
+        circle(d=grid_conn_wedge_x+(void?grid_conn_tol*2:0), $fn=16);
+    }
+  }
+}
+
+/* Submodule forming the signal block base, including the end connectors. */
+module grid_signal_base(height=1, length=1, void=false) {
+  if (!void) {
+    for (i = [0 : length-1]) {
+      translate([grid_xy*i, 0, 0])
+        grid_peg();
+    }
+    translate([-grid_xy/2+tol, -grid_signal_base_w/2, 0])
+      cube([grid_xy*length-tol*2, grid_signal_base_w, grid_base_t]);
+  } else {
+    for (i = [0 : length-1]) {
+      translate([grid_xy*i, 0, -grid_z])
+        grid_peg(void=true);
+     }
+     /* Cut out the top part of the signal tube for the roofless minimal
+        track segment */
+     translate([-grid_xy/2, -grid_xy/2, grid_signal_minimal_h])
+       cube([grid_xy*length, grid_xy, grid_z]);
+     translate([-grid_xy, 0, 0])
+       grid_connector(void=true);
+     translate([(length)*grid_xy, 0, 0])
+       rotate([0, 0, 180])
+         grid_connector(void=true);
+  }
+}
+
+/* Signal element, a minimal straight conduit of given length. */
 module grid_block_signal(length=1, invert=false) {
   difference() {
     union() {
-      grid_block_base(length=length);
       translate([-grid_xy/2+tol, 0, grid_base_t+r+r_tol]) rotate([0, 90, 0])
         if (invert) 
           switch_dpipe(grid_xy*length-tol*2, inverter=invert);
         else
           dpipe(grid_xy*length-tol*2);
+      grid_signal_base(length=length);
     }
-    grid_block_base(void=true, length=length);  
+    grid_signal_base(void=true, length=length);
     translate([-grid_xy/2, 0, grid_base_t+r+r_tol]) rotate([0, 90, 0])
       if (invert)
-        switch_dpipe(grid_xy*length, void=true, inverter=invert);
+        switch_dpipe(grid_xy*(length+1), void=true, inverter=invert);
       else
-        switch_dpipe(grid_xy*length, void=true, roofonly=true);
-     for (i = [0 : length-1]) {
+        switch_dpipe(grid_xy*(length+1), void=true, roofonly=true);
+/*     for (i = [0 : length-1]) {
        translate([grid_xy*i, 0, r*3])
          sphere(r=grid_xy/3);
        translate([grid_xy*i+grid_xy/8, -grid_xy/8*3/sqrt(2), r*2])
         rotate([0, -45, 0])
           cube([grid_xy/4*3/sqrt(2), grid_xy/4*3/sqrt(2), grid_z-grid_conn_z-r*2]);
-     }
+     } */
   }
 }
 
@@ -1030,8 +1028,20 @@ module grid_block_fabric() {
   difference() {
     union() {
       grid_block_base(height=2);
+      // Output connector
+      rotate([0, 0, -90]) grid_connector();
+      // Input connector
+      rotate([0, 0, 180]) translate([0, 0, grid_z]) grid_connector();
+      // Support structure for the input connector
+      difference() {
+        translate([0, 0, grid_z]) rotate([180, 0, 180]) grid_connector();
+        translate([-grid_xy/2-grid_conn_total_x, 0, grid_z])
+          rotate([0, 45, 0])
+            translate([0, -grid_xy/2, -grid_z])
+              cube([grid_xy, grid_xy, grid_z]);          
+      }
       translate([-grid_xy/2+tol, -grid_xy/2+tol, 0]) // Printing help
-        cube([grid_xy/4.5, grid_xy/2, grid_z-grid_conn_z-tol]);
+        cube([grid_xy/4.5, grid_xy/2, grid_z-tol]);
       translate([-grid_xy/2+tol, 0, grid_base_t+r+r_tol+grid_z]) rotate([0, 90, 0]) {
         dpipe(grid_xy/2-grid_z/2-r2r/2-tol+0.01);
         translate([0, r2r/2, 0])
@@ -1056,16 +1066,17 @@ module grid_block_fabric() {
           pipe_curve(grid_z/2, 90);
     }
     grid_block_base(height=2, void=true);
-    translate([-grid_xy/2, 0, grid_base_t+r+r_tol+grid_z]) rotate([0, 90, 0]) {
-      dpipe(grid_xy/2-grid_z/2-r2r/2+0.1, void=true);
+    translate([-grid_xy/2-grid_conn_total_x, 0, 
+               grid_base_t+r+r_tol+grid_z]) rotate([0, 90, 0]) {
+      dpipe(grid_xy/2-grid_z/2-r2r/2+0.1+grid_conn_total_x, void=true);
       translate([0, r2r/2, 0])
-        pipe(grid_xy/2-grid_z/2+r2r/2+0.1, void=true); 
+        pipe(grid_xy/2-grid_z/2+r2r/2+0.1+grid_conn_total_x, void=true); 
     }
-    translate([0, -grid_xy/2, grid_base_t+r+r_tol]) rotate([0, 90, 90]) {
-      dpipe(grid_xy/2-grid_z/2-r2r/2+0.1, void=true);
-      translate([0, -r2r/2, 0])
-        pipe(grid_xy/2-grid_z/2+r2r/2+0.1, void=true); 
- 
+    translate([0, -grid_xy/2-grid_conn_total_x, grid_base_t+r+r_tol]) 
+      rotate([0, 90, 90]) {
+        dpipe(grid_xy/2-grid_z/2-r2r/2+0.1+grid_conn_total_x, void=true);
+        translate([0, -r2r/2, 0])
+          pipe(grid_xy/2-grid_z/2+r2r/2+0.1+grid_conn_total_x, void=true); 
     }
       translate([-grid_z/2+r2r/2, r2r/2, grid_base_t+r+r_tol+grid_z])
         rotate([-90, 0, 0])
@@ -1079,10 +1090,10 @@ module grid_block_fabric() {
       translate([-r2r/2, -r2r/2, grid_base_t+r+r_tol+grid_z/2])
         rotate([0, 90, 180])
           pipe_curve(grid_z/2, 90, void=true);
-      translate([-grid_xy/8-grid_xy/2, -grid_xy/6-grid_conn_slot_tol, 
-                 -grid_conn_z+grid_z-grid_conn_slot_tol])
-        cube([grid_xy/4+grid_conn_slot_tol, grid_xy/3+grid_conn_slot_tol*2, 
-              grid_conn_z+grid_conn_slot_tol*2]);
+//      translate([-grid_xy/8-grid_xy/2, -grid_xy/6-grid_conn_slot_tol, 
+//                 -grid_conn_z+grid_z-grid_conn_slot_tol])
+//        cube([grid_xy/4+grid_conn_slot_tol, grid_xy/3+grid_conn_slot_tol*2, 
+//              grid_conn_z+grid_conn_slot_tol*2]);
   }    
 }
 
@@ -1153,19 +1164,20 @@ module grid_assembly() {
 }
 
 //rotate([0, -90, 0])
-//grid_block_fabric();
+grid_block_fabric();
 //grid_gate();
-//translate([-grid_xy/2, 0, -grid_conn_z+grid_z]) grid_connector_slot();
 //grid_block_signal(length=4);
-//translate([0, grid_xy, 0]) grid_block_signal(length=1);
-//translate([0, grid_xy, grid_z]) grid_block_signal(length=1);
+//translate([-grid_xy, 0, 0]) grid_block_signal(length=1);
+//translate([-grid_xy, 0, grid_z]) grid_block_signal(length=1);
 //translate([0, -grid_xy, 0]) grid_block_signal(length=2, invert=true);
 //translate([grid_xy, 0, 0]) 
 //grid_block_signal(invert=true);
-translate([-grid_xy/2, 0, grid_z-grid_conn_z]) color("salmon") grid_connector();
-translate([grid_xy, 0, grid_z-grid_conn_z]) color("salmon") grid_connector_multi(length=1, width=1);
-grid_spacer(length=2, height=1);
-//translate([0, -grid_xy, 0]) grid_spacer(length=1, height=1);
+//translate([-grid_xy/2, 0, grid_z-grid_conn_z]) color("salmon") grid_connector();
+//translate([grid_xy, 0, grid_z-grid_conn_z]) color("salmon") grid_connector_multi(length=1, width=1);
+//difference() { union() {
+//grid_spacer(length=4, height=4);
+//translate([0, 0, -grid_z]) grid_spacer(length=1, height=1);
+//} translate([0, 0, -50]) cube([100, 100, 100]); }
 //translate([-grid_xy/2, 0, grid_z*2-grid_conn_z]) grid_connector();
 //translate([0,0 , grid_z*2-grid_conn_z]) grid_connector_multi(length=3, width=1
 //, omit_start_x=true, omit_end_x=true, 

@@ -760,10 +760,70 @@ Logic ideas:
          - Scaffolding for filling empty spaces. DONE
          - Some kind of slot (but not snap-in) system between block tops
            and connectors. DONE
+	   
+      - Testing 13.2.2020:
+       - Tested spacer (scaffolding) blocks with adjusted fit. Seems good
+         for now. Connector to block bottom fit is pretty tight and
+	 connector to block top is not loose, but pretty easy to remove.
+       - The idea of when to use these:
+        - The signal route must use connectors the whole way to ensure
+	  the flow
+	- The multi-connectors may be used to construct modules with
+	  multiple parallel signals tied together, for example switching
+	  fabric assemblies.
+	- The spacers have slots for the connectors so that they can be
+	  tied together at the top as well as on the bottom. Otherwise
+	  we would have the modules simply resting on the spacers.
+	- Also if we really want to scale this up, there will be a need
+	  for larger scale module system. With just the block system,
+	  replacing anything at the bottom requires disassembling anything
+	  above. 
+        - TODO:
 	 - Remove unnecessary roofs from longer blocks, add side supports
 	 - Obviously, the gate
 	 - Source/sink signals (combine/diverge non-binary signals)
 	 - Simpler ways of combining gates without building a whole switch 
            fabric section (one- or maybe two-level lateral movement between
            rows of gates oriented the same way)
-	  
+
+      - Refactoring 17.3.2020-17.2.2021:
+       - Scrap the connector system, too fiddly and too much stuff to print.
+       - Replace with direct module-to-module interlocking system.
+        - Let's go back to the dovetail idea.
+        - Female connector on input, male on output.
+         - Allows building from bottom up
+         - Female connector has a floor which the male rests on, this allows
+           for example the fabric switch blocks to support the incoming signals
+           themselves. The input side of the signal still needs support though,
+           but this can be much simpler than the previous pin connector idea,
+           since the dovetail fit guarantees the signal paths.
+         - Non-signal block connections can be simple square pegs and holes
+           to roughly hold things together. The signals will then tie the
+           structure together.
+        - Macroblock structure?
+         - Simplest form: plate with pegs to build on. However, connecting
+           macroblocks together needs something else, as connecting lots of
+           dovetail joints at the edge in one go is not really feasible.
+         - Maybe something where a short and tall interconnection block slides
+           from top to tie two macroblocks together at each position where
+           they have a signal crossing between them. Ensures both the signal
+           connectivity and locks the blocks together. If the connection is good
+           enough, would even allow lifting several macroblocks together.
+          - Would it also be a good idea to use these interconnection spaces to
+            drop signals down to a lower layer of macroblocks? Probably depends
+            on how specialized the macroblocks end up being. If the design is
+            usually more efficient when dropping down inside a macroblock, it
+            would be a waste to require routing the signal to the edge, dropping
+            it there and routing it back inside the next block again.
+
+      - TODO+DONE 11.3.2021:
+       - Design a dovetail connection between modules
+        - DONE, actually more of a jigsaw puzzle connection
+       - Make the signal block minimal
+        - DONE for the version with no support for blocks above
+       - Redesign the scaffolding block with peg connections
+        - DONE
+       - Redesign a minimal scaffolding block. Remove the top and bottom solid
+         blocks and use just the truss structure and peg blocks.
+        - TODO
+
