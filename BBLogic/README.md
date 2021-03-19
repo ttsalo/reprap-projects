@@ -825,5 +825,14 @@ Logic ideas:
         - DONE
        - Redesign a minimal scaffolding block. Remove the top and bottom solid
          blocks and use just the truss structure and peg blocks.
-        - TODO
+        - DONE
+       - Redesign the switch fabric block with peg connections
+        - DONE, but:
+         - The printability now needs some work
+
+      - 13.3.2021 Connection issues and possible solutions:
+       - Change the setup so that signal tracks have negative connectors and other
+         elements have positive ones and reverse the conicality
+       - This actually makes a lot of sense, allowing straight signals to act as
+         simple bridges with no other support.
 
