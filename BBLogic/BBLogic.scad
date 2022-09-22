@@ -31,8 +31,9 @@ sync_frame_pos = 15; // Sync frame start
 switch_ramp_l = r + 0.5; // Length of the ramp in the switch section
 roof_cut = r*2; // Width of the cut in open-roof pipe sections
 
-// Basic divided 2D double track
-module dpipe_2d(void=false, openroof=false, r_extra=0) {
+// Basic divided 2D double track. Openroof omits a small width of the roof,
+// top_cut takes off a percentage of the diameter from the whole top part.
+module dpipe_2d(void=false, openroof=false, r_extra=0, top_cut=0.0) {
     difference() {
       union() {
         translate([0, -r2r/2, 0])
@@ -41,17 +42,22 @@ module dpipe_2d(void=false, openroof=false, r_extra=0) {
           circle(r=r+r_tol+(void ? 0 : r_t)+r_extra, $fn=24);
       }
     if (openroof) {
-        translate([-r-r_tol-r_t-0.1-r_extra, -roof_cut/2])
-         square([r, roof_cut]);   
+      translate([-r-r_tol-r_t-0.1-r_extra, -roof_cut/2])
+        square([r, roof_cut]);   
+    }
+    if (top_cut > 0.0) {
+      translate([-r-r_tol-r_t-0.1-r_extra, -r2r/2-r-r_tol-r_t-0.1-r_extra])
+        square([(r+r_tol+r_t+0.1+r_extra)*top_cut*2,               
+                 r2r+r*2+r_tol*2+r_t*2+0.2+r_extra*2]);   
     }
   }
 }
 
 // Basic divided double track section
-module dpipe(l, void=false, openroof=false, r_extra=0, labels=false) {
+module dpipe(l, void=false, openroof=false, r_extra=0, labels=false, top_cut=0.0) {
   translate([0, 0, (void ? -0.1 : 0)])
     linear_extrude(height=l + (void ? 0.2 : 0))
-      dpipe_2d(void=void, openroof=openroof, r_extra=r_extra);
+      dpipe_2d(void=void, openroof=openroof, r_extra=r_extra, top_cut=top_cut);
   if (labels) {
     translate([0, r2r/2-r/12, l/2-r/2])
       rotate([0, -90, 0])
@@ -79,19 +85,26 @@ module dtwist(l, void=false) {
 }
 
 // Curve a pipe for the an 'angle' section of the torus
-module pipe_curve(curve_r, angle, void=false) {
+// Currently limited to 50% top cut.
+module pipe_curve(curve_r, angle, void=false, top_cut=0.0) {
   translate([0, curve_r, 0])
   difference() {
     rotate_extrude(convexity = 10, $fn=60)
      translate([curve_r, 0, 0])
-      circle(r=r+r_tol+(void ? 0 : r_t), $fn=24);
+       circle(r=r+r_tol+(void ? 0 : r_t), $fn=24);
     translate([-r*2-curve_r, 0, 0])
       cube(r*4+curve_r*2, center=true);
     rotate([0, 0, 180+angle])
       translate([-r*2-curve_r, 0, 0])
         cube(r*4+curve_r*2, center=true);
+    if (top_cut != 0.0 && !void)
+      rotate_extrude(convexity = 10, $fn=60)
+        translate([curve_r+(top_cut > 0 ? 0 : -r*2), (-r-r_tol-r_t-0.1), 0])
+          square([r*2, r*2+r_tol*2+r_t*2+0.2]);
   }
 }
+
+//pipe_curve(45, 45, top_cut=-0.5);
 
 // Two back-to-back curve sections
 module pipe_double_curve(curve_r, angle, void=false) {
@@ -251,7 +264,7 @@ wheel_ratchet_r = 16/2;
 wheel_ratchet_tooth = 3;
 
 // Wheel offset from track centerline vertically
-wheel_offset_z = 12;
+wheel_offset_z = 50;
 
 wheel_minor_r = 7;
 
@@ -260,7 +273,7 @@ ratchet_shaft_x = 11; // Shaft centerline x position
 ratchet_shaft_r = 4/2;
 ratchet_shaft_holder_r = 12/2;
 ratchet_shaft_l = 16;
-ratchet_shaft_z_offset = 11; // Shaft centerline offset from track centerline in y
+ratchet_shaft_z_offset = 50; // Shaft centerline offset from track centerline in y
 ratchet_shaft_holder_gap = 3.5;
 ratchet_arm_w = 8;
 ratchet_arm_r = 3/2;
@@ -541,7 +554,7 @@ module sync_void() {
 module sync_frame_parts() {
     for (mirror = [true, false])
         mirror([0, mirror ? 1 : 0, 0]) {
-            translate([gate_x, R2R/2, wheel_offset_z])
+            translate([gate_x, 0, wheel_offset_z])
               rotate([90, 0, 0])
                 translate([0, 0, wheel_shaft_min_y])
                   rotate([0, 0, -135])
@@ -1105,17 +1118,22 @@ module grid_block_fabric() {
 gate_input_straight = 5;
 gate_output_straight = 5;
 
-/* The following two are critical to make the gate main pipe connected but
+/* The following three are critical to make the gate main pipe connected but
    these are currenty brute forced to fit, so these need adjusting if other
    parameters are changed */
 gate_io_curve_r = 20;
 gate_io_curve_angle = 14.46;
 gate_middle_length = 91.1;
 
+// Take the top off the gate
+gate_top_cut = 0.5;
+
+// Syncro part positioning, relative to the input end of the gate straight part.
+
+
 /* Gate with grid connectors
    Size fixed to 3x2x2, origin on the lower level middle of the input edge */
 module grid_gate() {
-    //sync_frame(all_parts=true);
   difference() {
     union() {
       // Input connectors
@@ -1124,37 +1142,38 @@ module grid_gate() {
         translate([grid_xy/2, i, grid_z]) rotate([0, 0, 180]) grid_connector();
         // Input straight pipe section
         translate([0, i, grid_z+grid_base_t+r+r_tol]) rotate([0, 90, 0]) 
-          dpipe(gate_input_straight);
+          dpipe(gate_input_straight, top_cut=gate_top_cut);
         // Input curved pipe section
         for (j = [-r2r/2, r2r/2])
           translate([gate_input_straight, i+j, grid_z+grid_base_t+r+r_tol]) 
             rotate([-90, 0, 0]) 
-              pipe_curve(gate_io_curve_r, gate_io_curve_angle);
+              pipe_curve(gate_io_curve_r, gate_io_curve_angle, top_cut=gate_top_cut);
         // Output connectors
         translate([grid_xy*2.5, i, 0]) grid_connector();
         // Output straight pipe section
         translate([grid_xy*3-gate_output_straight, i, grid_base_t+r+r_tol]) 
           rotate([0, 90, 0]) 
-            dpipe(gate_output_straight);
+            dpipe(gate_output_straight, top_cut=gate_top_cut);
         // Output curved pipe section
         for (j = [-r2r/2, r2r/2])
           translate([grid_xy*3-gate_input_straight, i+j, +grid_base_t+r+r_tol]) 
             rotate([90, 0, 180]) 
-              pipe_curve(gate_io_curve_r, gate_io_curve_angle);
+              pipe_curve(gate_io_curve_r, gate_io_curve_angle, top_cut=-gate_top_cut);
         // Middle straight pipe section
         translate([gate_input_straight, 0, grid_z+grid_base_t+r+r_tol-gate_io_curve_r]) 
           rotate([0, gate_io_curve_angle])
-            translate([0, i, gate_io_curve_r]) 
-              rotate([0, 90, 0]) 
-                dpipe(gate_middle_length);
+            translate([0, i, gate_io_curve_r])
+              grid_gate_middle(top_cut=gate_top_cut);
       }
+      // Sync static parts
+      sync_frame_parts();
     }
     // Void section
     for (i = [-grid_xy/2, grid_xy/2]) {
        // Input straight void
        translate([-grid_conn_total_x-1, i, grid_z+grid_base_t+r+r_tol]) 
          rotate([0, 90, 0]) 
-           dpipe(gate_input_straight+grid_conn_total_x+1, void=true);
+           dpipe(gate_input_straight+grid_conn_total_x+1, void=true, openroof=true);
         // Input curved pipe void
         for (j = [-r2r/2, r2r/2])
           translate([gate_input_straight, i+j, grid_z+grid_base_t+r+r_tol]) 
@@ -1173,16 +1192,27 @@ module grid_gate() {
         translate([gate_input_straight, 0, grid_z+grid_base_t+r+r_tol-gate_io_curve_r]) 
           rotate([0, gate_io_curve_angle])
             translate([0, i, gate_io_curve_r]) 
-              rotate([0, 90, 0]) 
-                dpipe(gate_middle_length, void=true);
+              grid_gate_middle(void=true);
     }
-  }    
+    sync_void();
+  }
+  // Sync moving parts, for demonstration purposes
+  translate([gate_x, 0, wheel_offset_z])
+    double_wheels();
+  translate([gate_x, 0, wheel_offset_z])
+    rotate([0, follower_rest_angle, 0])
+      rotate([180, 0, 0])
+        follower_arm();
+  translate([ratchet_shaft_x, +R2R/2, ratchet_shaft_z_offset])
+    rotate([0, 160, 0]) mirror([1, 0, 0]) ratchet_arm();
+  translate([ratchet_shaft_x, -R2R/2, ratchet_shaft_z_offset])
+    rotate([0, 170, 0]) mirror([1, 0, 0]) ratchet_arm();
 }
 
 /* The straight, slanted middle section of the gate */
-module grid_gate_middle(void=false) {
+module grid_gate_middle(void=false, top_cut=0.0) {
   rotate([0, 90, 0]) 
-    dpipe(gate_middle_length, void=void);
+    dpipe(gate_middle_length, void=void, top_cut=top_cut);
 }
 
 module grid_gate_old() 
@@ -1285,10 +1315,9 @@ grid_gate();
 //kick_and_sink_dpipe(35, 55, 7, void=true);
 
 //difference() {
-//  switch_dpipe(30, roofonly=true);
-//  switch_dpipe(30, roofonly=true, void=true);
+//  switch_dpipe(30, roofonly=true, openroof=true);
+//  switch_dpipe(30, roofonly=true, openroof=true, void=true);
 //}
-
 
 //rotate([0, slope, 0])
 //rotate([0, -90, 0])
