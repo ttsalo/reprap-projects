@@ -72,10 +72,19 @@ module dpipe(l, void=false, openroof=false, r_extra=0, labels=false, top_cut=0.0
 }
 
 // Basic single track section
-module pipe(l, void=false, r_extra=0) {
-  translate([0, 0, (void ? -0.1 : 0)])
-    cylinder(r=r+r_tol+(void ? 0 : r_t)+r_extra, h=l + (void ? 0.2 : 0), $fn=24);
+module pipe(l, void=false, r_extra=0, top_cut=0.0) {
+  difference() {
+    translate([0, 0, (void ? -0.1 : 0)])
+      cylinder(r=r+r_tol+(void ? 0 : r_t)+r_extra, h=l + (void ? 0.2 : 0), $fn=24);
+    if (top_cut > 0.0 && !void) {
+      translate([-0.1-r*3-r_tol-r_t-r_extra+(r+r_tol+r_t+r_extra)*top_cut*2, 
+                 -r-r_tol-r_t-r_extra, -0.1])
+      cube([r*2+0.2, r*2+r_tol*2+r_t*2+r_extra*2, l+0.2]);
+    }  
+  }    
 }
+
+//pipe(30, top_cut=0.5);
 
 // Twisting inverter. Note: does not work except for long lengths.
 // Twisting circle extrude does not generally pass a sphere.
@@ -99,12 +108,13 @@ module pipe_curve(curve_r, angle, void=false, top_cut=0.0) {
         cube(r*4+curve_r*2, center=true);
     if (top_cut != 0.0 && !void)
       rotate_extrude(convexity = 10, $fn=60)
-        translate([curve_r+(top_cut > 0 ? 0 : -r*2), (-r-r_tol-r_t-0.1), 0])
-          square([r*2, r*2+r_tol*2+r_t*2+0.2]);
+        translate([curve_r+(top_cut > 0 ? 0 : -r-r_tol-r_t), (-r-r_tol-r_t-0.1), 0])
+          square([r+r_tol+r_t, r*2+r_tol*2+r_t*2+0.2]);
   }
 }
 
-//pipe_curve(45, 45, top_cut=-0.5);
+//pipe_curve(grid_z/2, 90, top_cut=-0.5);
+//pipe_curve(14, 90, top_cut=-0.5);
 
 // Two back-to-back curve sections
 module pipe_double_curve(curve_r, angle, void=false) {
@@ -1066,22 +1076,22 @@ module grid_block_fabric() {
       }
       // Output straight section
       translate([0, -grid_xy/2+tol, grid_base_t+r+r_tol]) rotate([0, 90, 90]) {
-        dpipe(grid_xy/2-grid_z/2-r2r/2-tol+0.01);
+        dpipe(grid_xy/2-grid_z/2-r2r/2-tol+0.01, top_cut=0.5);
         translate([0, -r2r/2, 0])
-          pipe(grid_xy/2-grid_z/2+r2r/2-tol+0.01); 
+          pipe(grid_xy/2-grid_z/2+r2r/2-tol+0.01, top_cut=0.5); 
       }
       translate([-grid_z/2+r2r/2, r2r/2, grid_base_t+r+r_tol+grid_z])
         rotate([-90, 0, 0])
           pipe_curve(grid_z/2, 90.1);
       translate([r2r/2, r2r/2, grid_base_t+r+r_tol+grid_z/2])
         rotate([0, 90, 180])
-          pipe_curve(grid_z/2, 90);
+          pipe_curve(grid_z/2, 90, top_cut=-0.5);
       translate([-grid_z/2-r2r/2, -r2r/2, grid_base_t+r+r_tol+grid_z])
         rotate([-90, 0, 0])
           pipe_curve(grid_z/2, 90.1);
       translate([-r2r/2, -r2r/2, grid_base_t+r+r_tol+grid_z/2])
         rotate([0, 90, 180])
-          pipe_curve(grid_z/2, 90);
+          pipe_curve(grid_z/2, 90, top_cut=-0.5);
     }
     // Upper pipe section cutout
     translate([-grid_xy, -grid_xy, grid_z+grid_signal_minimal_h])
@@ -1282,8 +1292,8 @@ module grid_assembly() {
 }
 
 //rotate([0, -90, 0])
-//grid_block_fabric();
-grid_gate();
+grid_block_fabric();
+//grid_gate();
 //grid_block_signal(length=3);
 //translate([grid_xy*3.5, -grid_xy/2, 0]) grid_block_signal(length=1);
 //translate([grid_xy*-.5, -grid_xy/2, grid_z]) grid_block_signal(length=1);
