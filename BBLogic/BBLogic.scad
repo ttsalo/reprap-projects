@@ -928,25 +928,31 @@ module grid_peg(height=1, void=false) {
   translate([-grid_peg_xy/2-(void?grid_peg_tol:0), 
              -grid_peg_xy/2-(void?grid_peg_tol:0), 0])
     cube([grid_peg_xy+(void?grid_peg_tol*2:0), 
-          grid_peg_xy+(void?grid_peg_tol*2:0), 
-          grid_z*height+grid_peg_z+(void?grid_peg_tol:0)]);
+          grid_peg_xy+(void?grid_peg_tol*2:0),
+          (height==0 ? 
+          (void ? grid_peg_z+grid_peg_tol : grid_peg_z*3) :
+          grid_z*height+grid_peg_z+(void?grid_peg_tol:0))]);
   if (!void) {
     translate([-grid_peg_xy, -grid_peg_xy, 0])
       cube([grid_peg_xy*2, grid_peg_xy*2, grid_peg_z*2]);
   }
 }
 
-module grid_block_base(height=1, length=1, void=false) {
+module grid_block_base(height=1, length=1, width=1, void=false) {
   if (!void) {
     for (i = [0 : length-1]) {
-      translate([grid_xy*i, 0, 0])
-        grid_peg(height=height);
+      for (j = [0 : width-1]) {
+        translate([grid_xy*i, grid_xy*j, 0])
+          grid_peg(height=height);
+      }
     }
   } else {
     for (i = [0 : length-1]) {
-      translate([grid_xy*i, 0, -grid_z*height])
-        grid_peg(height=height, void=true);
-     }
+      for (j = [0 : width-1]) {
+        translate([grid_xy*i, grid_xy*j, -grid_z*height])
+          grid_peg(height=height, void=true);
+      }
+    }
   }
 }
 
@@ -965,12 +971,70 @@ module grid_spacer(length=1, height=1) {
   }
 }
 
+module grid_spacer_pegs(length=1, width=1) {
+    for (i = [0 : width-1]) {
+        translate([-grid_xy/2 + length*grid_xy, grid_xy/2 + i*grid_xy, 0])
+          difference() {
+            grid_connector(extra_back=1);
+            translate([grid_conn_wedge_y, -grid_conn_wedge_y, grid_peg_z*2])
+              cube([grid_conn_wedge_y*2, grid_conn_wedge_y*2, grid_signal_minimal_h]);
+          }
+      }
+    
+}
+
+module grid_spacer_pegholes(length=1, width=1, void=false) {
+  for (i = [0 : width-1]) {
+    translate([-grid_xy/2, grid_xy/2 + i*grid_xy, 0])
+      difference() {
+        union() {
+          grid_connector(void=true, extra_back=1);
+          if (!void) translate([grid_xy/2+tol, -grid_conn_wedge_y/2, 0])
+            cube([grid_conn_total_x+grid_spacer_truss_t, 
+              grid_conn_wedge_y, grid_peg_z*2]);
+        }
+        //translate([grid_conn_wedge_y, -grid_conn_wedge_y, grid_peg_z*2])
+        //  #cube([grid_conn_wedge_y*2, grid_conn_wedge_y*2, grid_signal_minimal_h]);
+
+      }
+  }
+}
+
+module grid_spacer_zeroh(length=1, width=1) {
+  difference() {
+    union() {
+      translate([grid_xy/2, grid_xy/2, 0])
+        grid_block_base(height=0, length=length, width=width);
+      x_pitch = (grid_xy*length-tol*2-grid_spacer_truss_t)/length;
+      y_pitch = (grid_xy*width-tol*2-grid_spacer_truss_t)/width;
+      translate([tol, tol, 0])
+        truss_lattice(grid_xy*length-tol*2, grid_xy*width-tol*2, 
+                      length, width, x_pitch, y_pitch,
+                      grid_peg_z*2, grid_spacer_truss_t, grid_spacer_truss_t);
+      // Right side pegholes
+      grid_spacer_pegs(length=length, width=width);
+      mirror([-1, 1, 0]) grid_spacer_pegs(length=length, width=width);
+      grid_spacer_pegholes(length=length, width=width);
+      mirror([-1, 1, 0]) grid_spacer_pegholes(length=length, width=width);
+    }
+    translate([grid_xy/2, grid_xy/2, 0])
+      grid_block_base(height=0, length=length, width=width, void=true);
+    grid_spacer_pegholes(length=length, width=width, void=true);
+    mirror([-1, 1, 0]) grid_spacer_pegholes(length=length, width=width, void=true);
+  }
+}
+
 grid_signal_base_w = 20;  // The width of the signal base
 grid_signal_minimal_h = 9; // Total height of the minimal signal block
 grid_conn_wedge_y = 15; // Grid connector wedge width in y
 grid_conn_wedge_x = 4; // Grid connector wedge depth in x
 grid_conn_total_x = 7; // Grid connector total depth (extension into another block)
 grid_conn_tol = 0.2; // Grid connector fit tolerance
+
+/* Increasing the below parameter will slow down incoming signals as there is a 
+   risk of a high speed signal bouncing back when entering the block. This can
+   be used to create a block to slow down too fast signals (use 14 instead of 9) */
+grid_block_top_minimal_h = 9; // Fabric block top minimal height variation
 
 /* Module for the positive and negative sides of the grid block connector.
    The input connections of each module should have the negative side and the
@@ -1061,8 +1125,10 @@ module grid_block_fabric() {
       // Support structure for the input connector
       difference() {
         translate([0, 0, grid_z]) rotate([180, 0, 180]) grid_connector(extra_back=15);
+        translate([0, 0, -grid_z/2]) cube([grid_xy*2, grid_xy, grid_z], center=true);
+        // Cutout for clearing an adjacent track
         translate([-grid_xy/2-grid_conn_total_x, 0, grid_z])
-          rotate([0, 45, 0])
+          rotate([0, 70, 0])
             translate([0, -grid_xy/2, -grid_z])
               cube([grid_xy, grid_xy, grid_z]);          
       }
@@ -1076,25 +1142,25 @@ module grid_block_fabric() {
       }
       // Output straight section
       translate([0, -grid_xy/2+tol, grid_base_t+r+r_tol]) rotate([0, 90, 90]) {
-        dpipe(grid_xy/2-grid_z/2-r2r/2-tol+0.01, top_cut=0.5);
+        dpipe(grid_xy/2-grid_z/2-r2r/2-tol+0.01, top_cut=0.0); // 0.5);
         translate([0, -r2r/2, 0])
-          pipe(grid_xy/2-grid_z/2+r2r/2-tol+0.01, top_cut=0.5); 
+          pipe(grid_xy/2-grid_z/2+r2r/2-tol+0.01, top_cut=0.0); // 0.5); 
       }
       translate([-grid_z/2+r2r/2, r2r/2, grid_base_t+r+r_tol+grid_z])
         rotate([-90, 0, 0])
           pipe_curve(grid_z/2, 90.1);
       translate([r2r/2, r2r/2, grid_base_t+r+r_tol+grid_z/2])
         rotate([0, 90, 180])
-          pipe_curve(grid_z/2, 90, top_cut=-0.5);
+          pipe_curve(grid_z/2, 90, top_cut=0.0); // -0.5);
       translate([-grid_z/2-r2r/2, -r2r/2, grid_base_t+r+r_tol+grid_z])
         rotate([-90, 0, 0])
           pipe_curve(grid_z/2, 90.1);
       translate([-r2r/2, -r2r/2, grid_base_t+r+r_tol+grid_z/2])
         rotate([0, 90, 180])
-          pipe_curve(grid_z/2, 90, top_cut=-0.5);
+          pipe_curve(grid_z/2, 90, top_cut=0.0); //-0.5);
     }
     // Upper pipe section cutout
-    translate([-grid_xy, -grid_xy, grid_z+grid_signal_minimal_h])
+    translate([-grid_xy, -grid_xy, grid_z+grid_block_top_minimal_h])
        cube([grid_xy*2, grid_xy*2, grid_z]);
     grid_block_base(height=2, void=true);
     translate([-grid_xy/2-grid_conn_total_x, 0, 
@@ -1292,8 +1358,9 @@ module grid_assembly() {
 }
 
 //rotate([0, -90, 0])
-grid_block_fabric();
+//grid_block_fabric();
 //grid_gate();
+//translate([grid_xy/2, 0, 0]) rotate([0, 0, -90])
 //grid_block_signal(length=3);
 //translate([grid_xy*3.5, -grid_xy/2, 0]) grid_block_signal(length=1);
 //translate([grid_xy*-.5, -grid_xy/2, grid_z]) grid_block_signal(length=1);
@@ -1303,9 +1370,10 @@ grid_block_fabric();
 //grid_block_signal(invert=true);
 //translate([-grid_xy/2, 0, grid_z-grid_conn_z]) color("salmon") grid_connector();
 //translate([grid_xy, 0, grid_z-grid_conn_z]) color("salmon") grid_connector_multi(length=1, width=1);
-//difference() { union() {
-//grid_spacer(length=1, height=2);
-//translate([0, 0, -grid_z]) grid_spacer(length=1, height=1);
+//difference() { union() {´
+//grid_block_base(length=2, width=2, height=1);
+grid_spacer_zeroh(length=2, width=2);
+//translate([-grid_xy/2, grid_xy/2, -grid_z]) grid_spacer(length=1, height=1);
 //} translate([0, 0, -50]) cube([100, 100, 100]); }
 //translate([-grid_xy/2, 0, grid_z*2-grid_conn_z]) grid_connector();
 //translate([0,0 , grid_z*2-grid_conn_z]) grid_connector_multi(length=3, width=1

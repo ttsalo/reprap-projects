@@ -835,4 +835,54 @@ Logic ideas:
          elements have positive ones and reverse the conicality
        - This actually makes a lot of sense, allowing straight signals to act as
          simple bridges with no other support.
+         
+      - Picking up again on 23.9.2022
+       - The new connector idea still seems sound. It reinforces the signal path
+         specifically and keeps the scaffolding as simple support. On the negative
+         side, printability when off the printing surface is not great, but for
+         multi block high structures it's going to be a problem anyways.
+       - Redesigning the gate as roofless track-like structure, printed in the
+         final orientation.
+        - Make the gate from two separate single signal blocks?
+       
+       - Testing 6.10.2022
+        - Tried improving the printability of the fabric block
+         - There was a possibility of a bounce from inner to outer track on high
+           speed input
+         - However making the input curves higher slows down the balls. Might be
+           useful for slowing down the signals in some designs.
+         - Removing upper portions of output curves didn't work, would allow balls
+           to move between tracks
+	 - After tuning various parameters the block can be printed with minimal
+	   supports and cleanup. Remember to adjust the support angles so that
+	   the ball channel only gets support right as the exit end.
 
+       - Development on 9.12.2022
+        - Refactor the gate for the new connector system and solve some problems
+	- Use roofless tubes for the gate, requires some work for refitting
+	  the moving parts
+	- What supports the upper end of the gate?
+	 - It needs to have something along the full length to put it on
+	   support blocks underneath. Adjusted 3x1 spacer block so that it
+	   works also as a print support?
+	  - Probably just the base plate and then whatever on top
+	- How do we put anything on top of the gate?
+	 - Either an integral structure or external supports
+	 - Thinking of a larger circuit, each gate drops the ball one level
+	   and the switch fabric another level.
+	 - Meaning that the gate above will be 8 levels up, leaving 6 empty
+	   grid levels between them (if we want to make a helix structure)
+	 - This makes fully printed superstructure a very big print for any
+	   larger circuit and the sane approach would be to use non-printed
+	   parts
+
+       - Testing 10.12.2022:
+        - Modular interlocking build plate DONE
+	- This is a must, assembling on flat surface is a no-go
+	- However it turns out that making the spacer pegs loose is a bad
+	  idea. The tightly fitting track system is not going to be exactly
+	  precise and if everything under it is loose, it will tend to knock
+	  the spacer towers over when doing anything.
+	 - TODO: change the fit to be precise. The original idea of being able
+	   to easily remove and insert large track modules is not worth the
+	   downside of everything being built on a shaky foundation.
