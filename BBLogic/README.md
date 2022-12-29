@@ -886,3 +886,160 @@ Logic ideas:
 	 - TODO: change the fit to be precise. The original idea of being able
 	   to easily remove and insert large track modules is not worth the
 	   downside of everything being built on a shaky foundation.
+        - Thinking about supporting larger circuits...
+	 - 1 gate wide (2 signals) fabric block requires 2 supports and the
+	   gate block 4 supports.
+	 - 2 gate wide fabric 4 supports and gate block 8 supports
+	 - 3 gate wide fabric 6 supports and gate block 12 supports
+	 - The fabric blocks are never in a line so they will require
+	   a set of single towers
+	 - However the gate block supports are always in two straight lines
+	 - So, let's say we are 6 high, 3 gate wide, we would need total
+	   of 12*6=72 spacer blocks
+	 - But we can also use just 2 6 wide single height spacers (12 blocks)
+	   and 4 5 high towers at the ends (20 blocks) cutting the total to
+	   just 32.
+	 - From this we could calculate the spacer block count for a given
+	   circuit length and width. For a 3 wide circuit, 1 additional length
+	   would require 6+4 blocks.
+	 - Also, the fabric can turn signals in both directions so we can
+	   build a zig-zag pattern (l-r-l-r) or a series of u-turns (l-l-r-r)
+	   The first gives a less wide staight line and the second wider but
+	   shorter straight line, with neither requiring building on top of
+	   the existing circuit. Both leave empty space though.
+
+       - Testing 13.12.2022:
+        - Some interesting spacer results:
+	 - 1 and 2 high spacers don't need crossbracing. Using just vertical
+	   bars seems to work fine.
+	 - 3 or higher vertical bars don't print nicely, there's too much
+	   wobble at the top. This means we have to split higher supports
+	   into at most 2-high sections.
+	 - 3mm diameter crossbraces don't print nicely either, too little
+	   cross section and the print ends uneven and weak.
+	 - Increased crossbraces to 4mm dia and this helped, but because
+	   of the overhangs the print doesn't go that smooth and now the
+	   accompanying vertical bars are a problem even 2-high.
+	 - However it turns out that with 2-high sections and 4mm crossbraces
+	   the vertical bars are not even needed, the structure is strong
+	   enough with just the cross-truss.
+	 - So, TODO: remove vertical bars from spacers 3 or higher.
+	   - Question: is the 3 high spacer ok with just one section?
+
+        - Now for a new problem:
+	 - Because the fabric blocks and gates are both now planned to have
+	   peg connectors, they need to have at least one length of track
+	   between them. This will add significant extra length to the
+	   circuit.
+	 - The fabric blocks need pegs on both input and output since the
+	   curvature begins right away (well, 1mm away)
+	 - So, change the gate to have peg holes instead, so we can plug
+	   a gate directly to two fabric blocks when needed. This should
+	   not be a problem since the gate does already have straight
+	   sections at input and output (these might need to be lengthened)
+	 - This now also means that the track sections need redesign'
+	  - Which then raises the problem that the peg sections were
+	    supposed to be the supporting ones and the holes supported ones.
+	  - However, by inverting the wedge shape we can just as well
+	    make the hole the supporting one.
+	   - Which then raises another problem, how do we fit supporting
+	     peg directly to supporting hole? The peg widens downwards
+	     and the hole narrows downwards.
+	 - WHAT IF... we just make the gate the supported one? This might
+	   solve other problems as well. The track sections were supposed
+	   to be bridges, but it shouldn't be an issue to move the spacers
+	   from the gate ends one space to the adjacent track end when needed.
+	   There's the slight problem of connecting two gates directly to
+	   each other but that should be solvable with a special spacer.
+	  - Nice features:
+	   - Gate base track is now printable slanted with no supports
+	   - Signal track blocks will be chainable with no extra effort
+	   - DONE
+
+       - Testing 14.12.2022:
+        - The new gate track works great. Now only needs the logic bits.
+	- The fabric block still has the problem that a ball can bounce
+	  from the inner to the outer track. At least too much speed
+	  triggers this, maybe something else (spin?). Same thing can
+	  happen after the exit.
+	 - Might not be a problem in practice as this test was with smooth
+	   gate tracks, real gates are not so fast.
+        - Modified the signal track connectors to work with the new idea
+	- Also a note about the build plate sections: The fabric block
+	  sections need to be square but the gate section N*3 by W.
+	- Problem: The integral support for the fabric block now prevents
+	  putting a supported 1-length signal section at the input, this
+	  will be needed in circuits now that the signal supports the gate
+
+       - Testing 15.12.2022:
+        - Fixed generating non-square build plate sections, printing
+	  some 4x3 to put between previous 4x4 plates (also 3x4, for
+	  putting after turning 90 degrees while keeping the peg
+	  orientations constant)
+
+       - Testing 20.12.2022:
+        - Printing some 4x3 and 3x4 plates to construct a build plate
+	  assembly for longer circuits
+	- TODO: End piece for signal tracks to stop balls from going everywhere
+	 - DONE, works fine
+	 - We'll also need a variant that fits into a gate directly.
+	- Printing a gate track with an output support, seems this will be
+	  needed pretty often
+	 - However chaining gates also needs either a peg-peg adapter piece
+	   or changing the gate output to a peg, so it can support the next
+	   gate
+	 - TODO: design the gate-to-gate support block
+	  - DONE, and we can probably rely on the two jigsaw pegs, just
+	    have small notch on the uphill gate to clear the center peg
+	    of the spacer block
+	   - Minor TODO: make sure this works on longer blocks, we'll
+	     want to have one full-width block to support all gates at once
+	- Fabric block fed directly from a empty gate track has serious
+	  problems with balls jumping the track
+	 - Adding a 2-long signal between the gate track output and fabric
+	   input seems to fix this
+	 - Solution maybe just avoiding feeding fabrics directly from
+	   transfer tracks?
+	 - Or adding some sort of a speed bump? Maybe just the wheel from
+	   the gate. That should work, it will have some friction and it
+	   will allow using a single kind of part for transfer tracks and gates.
+	 
+
+       - Full adder planning 20.12.2022:
+        - Needs 7 gates total, 2 repeaters, 5 actual gates
+	- 5 gates deep, circuit has only 3 but the need to repeat signals
+	  dictates this.
+	- 5 signals wide, 2 gates wide
+	- Only one fabric block needed
+	- The inputs are at level 6 if output is level 0
+
+       - Porting the old full gate mechanics to grid system 21.12.2022:
+        - First iteration of the new gate with old mechanism ported to it
+	- Bugs:
+	 - Ratchet arms will tend to fall of even with the collars added
+	  - DONE: added collars to both sides, this should fix the issue.
+	 - Wheel arm will also fall off from the shorter side
+	  - DONE: added collars to the shorter side only, idea is to avoid
+	    jamming as the gate track sections are not one piece
+	 - Wheel is a little bit too low, balls will get stuck
+	  - DONE: raised by 1mm
+         - The moving parts are now as far up as possible, which means that
+	   balls arriving at minimal speed will not get much more before
+	   hitting the mechanical parts. Move the assembly downhill?
+	 - The wheel is too low, balls can pass but just barely.
+	 - The ratchet-tooth angle may be slightly wrong, meaning that
+	   when one ball is loading the wheel and the other channel's
+	   ratchet arm, that may cause too much friction for the second ball.
+
+       - Testing 22.12.2022:
+        - Moved the mechanicals 15mm downhill
+	- Adjusted the wheel 1mm up
+	- Other ideas:
+	 - Maybe make the gate track pair one piece?
+	  - Yeah, this is a good idea. The grid system itself doesn't locate the
+	    gates well enough.
+
+       - Testing 28.12.2022:
+        - Constructing the gates on top of single towers is not a great idea.
+	  Fixed the gate support piece to allow wider structures. 
+	 

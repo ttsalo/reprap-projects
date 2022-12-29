@@ -22,7 +22,7 @@ h_pitch = h*cos(-angle);
 
 r = 12.7/2;    // Ball radius
 r2r = 10;       // Ball separation in a double track
-R2R = 26;      // Track separation
+R2R = 26;      // Track separation OBSOLETE, replaced by grid_xy
 r_tol = 1;   // Ball track tolerance
 r_t = 1.8;       // Ball track wall thickness
 mid_h = r+r_tol+r_t; // Pipe vertical midpoint - as low as possible to make room on top
@@ -213,10 +213,10 @@ module shaft_holder_void(r, h, gap, gap_l=0, $fn=$fn) {
 }
 
 // Produces a shaft holder, including printing support.
-module shaft_holder(r, h, $fn=$fn) {
+module shaft_holder(r, h, t, $fn=$fn) {
   cylinder(r=r, h=h, $fn=$fn);
   translate([0, -r, 0])
-    cube([r*2, r*2, h]);
+    cube([t, r*2, h]);
 }
 
 /* Partially open ring that snaps around a cylindrical shaft. */
@@ -247,7 +247,7 @@ module snap_in_void(inner_r, outer_r, opening, h) {
 
 // Sync part parameters
 
-gate_x = 36; // Gate positioning (wheel shaft offset inside frame)
+gate_x = 52; // Gate positioning (wheel shaft offset inside frame)
 
 // Wheel positioning in y: edges of the main cylinder relative to track centerline.
 wheel_min_y = -8;
@@ -264,8 +264,10 @@ wheel_void_tol = 1; // Tolerance for forming the void for the wheel
 // Wheel shaft positioning in y (from shaft end to shaft end for single channel)
 wheel_shaft_min_y = -12;
 wheel_shaft_max_y = 12;
-
+wheel_cutout_offset = 11; // Offset of the ball cutouts from the axis centerline
 wheel_shaft_rh_extra = 6; // Extra extension for the double wheel shaft on the right hand side
+wheel_shaft_collar_r = 8/2; // Short side collar to locate the shaft sideways
+wheel_shaft_collar_w = 2;
 
 // Wheel ratchet parameters
 wheel_ratchet_min_y = -13.5;
@@ -274,17 +276,19 @@ wheel_ratchet_r = 16/2;
 wheel_ratchet_tooth = 3;
 
 // Wheel offset from track centerline vertically
-wheel_offset_z = 50;
+wheel_offset_z = 35;
 
 wheel_minor_r = 7;
 
 // Ratchet arm parameters
-ratchet_shaft_x = 11; // Shaft centerline x position
+ratchet_shaft_x = 28; // Shaft centerline x position
 ratchet_shaft_r = 4/2;
 ratchet_shaft_holder_r = 12/2;
-ratchet_shaft_l = 16;
-ratchet_shaft_z_offset = 50; // Shaft centerline offset from track centerline in y
+ratchet_shaft_l = r2r+r*2+r_tol*2+r_t*2;
+ratchet_shaft_z_offset = 40; // Shaft centerline offset in z
 ratchet_shaft_holder_gap = 3.5;
+ratchet_shaft_collar_r = 8/2;
+ratchet_shaft_collar_w = 2;
 ratchet_arm_w = 8;
 ratchet_arm_r = 3/2;
 ratchet_arm_l = 24; // was 24
@@ -302,7 +306,7 @@ sync_frame_l = 50;
 // Logic part parameters
 
 follower_l = 30; // Total length of the follower arm from wheel shaft centerline
-follower_shaft_holder_w = 8; // Width of the pivot attachment
+follower_shaft_holder_w = 6; // Width of the pivot attachment
 follower_shaft_holder_opening = 120; // Degrees of opening for the pivot attachment
 follower_shaft_holder_t = 3; // Thickness of the follower's holder around wheel shaft
 follower_arm_w = 4; // Width of the main follower arm
@@ -330,7 +334,7 @@ module follower_arm() {
           snap_in(wheel_shaft_r+tol*2, wheel_shaft_r+follower_shaft_holder_t, 
                   follower_shaft_holder_opening, follower_shaft_holder_w);
       // Secondary shaft holder  
-      translate([0, R2R/2+wheel_shaft_max_y+wheel_void_tol, 0])
+      translate([0, grid_xy/2+wheel_void_tol+r2r/2+r+r_t+wheel_void_tol, 0])
         rotate([0, 90, 0])
           snap_in(wheel_shaft_r+tol*2, wheel_shaft_r+follower_shaft_holder_t, 
                   follower_shaft_holder_opening, wheel_shaft_rh_extra - wheel_void_tol);
@@ -338,16 +342,16 @@ module follower_arm() {
       translate([0, -follower_arm_w/2, -wheel_shaft_r-follower_shaft_holder_t])
         cube([follower_l, follower_arm_w, follower_arm_t]);
       // Cross-arm
-      translate([follower_l-follower_arm_w, -R2R/2 - kicker_outer_offset, 
+      translate([follower_l-follower_arm_w, -grid_xy/2 - kicker_outer_offset, 
                 -wheel_shaft_r-follower_shaft_holder_t])
-        cube([follower_arm_w, R2R + wheel_shaft_max_y + kicker_outer_offset + wheel_shaft_rh_extra,
+        cube([follower_arm_w, grid_xy + wheel_shaft_max_y + kicker_outer_offset + wheel_shaft_rh_extra,
               follower_arm_t]);
       // Secondary main arm
-      translate([0, R2R/2-follower_arm_w+wheel_shaft_max_y+wheel_shaft_rh_extra, 
+      translate([0, grid_xy/2+wheel_void_tol+r2r/2+r+r_t+wheel_void_tol, 
                  -wheel_shaft_r-follower_shaft_holder_t])
         cube([follower_l, follower_arm_w, follower_arm_t]);
       // Trigger
-      translate([follower_l-trigger_l, R2R/2 + wheel_max_y - trigger_w, 
+      translate([follower_l-trigger_l, grid_xy/2 + wheel_max_y - trigger_w, 
                 -wheel_shaft_r-follower_shaft_holder_t])
         difference() {
           cube([trigger_l, trigger_w, trigger_h*2]);
@@ -356,7 +360,7 @@ module follower_arm() {
               cube([trigger_l*2, trigger_w+0.02, trigger_h]);  
         }
       // Outer kicker
-      translate([follower_l-kicker_l, -R2R/2 - kicker_outer_offset, 
+      translate([follower_l-kicker_l, -grid_xy/2 - kicker_outer_offset, 
                 -wheel_shaft_r-follower_shaft_holder_t/4]) {
         // Support / printing help
         translate([0, 0, -follower_shaft_holder_t*0.75])
@@ -371,7 +375,7 @@ module follower_arm() {
           }
       }
       // Inner kicker
-      translate([follower_l-kicker_l, -R2R/2 + kicker_outer_offset - kicker_t, 
+      translate([follower_l-kicker_l, -grid_xy/2 + kicker_outer_offset - kicker_t, 
                 -wheel_shaft_r-follower_shaft_holder_t/4]) {
         // Support / printing help
         translate([0, 0, -follower_shaft_holder_t*0.75])
@@ -391,7 +395,7 @@ module follower_arm() {
         rotate([0, 90, 0])
           snap_in_void(wheel_shaft_r+tol*2, wheel_shaft_r+follower_shaft_holder_t, 
                         follower_shaft_holder_opening, follower_shaft_holder_w);
-    translate([0, R2R/2+wheel_shaft_max_y+wheel_void_tol, 0])
+    translate([0, grid_xy/2+wheel_shaft_max_y+wheel_void_tol, 0])
         rotate([0, 90, 0])
           snap_in_void(wheel_shaft_r+tol*2, wheel_shaft_r+follower_shaft_holder_t, 
                         follower_shaft_holder_opening, wheel_shaft_rh_extra - wheel_void_tol);
@@ -408,9 +412,30 @@ module follower_arm() {
 
 // Ratchet arm. Origin is in the center of the rotating shaft.
 module ratchet_arm() {
-   rotate([90, 0, 0])
-     translate([0, 0, -ratchet_shaft_l/2])
-       cylinder(r=ratchet_shaft_r, h=ratchet_shaft_l, $fn=24);
+   rotate([90, 0, 0]) {
+     // Main shaft
+     translate([0, 0, -ratchet_shaft_l/2-r_tol-ratchet_shaft_collar_w])
+       cylinder(r=ratchet_shaft_r, 
+                h=ratchet_shaft_l+r_tol*2+ratchet_shaft_collar_w*2, $fn=24);
+     difference() {
+       union() {
+         // Shaft collars (inner)
+         translate([0, 0, -ratchet_shaft_l/2+r_t+r_tol])
+           cylinder(r=ratchet_shaft_collar_r, h=ratchet_shaft_collar_w, $fn=24);
+         translate([0, 0, ratchet_shaft_l/2-r_t-r_tol-ratchet_shaft_collar_w])
+           cylinder(r=ratchet_shaft_collar_r, h=ratchet_shaft_collar_w, $fn=24);
+         // Shaft collars (outer)
+         translate([0, 0, -ratchet_shaft_l/2-ratchet_shaft_collar_w-r_tol])
+           cylinder(r=ratchet_shaft_collar_r, h=ratchet_shaft_collar_w, $fn=24);
+         translate([0, 0, ratchet_shaft_l/2+r_tol])
+           cylinder(r=ratchet_shaft_collar_r, h=ratchet_shaft_collar_w, $fn=24);
+         }
+         // Cut out sections of the collars to allow supportless printing
+         translate([-ratchet_shaft_l/2, -ratchet_shaft_l-ratchet_shaft_r, 
+                    -ratchet_shaft_l])
+           cube([ratchet_shaft_l, ratchet_shaft_l, ratchet_shaft_l*2]);
+      } 
+    }
     translate([0, -ratchet_arm_w/2, -ratchet_shaft_r])
       cube([ratchet_arm_l, ratchet_arm_w, ratchet_shaft_r*2]); 
     translate([ratchet_arm_l-ratchet_shaft_r*2, -ratchet_shaft_r, -ratchet_shaft_r])
@@ -425,7 +450,8 @@ module ratchet_arm() {
             translate([0, 0, -ratchet_arm_release_gap/2])
               cylinder(r=ratchet_arm_release_r, h=ratchet_arm_release_gap, $fn=60);
             translate([0, 0, -ratchet_arm_release_gap/2])
-              cylinder(r=ratchet_arm_release_gap_r, h=ratchet_arm_release_gap, $fn=60);
+              cylinder(r=ratchet_arm_release_gap_r, 
+                       h=ratchet_arm_release_gap, $fn=60);
           }
         }
         rotate([0, ratchet_arm_release_angle, 0])
@@ -473,17 +499,21 @@ module wheel(void=false, part1=true, part2=true) {
 module double_wheels() {
    for (mirror = [true, false])
      mirror([0, mirror ? 1 : 0, 0]) {
-       translate([0, R2R/2, 0]) {
+       translate([0, grid_xy/2, 0]) {
           rotate([-90, 0, 0]) {
            difference() {
              translate([0, 0, wheel_min_y])
               cylinder(r=wheel_r, h=wheel_max_y-wheel_min_y, $fn=24);             
                 for (a = [0, 90, 180, 270])
                     translate([0, 0, wheel_min_y])
-                    rotate([0, 0, a])
-                        translate([wheel_offset_z, 0, -1])
+                      rotate([0, 0, a]) {
+                        translate([wheel_cutout_offset, 0, -1])
                             cylinder(r=r, 
                                      h=wheel_max_y-wheel_min_y+2, $fn=24);
+                         // Extra cutouts to make the wheel "arms" pointy
+                         translate([6, 2, -1]) // XXX non-parametrized
+                           cube([r, r, wheel_max_y-wheel_min_y+2]);
+                      }
             translate([0, 0, -ratchet_arm_w/2-wheel_void_tol])
                cylinder(r=wheel_r+0.01, h=ratchet_arm_w+wheel_void_tol*2, $fn=24);
         }
@@ -499,64 +529,89 @@ module double_wheels() {
     }
    }
    }         
-   rotate([-90, 0, 0])
-        translate([0, 0, -R2R/2+wheel_shaft_min_y-wheel_shaft_rh_extra])
+   rotate([-90, 0, 0]) {
+     translate([0, 0, -grid_xy/2-r2r/2-r-r_tol-r_t-wheel_shaft_rh_extra])
           cylinder(r=wheel_shaft_r, 
-                   h=wheel_shaft_max_y-wheel_shaft_min_y+R2R+wheel_shaft_rh_extra, $fn=24);
+                   h=grid_xy+r2r+r*2+r_t*2+r_tol*3+wheel_shaft_collar_w           
+                     +wheel_shaft_rh_extra, $fn=24);
+     translate([0, 0, grid_xy/2+r2r/2+r+r_tol*2+r_t])  
+       cylinder(r=wheel_shaft_collar_r, h=wheel_shaft_collar_w, $fn=24);
+     translate([0, 0, grid_xy/2+r2r/2+r-wheel_shaft_collar_w])  
+       cylinder(r=wheel_shaft_collar_r, h=wheel_shaft_collar_w, $fn=24);
+   }
+        
 }
 
 // Synchronization part void
 module sync_void() {
   for (mirror = [true, false])
    mirror([0, mirror ? 1 : 0, 0]) {
-       // Wheel cutout
-       translate([gate_x, R2R/2, wheel_offset_z])
+       // Wheel cutout - not needed
+       /* translate([gate_x, grid_xy/2, wheel_offset_z])
           rotate([0, -45, 0])
-            wheel(void=true);
-      // Ratchet shaft void
-      translate([ratchet_shaft_x, R2R/2, ratchet_shaft_z_offset])
+            wheel(void=true); */
+      // Wheel shaft void
+      translate([gate_x, grid_xy/2, wheel_offset_z])
        rotate([90, 0, 0])
-        rotate([0, 0, 45])
+        rotate([0, 0, 90-gate_io_curve_angle])
+         translate([0, 0, -ratchet_shaft_l/2-wheel_void_tol])
+           shaft_holder_void(r=wheel_shaft_r+wheel_void_tol,
+                              gap=wheel_shaft_holder_gap, h=ratchet_shaft_l+
+                              wheel_void_tol*2, $fn=24);
+      // Wheel void
+      translate([gate_x, grid_xy/2, wheel_offset_z])
+       rotate([90, 0, 0])
+         rotate([0, 0, 45])
+           translate([0, 0, -r2r/2-r-r_tol]) {
+             cylinder(r=wheel_shaft_holder_r+wheel_void_tol+6, 
+                      h=r2r+r*2+r_tol*2, $fn=24);
+           }
+      // Ratchet shaft void
+      translate([ratchet_shaft_x, grid_xy/2, ratchet_shaft_z_offset])
+       rotate([90, 0, 0])
+        rotate([0, 0, 90-gate_io_curve_angle])
          translate([0, 0, -ratchet_shaft_l/2-wheel_void_tol])
            shaft_holder_void(r=ratchet_shaft_r+wheel_void_tol, 
                               gap=ratchet_shaft_holder_gap, h=ratchet_shaft_l+
                               wheel_void_tol*2, $fn=24);
      // Ratchet bar void
-     translate([ratchet_shaft_x, R2R/2, ratchet_shaft_z_offset])
+     translate([ratchet_shaft_x, grid_xy/2, ratchet_shaft_z_offset])
       rotate([90, 0, 0])
         rotate([0, 0, 45])
-         translate([0, 0, -ratchet_arm_w/2-wheel_void_tol]) {
-           cylinder(r=ratchet_shaft_holder_r+wheel_void_tol, 
-                    h=ratchet_arm_w+wheel_void_tol*2, $fn=24);
-           rotate([0, 0, 135])
+         translate([0, 0, -r2r/2-r-r_tol]) {
+           cylinder(r=ratchet_shaft_holder_r+wheel_void_tol+5, 
+                    h=r2r+r*2+r_tol*2, $fn=24);
+           // Cutout for the ratchet arm, not needed anymore
+           /* rotate([0, 0, 135])
              translate([-ratchet_arm_l, -ratchet_shaft_holder_r-wheel_void_tol, 0])
                cube([ratchet_arm_l, (ratchet_shaft_holder_r+wheel_void_tol)*2,
-                     ratchet_arm_w+wheel_void_tol*2]);
+                     ratchet_arm_w+wheel_void_tol*2]); */
          }
-      intersection() {
+       // Cutout for the follower arm, no longer neede either
+      /* intersection() {
         if (mirror == true)
-          translate([gate_x, R2R/2-wheel_max_y-wheel_void_tol, 0])
+          translate([gate_x, grid_xy/2-wheel_max_y-wheel_void_tol, 0])
             cube([follower_l+wheel_void_tol*2, wheel_max_y-wheel_min_y+wheel_void_tol*2, h]);
         else
-          translate([sync_frame_l, R2R/2-kicker_outer_offset-wheel_void_tol, 0])
+          translate([sync_frame_l, grid_xy/2-kicker_outer_offset-wheel_void_tol, 0])
             cube([follower_l-(sync_frame_l-gate_x)+wheel_void_tol*2, 
                   kicker_outer_offset*2+wheel_void_tol*2, h]);
         translate([gate_x, 0, wheel_offset_z])
           rotate([-90, 0, 0])
             cylinder(r=follower_l+wheel_void_tol*2, h=w/2, $fn=64);
-      }
+      } */
     }
-    // Shaft middle extra cutout
-   translate([gate_x, -follower_shaft_holder_w/2-wheel_void_tol, wheel_offset_z])
+    // Shaft middle extra cutout - not needed 
+   /* translate([gate_x, -follower_shaft_holder_w/2-wheel_void_tol, wheel_offset_z])
        rotate([-90, 0, 0])
          cylinder(r=wheel_shaft_r+follower_shaft_holder_t+wheel_void_tol, 
-                 h=follower_shaft_holder_w+wheel_void_tol*2, $fn=24);
-    // Shaft RH side extra cutout
-   translate([gate_x, -R2R/2-wheel_shaft_max_y-wheel_shaft_rh_extra-wheel_void_tol, 
+                 h=follower_shaft_holder_w+wheel_void_tol*2, $fn=24); */
+    // Shaft RH side extra cutout - not needed
+   /* translate([gate_x, -grid_xy/2-wheel_shaft_max_y-wheel_shaft_rh_extra-wheel_void_tol, 
                wheel_offset_z])
        rotate([-90, 0, 0])
          cylinder(r=wheel_shaft_r+follower_shaft_holder_t+wheel_void_tol, 
-                 h=wheel_shaft_rh_extra+wheel_void_tol, $fn=24);
+                 h=wheel_shaft_rh_extra+wheel_void_tol, $fn=24); */
 
 }
 
@@ -564,19 +619,19 @@ module sync_void() {
 module sync_frame_parts() {
     for (mirror = [true, false])
         mirror([0, mirror ? 1 : 0, 0]) {
-            translate([gate_x, 0, wheel_offset_z])
+            translate([gate_x, grid_xy/2, wheel_offset_z])
               rotate([90, 0, 0])
-                translate([0, 0, wheel_shaft_min_y])
-                  rotate([0, 0, -135])
-                     // Dropped the inner shaft holders,
-                     // was h=wheel_shaft_max_y-wheel_shaft_min_y
-                    shaft_holder(r=wheel_shaft_holder_r,
-                                 h=wheel_max_y-wheel_shaft_min_y, $fn=24);
-           translate([ratchet_shaft_x, R2R/2, ratchet_shaft_z_offset])
+                // Re-use the ratchet shaft measurements for the holders here
+                translate([0, 0, -ratchet_shaft_l/2])
+                  rotate([0, 0, -90-gate_io_curve_angle])
+                    shaft_holder(r=wheel_shaft_holder_r, t=wheel_shaft_holder_r+5,
+                                 h=ratchet_shaft_l, $fn=24);
+           translate([ratchet_shaft_x, grid_xy/2, ratchet_shaft_z_offset])
              rotate([90, 0, 0])
                translate([0, 0, -ratchet_shaft_l/2])
-                 rotate([0, 0, -135])
-                   shaft_holder(r=ratchet_shaft_holder_r, h=ratchet_shaft_l, $fn=24);
+                 rotate([0, 0, -90-gate_io_curve_angle])
+                   shaft_holder(r=ratchet_shaft_holder_r, h=ratchet_shaft_l,
+                                 t=ratchet_shaft_holder_r+4, $fn=24);
          }
 }
 
@@ -590,14 +645,14 @@ module kick_and_sink_dpipe(kick_l, total_l, d, void=false) {
 //  mirror([0, 1, 0])
     translate([0, -r2r/2, 0])
       rotate([0, -90, 0])
-        pipe_displace(total_l, -(w/2-R2R/2-r2r/2+ss_offset), half=true, void=void);
+        pipe_displace(total_l, -(w/2-grid_xy/2-r2r/2+ss_offset), half=true, void=void);
   // Kicking part to sink
   translate([0, r2r/2+d, kick_l/2])
       rotate([0, -90, 0])
-        pipe_displace(total_l-kick_l/2, -(w/2-R2R/2+r2r/2+ss_offset+d), half=true, void=void);
+        pipe_displace(total_l-kick_l/2, -(w/2-grid_xy/2+r2r/2+ss_offset+d), half=true, void=void);
   // Transfer void for the signaled channel
   if (void) {
-    translate([0, R2R-r2r/2, kick_l/2])
+    translate([0, grid_xy-r2r/2, kick_l/2])
       rotate([0, -90, 0])
         pipe_displace(20, r2r, half=true, void=void);   
   }
@@ -615,7 +670,7 @@ module kick_and_sink_dpipe(kick_l, total_l, d, void=false) {
 module full_gate(invert_a=false, invert_b=false, invert_c=false) {
   difference() {
     union() {
-      translate([0, w/2+R2R/2, mid_h])
+      translate([0, w/2+grid_xy/2, mid_h])
         rotate([0, 90, 0]) {
           dpipe(invert_a ? 5 : 20);
           if (invert_a)
@@ -628,7 +683,7 @@ module full_gate(invert_a=false, invert_b=false, invert_c=false) {
             translate([0, 0, gate_l-20]) switch_dpipe(15, inverter=false);
           translate([0, 0, gate_l-(invert_c ? 5 : 20)]) dpipe(invert_c ? 5 : 20); 
        }
-      translate([0, w/2-R2R/2, mid_h])
+      translate([0, w/2-grid_xy/2, mid_h])
         rotate([0, 90, 0]) {
           dpipe(invert_b ? 5 : 20);
           if (invert_b)          
@@ -646,7 +701,7 @@ module full_gate(invert_a=false, invert_b=false, invert_c=false) {
     translate([70, w/2, mid_h])
       mirror([1, 0, 0])
         sync_void();
-    translate([0, w/2+R2R/2, mid_h])
+    translate([0, w/2+grid_xy/2, mid_h])
         rotate([0, 90, 0]) {
           dpipe(0.1, void=true);
           if (invert_a)
@@ -664,7 +719,7 @@ module full_gate(invert_a=false, invert_b=false, invert_c=false) {
             translate([0, 0, gate_l-20]) dpipe(20, void=true);
           }
         }
-    translate([0, w/2-R2R/2, mid_h])
+    translate([0, w/2-grid_xy/2, mid_h])
         rotate([0, 90, 0]) {
           if (invert_b) {
             dpipe(0.1, void=true);
@@ -681,7 +736,7 @@ module full_gate(invert_a=false, invert_b=false, invert_c=false) {
         pipe(gate_l, void=true);
     // "inspection hatches"
     translate([110, -5, h/2]) cylinder(r=r, h=h); // Routes to sink
-    translate([70+35/2, w/2+R2R/2, h/2]) cylinder(r=r, h=h); // Kick section
+    translate([70+35/2, w/2+grid_xy/2, h/2]) cylinder(r=r, h=h); // Kick section
   }
 }
 
@@ -696,7 +751,7 @@ module full_gate(invert_a=false, invert_b=false, invert_c=false) {
 module full_gate_ng(invert_c=false) {
   difference() {
     union() {
-      translate([0, w/2+R2R/2, mid_h])
+      translate([0, w/2+grid_xy/2, mid_h])
         rotate([0, 90, 0]) {
           translate([0, 0, sync_frame_pos-5]) dpipe(5);
           translate([0, 0, sync_frame_pos]) switch_dpipe(sync_frame_l, roofonly=true);
@@ -707,7 +762,7 @@ module full_gate_ng(invert_c=false) {
             translate([0, 0, gate_l-20]) switch_dpipe(15, inverter=false);
           translate([0, 0, gate_l-(invert_c ? 5 : 20)]) dpipe(invert_c ? 5 : 20);  */
        }
-      translate([0, w/2-R2R/2, mid_h])
+      translate([0, w/2-grid_xy/2, mid_h])
         rotate([0, 90, 0]) {
           translate([0, 0, sync_frame_pos-5]) dpipe(5);
           translate([0, 0, sync_frame_pos]) switch_dpipe(sync_frame_l, roofonly=true);
@@ -724,7 +779,7 @@ module full_gate_ng(invert_c=false) {
     }
     translate([sync_frame_pos, w/2, mid_h])
       sync_void();
-    translate([0, w/2+R2R/2, mid_h])
+    translate([0, w/2+grid_xy/2, mid_h])
         rotate([0, 90, 0]) {
           translate([0, 0, 0]) dpipe(5, void=true);
           translate([0, 0, sync_frame_pos]) switch_dpipe(sync_frame_l, roofonly=true, void=true);
@@ -744,7 +799,7 @@ module full_gate_ng(invert_c=false) {
             translate([0, 0, gate_l-20]) dpipe(20, void=true);
           }
         }
-    translate([0, w/2-R2R/2, mid_h])
+    translate([0, w/2-grid_xy/2, mid_h])
         rotate([0, 90, 0]) {
           translate([0, 0, 0]) dpipe(5, void=true);
           translate([0, 0, sync_frame_pos]) switch_dpipe(sync_frame_l, roofonly=true, void=true); 
@@ -763,9 +818,9 @@ module full_gate_ng(invert_c=false) {
 /* Pipes to route balls from the source/sink channel into the nearest signal sync section. */
 module source_route(l, void=false) {
   // Source to right channel negative value
-  translate([0, -w/2+R2R/2-ss_offset, 0])
+  translate([0, -w/2+grid_xy/2-ss_offset, 0])
       rotate([0, -90, 0]) {
-        translate([5, 0, 0]) pipe_displace(50, (w/2-R2R/2+r2r/2+ss_offset), void=void);
+        translate([5, 0, 0]) pipe_displace(50, (w/2-grid_xy/2+r2r/2+ss_offset), void=void);
       }
   translate([0, r2r/2, 5+25]) pipe(35, void=void);
 }
@@ -782,12 +837,12 @@ module connector(level=0, input=false, output=false) {
   translate([0, 0, -connector_l/2])
   difference() {
     union() {
-      translate([0, w/2+R2R/2, 0]) {
+      translate([0, w/2+grid_xy/2, 0]) {
         dpipe(connector_l, r_extra=r_t+tol, labels=true);
         if (input) translate([0, 0, -input_l-r_t]) dpipe(input_l+r_t);
         if (output) translate([0, 0, 0]) dpipe(connector_l+output_l+r_t);
       }
-      translate([0, w/2-R2R/2, 0]) {
+      translate([0, w/2-grid_xy/2, 0]) {
         dpipe(connector_l, r_extra=r_t+tol, labels=true);
         if (input) translate([0, 0, -input_l-r_t]) dpipe(input_l+r_t);
         if (output) translate([0, 0, 0]) dpipe(connector_l+output_l+r_t);
@@ -797,23 +852,23 @@ module connector(level=0, input=false, output=false) {
         if (input) translate([0, 0, -input_l-r_t]) pipe(input_l+r_t);
         if (output) translate([0, 0, 0]) pipe(connector_l+output_l+r_t);
      }
-     for (offset = [w/2+R2R/2, w/2-R2R/2, -ss_offset])
+     for (offset = [w/2+grid_xy/2, w/2-grid_xy/2, -ss_offset])
        translate([r+r_t, offset, connector_l/2])
          rotate([0, 90-slope, 0])
            cylinder(r=leg_d/2, h=leg_l+gate_l*sin(slope)*level);
      if (output) 
-      for (offset = [w/2+R2R/2, w/2-R2R/2, -ss_offset])
+      for (offset = [w/2+grid_xy/2, w/2-grid_xy/2, -ss_offset])
        translate([r+r_t, offset, connector_l/2])
          rotate([0, 90-slope, 0])
            translate([-output_l, 0, 0])
            cylinder(r=leg_d/2, h=leg_l+gate_l*sin(slope)*level);
     }
-    translate([0, w/2+R2R/2, output?-connector_l/2:(input?connector_l/2:0)]) {
+    translate([0, w/2+grid_xy/2, output?-connector_l/2:(input?connector_l/2:0)]) {
        dpipe(connector_l, void=true, r_extra=r_t+tol);
        if (input) translate([0, 0, -input_l-connector_l/2]) dpipe(input_l+connector_l, void=true);
        if (output) translate([0, 0, connector_l/2]) dpipe(output_l+connector_l, void=true);
     }
-    translate([0, w/2-R2R/2, output?-connector_l/2:(input?connector_l/2:0)]) {
+    translate([0, w/2-grid_xy/2, output?-connector_l/2:(input?connector_l/2:0)]) {
       dpipe(connector_l, void=true, r_extra=r_t+tol);
       if (input) translate([0, 0, -input_l-connector_l/2]) dpipe(input_l+connector_l, void=true);
       if (output) translate([0, 0, connector_l/2]) dpipe(output_l+connector_l, void=true);
@@ -833,11 +888,11 @@ module sync_frame(all_parts=false) {
   difference() {
     union() {
       //small_frame(fl=sync_frame_l);
-      translate([0, w/2+R2R/2, mid_h])
+      translate([0, w/2+grid_xy/2, mid_h])
         rotate([0, 90, 0]) {
           switch_dpipe(sync_frame_l, roofonly=true, openroof=false);          
        }
-      translate([0, w/2-R2R/2, mid_h])
+      translate([0, w/2-grid_xy/2, mid_h])
         rotate([0, 90, 0]) {
           switch_dpipe(sync_frame_l, roofonly=true, openroof=false);
         }
@@ -846,11 +901,11 @@ module sync_frame(all_parts=false) {
     }
     translate([0, w/2, mid_h])
       sync_void();
-    translate([0, w/2+R2R/2, mid_h])
+    translate([0, w/2+grid_xy/2, mid_h])
         rotate([0, 90, 0]) {
           switch_dpipe(sync_frame_l, roofonly=true, void=true);          
         }
-    translate([0, w/2-R2R/2, mid_h])
+    translate([0, w/2-grid_xy/2, mid_h])
         rotate([0, 90, 0]) {
           switch_dpipe(sync_frame_l, roofonly=true, void=true); 
         }
@@ -858,9 +913,9 @@ module sync_frame(all_parts=false) {
   if (all_parts) {
     translate([gate_x, w/2, mid_h+wheel_offset_z])
       rotate([0, -45, 0]) double_wheels();
-    translate([ratchet_shaft_x, w/2+R2R/2, mid_h + ratchet_shaft_z_offset])
+    translate([ratchet_shaft_x, w/2+grid_xy/2, mid_h + ratchet_shaft_z_offset])
       rotate([0, 205, 0]) ratchet_arm();
-    translate([ratchet_shaft_x, w/2-R2R/2, mid_h + ratchet_shaft_z_offset])
+    translate([ratchet_shaft_x, w/2-grid_xy/2, mid_h + ratchet_shaft_z_offset])
       rotate([0, 220, 0]) ratchet_arm();
   }
 }
@@ -869,27 +924,27 @@ module sync_frame(all_parts=false) {
 module invert_frame() {
    difference() {
     union() {
-      translate([0, w/2+R2R/2, mid_h])
+      translate([0, w/2+grid_xy/2, mid_h])
         rotate([0, 90, 0]) {
           dpipe(5);          
           translate([0, 0, 5]) switch_dpipe(35, inverter=true);
           translate([0, 0, 40]) dpipe(5); 
        }
-      translate([0, w/2-R2R/2, mid_h])
+      translate([0, w/2-grid_xy/2, mid_h])
         rotate([0, 90, 0]) {
           dpipe(5);
           translate([0, 0, 5]) switch_dpipe(15);
           translate([0, 0, 20]) dpipe(5); 
         }
     }
-    translate([0, w/2+R2R/2, mid_h])
+    translate([0, w/2+grid_xy/2, mid_h])
         rotate([0, 90, 0]) {
           dpipe(5, void=true);
           translate([0, 0, 5]) 
             switch_dpipe(45, inverter=true, void=true);
           translate([0, 0, 40]) dpipe(5, void=true); 
         }
-    translate([0, w/2-R2R/2, mid_h]) {
+    translate([0, w/2-grid_xy/2, mid_h]) {
         rotate([0, 90, 0]) {
            dpipe(0.1, void=true);
           translate([0, 0, 24.9]) dpipe(0.1, void=true); 
@@ -911,6 +966,10 @@ module assembly() {
     //follower_arm();
 }
 
+/*
+    REFACTORED GRID-BASED SYSTEM STARTS HERE
+*/
+
 // Grid elements
 
 grid_xy = 36; // Grid horizontal pitch
@@ -918,11 +977,12 @@ grid_z = 24; // Grid vertical pitch
 grid_base_t = 4; // Grid block base thickness
 
 grid_spacer_truss_t = 3;
+grid_spacer_cross_t = 4;
 
 // Grid alignment peg dimensions
 grid_peg_xy = 5;
 grid_peg_z = 2.5;
-grid_peg_tol = 0.3;
+grid_peg_tol = 0.2; // 0.4 is loose, 0.3 semi-snap, 0.2 should be firm connection
 
 module grid_peg(height=1, void=false) {
   translate([-grid_peg_xy/2-(void?grid_peg_tol:0), 
@@ -961,9 +1021,10 @@ module grid_spacer(length=1, height=1) {
     union() {
       translate([-grid_xy/2+tol, -grid_xy/2+tol, 0])
         pyramid_box_truss(grid_xy*length-tol*2, grid_xy-tol*2, grid_z*height-tol,
-                      length, 1, 2,
+                      length, 1, height<3 ? 2 : 4,
                       grid_spacer_truss_t, grid_spacer_truss_t, grid_spacer_truss_t, 
-                      (height==1?0:grid_spacer_truss_t), grid_spacer_truss_t,
+                      (height<3 ? 0 : grid_spacer_cross_t), 
+                      (height<3 ? grid_spacer_truss_t : 0),
                       false, false, 16);
       grid_block_base(length=length, height=height);
     }
@@ -989,9 +1050,9 @@ module grid_spacer_pegholes(length=1, width=1, void=false) {
       difference() {
         union() {
           grid_connector(void=true, extra_back=1);
-          if (!void) translate([grid_xy/2+tol, -grid_conn_wedge_y/2, 0])
+          if (!void) translate([grid_xy/2+tol, -grid_conn_wedge_y/2-1, 0])
             cube([grid_conn_total_x+grid_spacer_truss_t, 
-              grid_conn_wedge_y, grid_peg_z*2]);
+              grid_conn_wedge_y+2, grid_peg_z*2]);
         }
         //translate([grid_conn_wedge_y, -grid_conn_wedge_y, grid_peg_z*2])
         //  #cube([grid_conn_wedge_y*2, grid_conn_wedge_y*2, grid_signal_minimal_h]);
@@ -1012,17 +1073,75 @@ module grid_spacer_zeroh(length=1, width=1) {
                       length, width, x_pitch, y_pitch,
                       grid_peg_z*2, grid_spacer_truss_t, grid_spacer_truss_t);
       // Right side pegholes
-      grid_spacer_pegs(length=length, width=width);
-      mirror([-1, 1, 0]) grid_spacer_pegs(length=length, width=width);
+      grid_spacer_pegs(length=length, width=width); // Right side
+      translate([grid_xy*length, grid_xy*width, 0])
+        rotate([0, 0, 90])
+          translate([-grid_xy*width, 0, 0])
+            grid_spacer_pegs(length=width, width=length); // Far side
       grid_spacer_pegholes(length=length, width=width);
-      mirror([-1, 1, 0]) grid_spacer_pegholes(length=length, width=width);
+      translate([grid_xy*length, 0, 0]) rotate([0, 0, 90])
+        grid_spacer_pegholes(length=width, width=length);
     }
     translate([grid_xy/2, grid_xy/2, 0])
       grid_block_base(height=0, length=length, width=width, void=true);
     grid_spacer_pegholes(length=length, width=width, void=true);
-    mirror([-1, 1, 0]) grid_spacer_pegholes(length=length, width=width, void=true);
+    translate([grid_xy*length, 0, 0]) rotate([0, 0, 90])
+      grid_spacer_pegholes(length=width, width=length, void=true);
   }
 }
+
+module grid_spacer_gate_support(length=1, height=1) {
+  difference() {
+    union() {
+      translate([-grid_xy/2+tol, -grid_xy/2+tol, (height-1)*grid_z])
+        pyramid_box_truss(grid_xy*length-tol*2, grid_xy-tol*2, grid_z-tol,
+                      length, 1, 2,
+                      grid_spacer_truss_t, grid_spacer_truss_t, grid_spacer_truss_t, 
+                      0, grid_spacer_truss_t,
+                      false, false, 16);
+      if (height > 1)
+        translate([-grid_xy/2+tol, -grid_xy/2+tol, 0])
+         pyramid_box_truss(grid_xy*length-tol*2, grid_xy-tol*2, grid_z*(height-1)-tol,
+                      length, 1, (height-1)<3 ? 2 : 4,
+                      grid_spacer_truss_t, grid_spacer_truss_t, grid_spacer_truss_t, 
+                      ((height-1)<3 ? 0 : grid_spacer_cross_t), grid_spacer_truss_t,
+                      false, false, 16);
+      grid_block_base(length=length, height=height);
+      for (j = [0 : length - 1])
+        translate([j*grid_xy, 0, (height-1)*grid_z])
+        rotate([0, 0, 90])
+      for (i = [0, 180]) {
+        rotate([0, 0, i]) translate([i == 180 ? grid_xy : 0, 0, ]) {
+      // Input connector
+      rotate([0, 0, 180]) translate([0, 0, grid_z]) grid_connector(extra_back=1);
+      // Support structure for the input connector
+      difference() {
+        translate([0, 0, grid_z]) rotate([180, 0, 180]) 
+          grid_connector(extra_back=(i == 180 ? 1 : 12));
+        translate([0, 0, -grid_z/2]) cube([grid_xy*2, grid_xy, grid_z], center=true);
+        // Sloping cutout
+        translate([-grid_xy/2-grid_conn_total_x, 0, grid_z])
+          rotate([0, 70, 0])
+            translate([0, -grid_xy/2, -grid_z])
+              cube([grid_xy, grid_xy, grid_z]);          
+        // Cutout for the extra back part, easier to do here
+        translate([-grid_xy/2+4, -grid_xy/2, 0])
+           cube([grid_xy, grid_xy, grid_z]);          
+      }
+  }
+      }
+    }
+    grid_block_base(length=length, height=height, void=true);
+    // Signal cutout for the next level
+    for (j = [0 : length - 1])
+        translate([j*grid_xy, 0, (height-1)*grid_z])
+    rotate([0, 0, 90])
+    translate([-grid_xy, 0, 
+               grid_base_t+r+r_tol+grid_z]) rotate([0, 90, 0])
+      dpipe(grid_xy, void=true);
+  }
+}
+
 
 grid_signal_base_w = 20;  // The width of the signal base
 grid_signal_minimal_h = 9; // Total height of the minimal signal block
@@ -1057,7 +1176,8 @@ module grid_connector(void=false, extra_back=1) {
 }
 
 /* Submodule forming the signal block base, including the end connectors. */
-module grid_signal_base(height=1, length=1, void=false) {
+module grid_signal_base(height=1, length=1, void=false, omit_peg=false,
+                        omit_peg_void=false) {
   if (!void) {
     for (i = [0 : length-1]) {
       translate([grid_xy*i, 0, 0])
@@ -1065,6 +1185,11 @@ module grid_signal_base(height=1, length=1, void=false) {
     }
     translate([-grid_xy/2+tol, -grid_signal_base_w/2, 0])
       cube([grid_xy*length-tol*2, grid_signal_base_w, grid_base_t]);
+    if (!omit_peg) {
+      translate([(length-1)*grid_xy, 0, 0])
+         //rotate([0, 0, 180])
+           grid_connector();
+    }
   } else {
     for (i = [0 : length-1]) {
       translate([grid_xy*i, 0, -grid_z])
@@ -1074,10 +1199,8 @@ module grid_signal_base(height=1, length=1, void=false) {
         track segment */
      translate([-grid_xy/2, -grid_xy/2, grid_signal_minimal_h])
        cube([grid_xy*length, grid_xy, grid_z]);
-     translate([-grid_xy, 0, 0])
-       grid_connector(void=true);
-     translate([(length)*grid_xy, 0, 0])
-       rotate([0, 0, 180])
+     if (!omit_peg_void)
+       translate([-grid_xy, 0, 0])
          grid_connector(void=true);
   }
 }
@@ -1099,6 +1222,9 @@ module grid_block_signal(length=1, invert=false) {
         switch_dpipe(grid_xy*(length), void=true, inverter=invert);
       else
         switch_dpipe(grid_xy*(length), void=true, roofonly=true);
+      // Cutout for the peg block
+    translate([grid_xy*(length-1), 0, grid_base_t+r+r_tol]) rotate([0, 90, 0])
+      switch_dpipe(grid_xy, void=true, roofonly=true);
 /*     for (i = [0 : length-1]) {
        translate([grid_xy*i, 0, r*3])
          sphere(r=grid_xy/3);
@@ -1109,6 +1235,42 @@ module grid_block_signal(length=1, invert=false) {
   }
 }
 
+/* Variant of the signal element with the end blocked. (peghole variant) */
+module grid_block_signal_end_neg(length=1) {
+  difference() {
+    union() {
+      translate([-grid_xy/2+tol, 0, grid_base_t+r+r_tol]) rotate([0, 90, 0])
+        dpipe(grid_xy*length-tol*2);
+      grid_signal_base(length=length, omit_peg=true);
+    }
+    grid_signal_base(void=true, length=length);
+    translate([-r-r_t, 0, 0])
+    translate([-grid_xy/2, 0, grid_base_t+r+r_tol]) rotate([0, 90, 0])
+      switch_dpipe(grid_xy*(length), void=true, roofonly=true);
+    for (i = [-r2r/2, r2r/2]) {
+      translate([grid_xy*(length-0.5)-r-r_t, i, grid_base_t+r+r_tol])
+        sphere(r=r+r_tol, $fn=20);
+    }
+  }
+}
+
+/* Variant of the signal element with the end blocked. (peg variant) */
+module grid_block_signal_end(length=1) {
+  difference() {
+    union() {
+      translate([-grid_xy/2+tol, 0, grid_base_t+r+r_tol]) rotate([0, 90, 0])
+        dpipe(grid_xy*length-tol*2);
+      grid_signal_base(length=length);
+    }
+    grid_signal_base(void=true, length=length, omit_peg_void=true);
+    translate([-grid_xy/2+r+r_t, 0, grid_base_t+r+r_tol]) rotate([0, 90, 0])
+      switch_dpipe(grid_xy*(length), void=true, roofonly=true);
+    for (i = [-r2r/2, r2r/2]) {
+      translate([grid_xy*-0.5+r+r_t, i, grid_base_t+r+r_tol])
+        sphere(r=r+r_tol, $fn=20); 
+    }
+  }
+}
 /* Switch fabric element. Takes signal, drops it one level and turns it 
 90 degrees to the side. */
 module grid_block_fabric() {
@@ -1204,18 +1366,26 @@ gate_middle_length = 91.1;
 // Take the top off the gate
 gate_top_cut = 0.5;
 
-// Syncro part positioning, relative to the input end of the gate straight part.
+// Gate bottom flat section dimensions
+gate_bottom_w = 18; // Width of the flat section
+gate_bottom_t = 10.7; // Thickness of the flat section measured from the track
+                    // vertical centerline
 
+// Syncro part positioning, relative to the input end of the gate straight part.
+// XXX Most of this is defined above near the moving sync parts
+
+/* Switch section (part with no center divider) for the gate output channel */
+gate_switch_start = 55;
+gate_switch_end = 80;
 
 /* Gate with grid connectors
    Size fixed to 3x2x2, origin on the lower level middle of the input edge */
 module grid_gate() {
   difference() {
     union() {
-      // Input connectors
       for (i = [-grid_xy/2, grid_xy/2]) {
         // Input connectors
-        translate([grid_xy/2, i, grid_z]) rotate([0, 0, 180]) grid_connector();
+        // translate([grid_xy/2, i, grid_z]) rotate([0, 0, 180]) grid_connector();
         // Input straight pipe section
         translate([0, i, grid_z+grid_base_t+r+r_tol]) rotate([0, 90, 0]) 
           dpipe(gate_input_straight, top_cut=gate_top_cut);
@@ -1224,8 +1394,6 @@ module grid_gate() {
           translate([gate_input_straight, i+j, grid_z+grid_base_t+r+r_tol]) 
             rotate([-90, 0, 0]) 
               pipe_curve(gate_io_curve_r, gate_io_curve_angle, top_cut=gate_top_cut);
-        // Output connectors
-        translate([grid_xy*2.5, i, 0]) grid_connector();
         // Output straight pipe section
         translate([grid_xy*3-gate_output_straight, i, grid_base_t+r+r_tol]) 
           rotate([0, 90, 0]) 
@@ -1236,16 +1404,41 @@ module grid_gate() {
             rotate([90, 0, 180]) 
               pipe_curve(gate_io_curve_r, gate_io_curve_angle, top_cut=-gate_top_cut);
         // Middle straight pipe section
-        translate([gate_input_straight, 0, grid_z+grid_base_t+r+r_tol-gate_io_curve_r]) 
-          rotate([0, gate_io_curve_angle])
-            translate([0, i, gate_io_curve_r])
-              grid_gate_middle(top_cut=gate_top_cut);
+        intersection() {
+          union() {
+            translate([gate_input_straight, 0, 
+                       grid_z+grid_base_t+r+r_tol-gate_io_curve_r]) 
+              rotate([0, gate_io_curve_angle])
+                translate([0, i, gate_io_curve_r])
+                  { 
+                    grid_gate_middle(top_cut=gate_top_cut);
+                    // Rectangular base
+                    translate([-grid_xy, -gate_bottom_w/2, -gate_bottom_t])
+                    cube([grid_xy*4, gate_bottom_w, gate_bottom_t]); 
+                    // Joining the tracks together
+                    if (i < 0) {
+                     translate([grid_xy/3, 0, -gate_bottom_t])
+                        cube([grid_xy/4, grid_xy, gate_bottom_t]); 
+                     translate([grid_xy*2, 0, -gate_bottom_t])
+                        cube([grid_xy/4, grid_xy, gate_bottom_t]); 
+                    }
+                  }
+            }
+          /* Clip the baseplate to the bounding box of the whole gate */
+          translate([0, i-grid_xy/2, 0])
+            cube([grid_xy*3, grid_xy*2, grid_z*2]);
+        }
+        // Output side bottom support (also needs lattice)
+        // translate([grid_xy*2.5, i, 0])
+        //  grid_block_base(height=0, length=1, width=1);
       }
       // Sync static parts
-      sync_frame_parts();
+      //sync_frame_parts();
     }
     // Void section
     for (i = [-grid_xy/2, grid_xy/2]) {
+       // Input connectors
+       translate([-grid_xy/2, i, grid_z]) grid_connector(void=true);
        // Input straight void
        translate([-grid_conn_total_x-1, i, grid_z+grid_base_t+r+r_tol]) 
          rotate([0, 90, 0]) 
@@ -1264,31 +1457,47 @@ module grid_gate() {
           translate([grid_xy*3-gate_input_straight, i+j, +grid_base_t+r+r_tol]) 
             rotate([90, 0, 180]) 
               pipe_curve(gate_io_curve_r, gate_io_curve_angle, void=true);
+        // Output connectors
+        translate([grid_xy*3.5, i, 0]) rotate([0, 0, 180]) grid_connector(void=true);
         // Middle straight pipe section void
-        translate([gate_input_straight, 0, grid_z+grid_base_t+r+r_tol-gate_io_curve_r]) 
+        translate([gate_input_straight, 0, 
+                   grid_z+grid_base_t+r+r_tol-gate_io_curve_r]) 
           rotate([0, gate_io_curve_angle])
             translate([0, i, gate_io_curve_r]) 
-              grid_gate_middle(void=true);
+              grid_gate_middle(void=true, switch=true); // (i>0));
+        // Output side bottom support void
+        translate([grid_xy*2.5, i, 0])
+          grid_block_base(height=0, length=1, width=1, void=true);
     }
+    //sync_void();
+  }
+  difference() {
+    sync_frame_parts();
     sync_void();
   }
   // Sync moving parts, for demonstration purposes
+   /*
   translate([gate_x, 0, wheel_offset_z])
     double_wheels();
   translate([gate_x, 0, wheel_offset_z])
     rotate([0, follower_rest_angle, 0])
-      rotate([180, 0, 0])
+      rotate([180, 15, 0])
         follower_arm();
-  translate([ratchet_shaft_x, +R2R/2, ratchet_shaft_z_offset])
-    rotate([0, 160, 0]) mirror([1, 0, 0]) ratchet_arm();
-  translate([ratchet_shaft_x, -R2R/2, ratchet_shaft_z_offset])
+  translate([ratchet_shaft_x, +grid_xy/2, ratchet_shaft_z_offset])
+    rotate([0, 190, 0]) mirror([1, 0, 0]) ratchet_arm();
+  translate([ratchet_shaft_x, -grid_xy/2, ratchet_shaft_z_offset])
     rotate([0, 170, 0]) mirror([1, 0, 0]) ratchet_arm();
+  */
 }
 
 /* The straight, slanted middle section of the gate */
-module grid_gate_middle(void=false, top_cut=0.0) {
+module grid_gate_middle(void=false, switch=false, top_cut=0.0) {
   rotate([0, 90, 0]) 
     dpipe(gate_middle_length, void=void, top_cut=top_cut);
+  if (switch)
+    rotate([0, 90, 0])
+      translate([0, 0, gate_switch_start])
+        switch_dpipe(gate_switch_end-gate_switch_start, void=true);
 }
 
 module grid_gate_old() 
@@ -1359,9 +1568,13 @@ module grid_assembly() {
 
 //rotate([0, -90, 0])
 //grid_block_fabric();
-//grid_gate();
+//rotate([0, -gate_io_curve_angle, 0])
+//difference() { 
+//  grid_gate(); 
+//  cube([120,120,120]);}
 //translate([grid_xy/2, 0, 0]) rotate([0, 0, -90])
-//grid_block_signal(length=3);
+//translate([0, grid_xy, 0]) grid_block_signal(length=2);
+//grid_block_signal_end(length=3);
 //translate([grid_xy*3.5, -grid_xy/2, 0]) grid_block_signal(length=1);
 //translate([grid_xy*-.5, -grid_xy/2, grid_z]) grid_block_signal(length=1);
 //translate([-grid_xy, 0, grid_z]) grid_block_signal(length=1);
@@ -1372,20 +1585,26 @@ module grid_assembly() {
 //translate([grid_xy, 0, grid_z-grid_conn_z]) color("salmon") grid_connector_multi(length=1, width=1);
 //difference() { union() {´
 //grid_block_base(length=2, width=2, height=1);
-grid_spacer_zeroh(length=2, width=2);
-//translate([-grid_xy/2, grid_xy/2, -grid_z]) grid_spacer(length=1, height=1);
+//grid_spacer_zeroh(length=3, width=4);
+//translate([-grid_xy/2, grid_xy/2, -grid_z]) 
+//grid_spacer_gate_support(length=4, height=1);
+//translate([-grid_xy/2*3, grid_xy/2, -grid_z]) grid_spacer(length=1, height=2);
+//translate([-grid_xy/2*5, grid_xy/2, -grid_z]) grid_spacer(length=1, height=3);
+//translate([-grid_xy/2*7, grid_xy/2, -grid_z]) grid_spacer(length=1, height=4);
 //} translate([0, 0, -50]) cube([100, 100, 100]); }
 //translate([-grid_xy/2, 0, grid_z*2-grid_conn_z]) grid_connector();
 //translate([0,0 , grid_z*2-grid_conn_z]) grid_connector_multi(length=3, width=1
 //, omit_start_x=true, omit_end_x=true, 
 //, omit_start_y=true, omit_end_y=true
 //); 
+double_wheels();
+//ratchet_arm();
+//follower_arm();
 
 //rotate([0, -90, 0])
 //rotate([0, slope, 0])
 //assembly();
 //full_gate_ng();
-//follower_arm();
 
 //kick_dpipe(30, 7, void=true);
 //kick_dpipe(30, 7);
@@ -1418,6 +1637,6 @@ grid_spacer_zeroh(length=2, width=2);
 //wheel(part2=false); 
 //%wheel(void=true);
 //}
-//double_wheels();
-//ratchet_arm();
+
+
 //invert_frame();
