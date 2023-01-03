@@ -1041,5 +1041,93 @@ Logic ideas:
 
        - Testing 28.12.2022:
         - Constructing the gates on top of single towers is not a great idea.
-	  Fixed the gate support piece to allow wider structures. 
-	 
+	  Fixed the gate support piece to allow wider structures. These should
+	  fix the gates in place pretty well.
+	- The gate mechanicals have some problems... 
+	 - The holders are too fragile, depending on plastic used.
+	  - The ratchet arms don't need to rotate around so they can have a
+	    flat on the shaft for inserting
+	 - The wheel shaft gets pushed up by the balls and can jam itself
+	   in the insertion gap. The ball can also get wedged against the
+	   flat on wheel spoke.
+	 - Print imperfections can also cause the ratchet arm to jam,
+	   either it doesn't raise and can jam the ball (probably only
+	   happens when the ball is slow), or doesn't fall back down and
+	   fails to stop the wheel
+
+       - Testing and development 29.12.2022:
+        - DONE: reshaped the wheel teeth to be pointy, hoping to avoid
+	  balls getting stuck leaning against the flat ends.
+	- DONE: tuned the wheel shaft supports to be more minimal
+	 - Doing a test print before any other improvements
+	- DONE: make the shaft holders thicker and stronger
+	 - Maybe just thicken them on the inside and subtract the
+	   ball track out. There's plenty of extra space on the
+	   inside as long as the balls clear the shaft holders.
+	 - Made them a lot thicker, still broke a couple.
+	- TODO: make the ratchet shaft flat on both sides so it can be
+	  inserted easier? (maybe not worth it since we can't do that
+	  to the wheel shaft anyways, it would jam)
+        - DONE: the ratchet contact angle is wrong, ball arriving on
+	  one side can also pop the ratchet on the other side.
+	  Move ratchet 1mm back? Would that be enough?
+	- TODO: the shaft holders are snapping at a specific point
+	  (around or little below the shaft centerpoint),
+	  reshape the holder to add some material there.
+	  
+       - Testing and development 30.12.2022:
+        - Tested with new ratchet position, wheel printed with 0.15
+	  layers and cleaned up better, seems to work a lot better now.
+	 - However balls arriving fast enough, from the top of an empty
+	   second gate track will start to cause problems. The first
+	   ball can make the second signal ratchet to jump, and somehow
+	   the second ball can also pass while leaving the first ball
+	   still waiting (the wheel rotates so fast that the first ball
+	   doesn't have time to accelerate and take the passing slot?)
+	 - Also tested feeding several balls into one side
+	  - Loading 3 balls seems to work fine. The fourth will sit on
+	    the flat bit between gates.
+	 - TODO: The follower arm lift wedge can actually kick the static
+	   ball into the other track because the switch section allows it.
+	  - Change the gates to have just one switch section? Maybe the
+	    safest bet, but will limit part reusability. Planning the
+	    full adder showed that optimizing the part count requires
+	    quite a lot of differently handed gates.
+	  - Or refactor the follower arm to keep the ball on the track?
+	- Next steps:
+	 - Print more components and test several gates in sequence.
+	   See if we are then getting consistent action.
+	  - Starting from entering a fabric block and then passing two
+	    gates, the speed seems about right.
+         - Seeing two problems: the wheel spoke may be in a position
+	   to wedge the arriving ball and a faster ball may pass without
+	   releasing the earlier one, the ratchet falls back down before
+	   the other ball has started moving. Why does this even happen?
+	   The wheels are on a single shaft, both balls should always
+	   move forward when it rotates. Is this also the case of
+	   the first ball leaning against the wheel arm instead of
+	   taking the slot?
+	  - TODO: Let's reshape the wheel so that once the ball arrives
+	    at the locked position, it's in a wheel slot so that it's
+	    not possible for one ball to proceed without the other.
+	   - Wheel radius now 12 from 10, made the spoke symmetrically
+	     pointy.
+	   - One thing to watch out with adjustments is that the ratchet
+	     stopper tooth has to rotate under the ratchet before the
+	     ball lets it fall. Maybe reshape the ratchet release wedge
+	     to make it stay up longer?
+           - The second thing is that if possible, the wheel spoke should
+	     clear the possible second ball in the queue.
+
+       - Testing 3.1.2023:
+        - The rehaped wheel seems to be working better, but there is still
+	  a glitch. What seems to happen is that balls are arriving almost
+	  at the same time, the ratchets release but slightly before the
+	  balls are in the wheel slots. So, the first ball starts to rotate
+	  the wheel and this blocks the second ball from entering the
+	  slot.
+         - How to fix?
+	 - Adjust the ratchet wedge to release later? This way we should
+	   be able to make sure that the ball is in the slot when the
+	   wheel gets released and starts to rotate.
+         - Change to three spoke wheel? 
