@@ -1130,4 +1130,315 @@ Logic ideas:
 	 - Adjust the ratchet wedge to release later? This way we should
 	   be able to make sure that the ball is in the slot when the
 	   wheel gets released and starts to rotate.
-         - Change to three spoke wheel? 
+         - Change to three spoke wheel?
+	 
+       - Testing 4.1.2023:
+        - Three spoke wheel with adjusted angles seems to have finally
+	  fixed the issue of leaving one ball behind. Couple of glitches
+	  but those seemed to be just some print inaccuracies jamming
+	  the ratchet.
+	 - This design doesn't work at all with more than one ball
+	   queued but the four spoke one didn't work either. We'll
+	   need something else to feed a queue into a signal.
+	 - It also still has the problem with fast balls (fabric +
+	   empty gate section).
+	- Widen the lower parts of the shaft holders and the design might
+	  be ready for a larger scale test.
+	- TODO: Label holders. Something that just clips to the track
+	  edges and has a label, either a printed letter or flat surface
+	  for writing.
+	- DONE: Followers for the rest of the gate types. Can we actually
+	  fit two gates side by side with the current design? Also, could
+	  the follower work with only the middle arm? TESTED, no, with
+	  only middle arm it tilts too much when one input raises it, and
+	  the other input gets inverted even with arm activated.
+	  Also TESTED, the wheel shaft extension needs to be 2mm shorter. DONE
+	  And the wedge didn't clear the wheel spokes, made 2mm shorter as
+	  well.
+	- DONE: The shaft holders still want to break. Cut off a bit from
+	  the top? The gap for the axle doesn't need to be that long.
+        - TODO: 1/8x slomo is enough for checking the gate action. Was
+	  really easy to see how the fast ball kicks the first ball back.
+	  Meaning that the wheel spokes still do not properly force the
+	  balls to same movement.
+
+       - IDEAS 5.1.2023:
+        - Could the kinda inconvenient connections be replaced by magnets?
+	  Insert from below, small spacing, snaps sections together...
+	  Except that would rule out metal balls...
+	- Something like this could work for the input
+	  https://www.printables.com/model/318143-marblevator-starting-gate
+	- Circuits do not need fully populated build plates, if we imagine
+	  someone starting with a circuit idea they want to implement.
+	  We could well minimize the ground pieces to much less as long
+	  as everything stays somewhat interconnected on the bottom level.
+	  The track connections are strong enough to ensure the actual
+	  signal flows correctly. This will save a lot of plastic.
+	 - Minimal design:
+	  - The exit edge of the fabric square needs a full length
+	    single width section (to support the signal ends or fabric
+	    blocks which support the next gates)
+	  - The enter edge likewise needs full length section to support
+	    the gates feeding it
+	  - The rest of the fabric square only needs some configuration
+	    to support the fabric blocks not on the edges.
+	  - The gate sections between need connections only along the
+	    edged to join fabric blocks. The gates will be supported at
+	    both ends by fabric blocks (for one gate sections) or
+	    by intermediate support scaffolds if more than one gate
+	    in sequence.
+	   - Full adder design: 59 ground plate sections needed, 47
+	     saved from compared to minimal fully populated design,
+	     and somewhat more when compared to standard size rectangular
+	     plate design.
+        - Hermaphroditic ground connections maybe? These don't need
+	  support from the sloping design. 
+
+       - Testing 6.1.2023:
+        - Starting the final assembly of the full adder
+        - The base plate constructed from smaller pieces works great.
+	  Also the peg tolerances are fine once printed with correct
+	  Z leveling.
+	- The shaft holders still consistently break when trying to
+	  insert the shaft. Seems that making them stronger didn't help,
+	  now that they are stiffer there is more force when inserting
+	  the shaft and the end result is the same.
+	 - Fix? Increase the gap? For the ratchet shaft, there should
+	   never be anything pushing it up. For the wheel shaft,
+	   the force should be forwards when the ratchet is holding it
+	   and the ball tries to rotate it. 
+	- If a signal needs to terminate before the final lowest level,
+	  the standard end piece doesn't fit. Will need an end piece
+	  that can replace a gate track section (currently the end piece
+	  has a male peg that doesn't fit into the gate support block
+	  that the preceding gate rests on, and the possible next
+	  gate support block doesn't allow a spacer to be placed on it)
+
+       - Testing 7.1.2023:
+        - Full adder base plate printed and assembled
+	- DONE: Design a tower that can fit on the gate support block
+	  (needs to fit the peg)
+	- DONE: The basic one height rectangular spacer corners need some
+	  attention. Vertical spokes breaking really easily and some of
+	  the bridging is pretty bad. Added some low-poly spheres into the
+	  corners.
+
+       - Testing 8.1.2023:
+        - Proceeding with the full adder prototype.
+	 - Tried an empty gate section feeding a gate again, same problem,
+	   the fast ball bounces the stationary ball back.
+	 - Need to design a section which can slow the ball down. Feeling
+	   like adjusting the sync parts to deal with fast balls will cause
+	   problems with reliablity in the common case.
+	 - Maybe put two inverters (or even more?) into the section
+	 - Or maybe a ramp with a stop at the end, the stop kills forward
+	   momentum before allowing the ball to drop down and continue
+	   along the slope
+	 - DONE: slope section with two inverters, can add more if needed.
+	   Just needs testing.
+	 - Tested the 2-inverting slope, hard to say how much it helps.
+	   Will test with series of 4 and 6 inverters as well.
+	 - Tested 4 and 6, 6 is a no go, will randomize balls. 4 seems
+	   to work, needs some more testing to see whether this are
+	   reliable and sufficient. 2 doesn't work, it will throw the
+	   ball into the gate in a curve which makes it invert once more.
+	   If 4 starts showing problems, we may need some alternative
+	   solution.
+	- TODO: We'll also need (for some even larger circuits) a way to
+	  force signals to zero, when feeding unnecessary balls to
+	  repeaters. This should be a fairly simple variant of the inverter,
+	  which we can put into either a flat or sloped signal section,
+	  but what if we want to feed a gate from another directly?
+	  Because we have the switch section on both sides of the gate,
+	  it might be possible to force a set or clear on also the
+	  triggering signal which otherwise just passes through unchanged.
+
+       - Testing 9.1.2023:
+        - The 3mm square vertical and 4mm round truss bars in spacer
+	  blocks are proving quite annoying to print. Verticals break
+	  and truss bars become blobby very easily, especially in the
+	  middle joint (also overhang problems, as usual)
+	 - Prototyped a solid block spacer, it's fine but even with just
+	   2 perimeters and almost no infill, takes noticeably more plastic
+	   (not time though).
+	 - Now printing a version with 8mm truss bars, 2 perimeters,
+	   0% infill. Hopefully the larger hollow structures fix the
+	   blobbing issues. Time is about the same and plastic used
+	   something like 15% more.
+	 - DONE, 3 high spacers printed pretty much perfectly as a pair
+	   and the strength seems very good. Seems like we can standardize
+	   on these for spacers 3 or higher. What about 1 and 2?
+	  - Looks like 2 can use the same design. Maybe a bit overkill though.
+	  - 1 is probably fine with vertical bars now that we have the
+	    reinforced corners.
+	  - 5 high spacers were fine as well (the middles remained a
+	    bit too hot though). Dunno what the practical maximum for
+	    this design is. 
+
+       - Testing 10.1.2023:
+        - Printing the final two pieces! After that just some cleanup,
+	  installation and can try some full circuit tests.
+	- What about the labeling? Now that the 1-length input chutes
+	  seem like the practical option, placing anything on top of them
+	  is not a great idea.
+	- We could simply subtract the letters from the 1-length pieces.
+	 - This seems like the easiest idea. The end pieces need two
+	   variants though, unless we use two variants of signal blocks,
+	   which seems more annoying.
+	 - Design ready, need to test in practice.
+	- Looking at the lettered blocks gives an idea... could we add
+	  some kind of a living spring mechanism to the pin (vertical
+	  connectors, should rename those in the source file) connection?
+	  Would be so nice to get a better snap-in action.
+
+       - Testing 14.1.2023:
+        - Final assembly done
+	 - One of the 5-long gate supports has really bad fit for some reason
+	   Can't get the upper section to fit well enough to get balls
+	   rolling reliably. Will reprint with 0.2mm to hopefully get
+	   better fit.
+	  - Also the gate to gate connection doesn't seem to have any
+	    clearance. DONE, add some tolerance in both ends.
+	 - Printed some 6-high supports, seems to work fine. 
+	 - TODO: fix the grid spacer gate support piece, it's using the
+	   wrong pyramid truss call.
+	 - The 4-inversion slowdown piece seems to be working fine for
+	   the slowdown but it seems to flip signals. Need to brainstorm
+	   something else for that. Otherwise the sync action looks
+	   really promising, several runs through the whole set of
+	   gates passed with no issues (except the inversions).
+	  - Ideas?
+          - Testing a series of 4 ski jumps (when printed, almost horizontal
+	    when placed to the design... may need to reduce the slopes a
+	    bit, but let's see).
+	  - If just the jumps don't work, then we may need to look into
+	    putting a top structure which completely stops the horizontal
+	    speed, lets the ball drop down and start rolling from there.
+          - Turns out the ramp sequence doesn't work at all, the bouncing
+	    goes way too uncontrolled by the end.
+	  - Go back to the top obstacle idea. The already implemented
+	    ramps should work fine with that.
+	  - DONE, implemented the ramp+tunnel idea and finally the action
+	    seems foolproof. Even saw some balls bounce back, then continue
+	    just as intended. Also feeding a 4-long straight section into
+	    a fabric block is not a problem at all.
+
+       - Testing 16.1.2023:
+        - Several full test runs with all the logic done! But some
+	  bugs seen...
+	 - Some gates can get stuck. Seems there is 2 or 3 with some
+	   finish issues, between the ratchet arm and the wheel, and
+	   maybe in the wheel teeth as well.
+	 - The double sided connectors in the gate support blocks
+	   turned out more finicky than expected. Probably because
+	   there are three parts to fit together there and the gates
+	   were missing the clearances. Also because the truss flexes
+	   a bit, when fitting one end, the other wants to pop out or
+	   at least twist, which then causes signal glitches later.
+	   Tuned some of the gates already, looks like the upper section
+	   still needs some work. Also maybe we should make the gates
+	   less stiff, put just one connector near the wheel shaft?
+	   That's the only positioning-critical part.
+	 - The logic arm trigger side can flip the ball, looks like.
+	   Move the trigger closer to the center? Looks like it can
+	   be moved 2 mm to the center. That should make it push the
+	   triggering ball toward the edge rather than center. DONE
+	- How to improve?
+	 - Test everything individually and incrementally.
+	  - "Test bench" for the gates at least, easy way to stress test
+	    them a bit.
+	  - When building the circuit, test fit every connection before
+	    trying to build on the scaffolding. Check that there are air
+	    gaps between track walls at each connection!
+	  - Once the circuit is built, test run it before installing
+	    the moving parts and check that there are no signal flips
+	    or stuck balls (gates without moving parts might be too fast?)
+          - For demo purposes the I/O markings are important.
+
+
+       - Wild ideas 17.1.2023:
+        - Elevators! The vertical screw conveyor can lift multiple channels
+	  without mixing them. Multi-slot chain conveyor can as well. This
+	  could be used to construct long circuits while keeping the height
+	  low, but maybe the more interesting part would be to loop the
+	  signals back up.
+	- Vertical design. Could we stack the fabric squares and have the
+	  other parts outside it? Meaning some kind of a block construction
+	  of the fabric, not built on scaffolding. There would be two
+	  advantages here, we could drop signals a long way into a further
+	  part of a circuit whereas in the plane setup the number of
+	  parallel signals determines the width, which will become
+	  prohibitive maybe after 8 or so? And the other would be that
+	  the xy size would stay compact and you could just build up.
+	  Additionally we could have lift screws (or belts) running up
+	  the tower. 
+        - Thinking about the simplest possible programmable computer...
+	 - Memory cells. We could have a diverter on a vertical shaft,
+	   in the read channel it's placed at one of the edges of the
+	   channel just like the gate kickers. The write channel instead
+	   moves it according to channel it's in.
+	  - TODO this should be easily done with a literal flip-flop.
+	    Shaft in the center, triggers before and after it, kickers
+	    accordingly in the other channel.
+	  - For ROM it would obviously be just manually set, or we could
+	    omit the triggers and use a more compact design.
+	 - Memory addressing? In our case it would be just a demultiplexer
+	   to direct the read or write signal to the correct memory cell,
+	   then we can simply combine the cell outputs into a single
+	   output signal. However our gate implementation would be
+	   absolutely massive because of the internal signal fanout.
+           So there needs to be some non-gate solution to this.
+	  - Large scale memory is divided into blocks, upper part of the
+	    address selects the block, lower part selects the cell inside
+	    the block, only lower part needs to be routed to every block.
+	    Inside the block, a row and column setup can be used to
+	    select a single cell.
+	    https://www.geeksforgeeks.org/what-is-memory-decoding/
+          - There needs to be some sort of non-gate demultiplexer
+	    solution for addressing memory cells. Using gates would
+	    require a shitton of hardware.
+	   - Binary tree of switchable routes to the cells? Then send
+	     the address to the switches, after that the data route
+	     is ready. For this we just need a controllable switch.
+	     For reading it doesn't need to preserve the signal, but
+	     for writing it obviously needs to.
+	   - If the binary tree grows larger, we can't control all the
+	     switches at later levels, it would be too much friction
+	     to overcome. Instead what we would need to do is route
+	     both the data and the subsequent address bits to the
+	     correct route. This way each address bit would need to
+	     only control two switches, one for the data and one
+	     for the remaining address bits. With this idea we would
+	     need a pretty complex switch action with three states,
+	     unset, set to 0 and set to 1. Each address bit arriving
+	     at unset gate would set the route and next bits would
+	     follow it. Then we would need the routed data bit to
+	     unset the switches it passes so that the next address
+	     can be set.
+	   - The other mux/demux action we would need is sending
+	     words bit by bit to the adder (this needs looping the
+	     carry back) and then collecting them back to a
+	     register.
+	    - This would be a fun next project after the full
+	      adder, build a program counter. After that memory
+	      access to fetch instructions. And after that we
+	      can start about thinking of an instruction set.
+	   - Demux idea:
+	    - We can probably fit a diverting signal path into a
+	      space of a gate. If the path is clear, the signal
+	      continues straight (set to 0). If there are
+	      kickers/diverters down, it gets directed to the
+	      other track (set to 1). The interesting part will
+	      be implementing the unset state, where the arriving
+	      signal needs to both choose a path and set the
+	      switch.
+	    - How do we distinguish the data signal? Since we know
+	      the number of address bits, we could count them and
+	      use just a single channel throughout. The other option
+	      would be to implement a whole separate data path.
+	      This would make the switch simpler and we'll probably
+	      need that anyways to actually get the data to the
+	      memory cell. And we can send the r/w bit last and
+	      direct the data bit to either the read or write channel
+	      of the memory cell.
+

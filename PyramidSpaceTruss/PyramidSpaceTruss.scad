@@ -43,6 +43,8 @@ use <../includes/maths.scad>;
    crossbars1, crossbars2: each true or false depending on if crossbars are
      wanted at the sides
      
+   corner_extra: extra reinforcement for the vertical bars
+     
    bar_fn: used as the $fn parameter for the round bars
    */
 
@@ -51,12 +53,13 @@ if (false)
   pyramid_box_truss(40, 40, 120, // Overall dimensions
                       1, 1, 6,      // Segment counts
                       4, 4, 4, 4, 4, // Thicknesses
-                      true, true, $16);
+                      true, true, 0, $16);
    
 module 
 pyramid_box_truss(x_size, y_size, z_size, x_segs, y_segs, z_segs,
                          slat_z_thickness, slat_xy_thickness, slat_k_thickness,
-                         bar_diameter, vert_thickness, crossbars1, crossbars2, bar_fn)
+                         bar_diameter, vert_thickness, crossbars1, crossbars2, 
+                         corner_extra, bar_fn)
 {
   x_pitch = (x_size - slat_xy_thickness) / x_segs;
   y_pitch = (y_size - slat_xy_thickness) / y_segs;
@@ -70,6 +73,22 @@ pyramid_box_truss(x_size, y_size, z_size, x_segs, y_segs, z_segs,
                     bar_diameter, bar_fn, (z % 2));
   }
 
+  if (corner_extra > 0 || bar_diameter > 0)
+  intersection() {
+    for (x = [0 : x_segs])
+      for (y = [0 : y_segs]) {
+        for (z = [0 : z_segs])
+          if (z % 2 == 0)
+        translate([x*x_pitch+slat_xy_thickness/2, y*y_pitch+slat_xy_thickness/2,
+                   z*z_pitch+slat_z_thickness/2])
+          if (corner_extra > 0)
+            sphere(r=corner_extra, $fn=8);
+          else
+            sphere(r=bar_diameter, $fn=8);
+      }
+    cube([x_size, y_size, z_size]);
+  }
+    
   if (z_segs > 1) {
     intersection () {
       cube([x_size, y_size, z_size]);

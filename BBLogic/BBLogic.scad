@@ -206,17 +206,37 @@ module merge_pipe(l, void=false) {
 }
 
 // Produces a shaft holder void, including a gap along the side.
-module shaft_holder_void(r, h, gap, gap_l=0, $fn=$fn) {
+// The gap_angle parameter makes the gap widen towards the outside.
+module shaft_holder_void(r, h, gap, gap_l=0, gap_angle=0, $fn=$fn) {
   cylinder(r=r, h=h, $fn=$fn);
-  translate([0, -gap/2, 0])
-    cube([r*3, gap, gap_l > 0 ? gap_l : h]);
+  if (gap_angle == 0) {
+    translate([0, -gap/2, 0])
+      cube([r*3, gap, gap_l > 0 ? gap_l : h]);
+  } else {
+    for (rot = [-gap_angle, gap_angle])
+      rotate([0, 0, rot])
+        translate([0, -gap/2, 0])
+          cube([r*3, gap, gap_l > 0 ? gap_l : h]);
+  }
+  translate([r*1.5, -r*2, 0])
+    cube([r*3, r*4, h]);
 }
 
 // Produces a shaft holder, including printing support.
 module shaft_holder(r, h, t, $fn=$fn) {
   cylinder(r=r, h=h, $fn=$fn);
-  translate([0, -r, 0])
-    cube([t, r*2, h]);
+  difference() {
+    union() {
+      rotate([0, 0, -30])
+        translate([0, -r, 0])
+          cube([t*2, r*2, h]);
+      rotate([0, 0, 30])
+        translate([0, -r, 0])
+          cube([t*2, r*2, h]);
+    }
+    translate([t, -r*3, 0])
+      cube([t*2, r*6, h]);
+  }
 }
 
 /* Partially open ring that snaps around a cylindrical shaft. */
@@ -253,7 +273,7 @@ gate_x = 52; // Gate positioning (wheel shaft offset inside frame)
 wheel_min_y = -8;
 wheel_max_y = 8;
 
-wheel_r = 10;
+wheel_r = 12; // Was 10
 wheel_shaft_r = 4/2;
 wheel_shaft_holder_r = 12/2;
 wheel_shaft_holder_gap = 3.5;
@@ -265,9 +285,10 @@ wheel_void_tol = 1; // Tolerance for forming the void for the wheel
 wheel_shaft_min_y = -12;
 wheel_shaft_max_y = 12;
 wheel_cutout_offset = 11; // Offset of the ball cutouts from the axis centerline
-wheel_shaft_rh_extra = 6; // Extra extension for the double wheel shaft on the right hand side
+wheel_shaft_rh_extra = 4; // Extra extension for the double wheel shaft on the right hand side
 wheel_shaft_collar_r = 8/2; // Short side collar to locate the shaft sideways
 wheel_shaft_collar_w = 2;
+wheel_shaft_holder_t = 4;
 
 // Wheel ratchet parameters
 wheel_ratchet_min_y = -13.5;
@@ -281,10 +302,10 @@ wheel_offset_z = 35;
 wheel_minor_r = 7;
 
 // Ratchet arm parameters
-ratchet_shaft_x = 28; // Shaft centerline x position
+ratchet_shaft_x = 27; // Shaft centerline x position
 ratchet_shaft_r = 4/2;
 ratchet_shaft_holder_r = 12/2;
-ratchet_shaft_holder_t = 5;
+ratchet_shaft_holder_t = 4;
 ratchet_shaft_l = r2r+r*2+r_tol*2+r_t*2;
 ratchet_shaft_z_offset = 40; // Shaft centerline offset in z
 ratchet_shaft_holder_gap = 3.5;
@@ -316,9 +337,10 @@ follower_rest_angle = 10; // Rest position for the follower
 
 // Trigger parameters
 trigger_w = 3; // Trigger wedge thickness
-trigger_l = 18; // Length of the trigger wedge
+trigger_l = 16; // Length of the trigger wedge
 trigger_h = 8; // How far the trigger contact surface start extends from follower arm origin in z
 trigger_angle = 20; // Angling of the contact surface of the trigger
+trigger_offset = 5; // Distance of the trigger outer edge from the centerline
 
 // Kicker side parameters
 kicker_outer_offset = 11; // Kicker part outer edge offset from double track centerline
@@ -326,7 +348,8 @@ kicker_t = 4; // Kicker thickness
 kicker_l = 8; // Kicker length (in x)
 kicker_h = 10; // How far kicker extend from follower arm origin in z
 
-module follower_arm() {
+module follower_arm(trigger_pos=4, kicker_ch=2, 
+                    kicker_clears=true, kicker_sets=true) {
   difference() {
     union() {
       // Shaft holder  
@@ -350,9 +373,12 @@ module follower_arm() {
       // Secondary main arm
       translate([0, grid_xy/2+wheel_void_tol+r2r/2+r+r_t+wheel_void_tol, 
                  -wheel_shaft_r-follower_shaft_holder_t])
-        cube([follower_l, follower_arm_w, follower_arm_t]);
+        cube([follower_l, wheel_shaft_rh_extra - wheel_void_tol, follower_arm_t]);
       // Trigger
-      translate([follower_l-trigger_l, grid_xy/2 + wheel_max_y - trigger_w, 
+      translate([follower_l-trigger_l,
+                 (trigger_pos <= 2 ? -1 : 1) * grid_xy/2 
+                 + ((trigger_pos == 2 || trigger_pos == 4) ? 
+                     trigger_offset - trigger_w : -trigger_offset), 
                 -wheel_shaft_r-follower_shaft_holder_t])
         difference() {
           cube([trigger_l, trigger_w, trigger_h*2]);
@@ -361,7 +387,9 @@ module follower_arm() {
               cube([trigger_l*2, trigger_w+0.02, trigger_h]);  
         }
       // Outer kicker
-      translate([follower_l-kicker_l, -grid_xy/2 - kicker_outer_offset, 
+      if (kicker_sets)
+      translate([follower_l-kicker_l, 
+                 (kicker_ch == 1 ? -1 : 1) * grid_xy/2 - kicker_outer_offset, 
                 -wheel_shaft_r-follower_shaft_holder_t/4]) {
         // Support / printing help
         translate([0, 0, -follower_shaft_holder_t*0.75])
@@ -376,7 +404,9 @@ module follower_arm() {
           }
       }
       // Inner kicker
-      translate([follower_l-kicker_l, -grid_xy/2 + kicker_outer_offset - kicker_t, 
+      if (kicker_clears)
+      translate([follower_l-kicker_l, 
+                 (kicker_ch == 1 ? -1 : 1) * grid_xy/2 + kicker_outer_offset - kicker_t, 
                 -wheel_shaft_r-follower_shaft_holder_t/4]) {
         // Support / printing help
         translate([0, 0, -follower_shaft_holder_t*0.75])
@@ -396,8 +426,8 @@ module follower_arm() {
         rotate([0, 90, 0])
           snap_in_void(wheel_shaft_r+tol*2, wheel_shaft_r+follower_shaft_holder_t, 
                         follower_shaft_holder_opening, follower_shaft_holder_w);
-    translate([0, grid_xy/2+wheel_shaft_max_y+wheel_void_tol, 0])
-        rotate([0, 90, 0])
+    translate([0, grid_xy/2+wheel_void_tol+r2r/2+r+r_t+wheel_void_tol, 0])
+      rotate([0, 90, 0])
           snap_in_void(wheel_shaft_r+tol*2, wheel_shaft_r+follower_shaft_holder_t, 
                         follower_shaft_holder_opening, wheel_shaft_rh_extra - wheel_void_tol);
 
@@ -506,21 +536,28 @@ module double_wheels() {
            difference() {
              translate([0, 0, wheel_min_y])
               cylinder(r=wheel_r, h=wheel_max_y-wheel_min_y, $fn=24);             
-                for (a = [0, 90, 180, 270])
+                for (a = [0, 120, 240]) //  [0, 90, 180, 270])
                     translate([0, 0, wheel_min_y])
-                      rotate([0, 0, a]) {
+                      rotate([0, 0, a+45]) {
                         translate([wheel_cutout_offset, 0, -1])
-                            cylinder(r=r, 
+                            cylinder(r=r+1, 
                                      h=wheel_max_y-wheel_min_y+2, $fn=24);
                          // Extra cutouts to make the wheel "arms" pointy
-                         translate([6, 2, -1]) // XXX non-parametrized
-                           cube([r, r, wheel_max_y-wheel_min_y+2]);
+/*                         rotate([0, 0, -15]) 
+                           translate([6, 4, -1]) // XXX non-parametrized
+                            cube([r, r, wheel_max_y-wheel_min_y+2]);
+                         rotate([0, 0, 15]) 
+                           translate([4, 6, -1]) // XXX non-parametrized
+                            cube([r, r, wheel_max_y-wheel_min_y+2]);*/
+                         rotate([0, 0, 0]) 
+                           translate([7, -r*2, -1]) // XXX non-parametrized
+                            cube([r, r*4, wheel_max_y-wheel_min_y+2]);
                       }
             translate([0, 0, -ratchet_arm_w/2-wheel_void_tol])
                cylinder(r=wheel_r+0.01, h=ratchet_arm_w+wheel_void_tol*2, $fn=24);
         }
         difference() {
-         for (a = [0, 90, 180, 270])
+         for (a = [0, 120, 240]) // [0, 90, 180, 270])
           rotate([0, 0, a+45])
             translate([0, -wheel_shaft_r, -ratchet_arm_release_gap/2+ratchet_arm_release_tol])
               cube([wheel_minor_r, wheel_shaft_r*2, 
@@ -536,9 +573,10 @@ module double_wheels() {
           cylinder(r=wheel_shaft_r, 
                    h=grid_xy+r2r+r*2+r_t*2+r_tol*3+wheel_shaft_collar_w           
                      +wheel_shaft_rh_extra, $fn=24);
-     translate([0, 0, grid_xy/2+r2r/2+r+r_tol*2+r_t])  
+     translate([0, 0, grid_xy/2+r2r/2+r+r_tol*2+r_t])
        cylinder(r=wheel_shaft_collar_r, h=wheel_shaft_collar_w, $fn=24);
-     translate([0, 0, grid_xy/2+r2r/2+r-wheel_shaft_collar_w])  
+     translate([0, 0, 
+       grid_xy/2+r2r/2+r+r_t-wheel_shaft_holder_t-wheel_shaft_collar_w])  
        cylinder(r=wheel_shaft_collar_r, h=wheel_shaft_collar_w, $fn=24);
    }
         
@@ -555,14 +593,14 @@ module sync_void() {
          translate([0, 0, -ratchet_shaft_l/2-wheel_void_tol])
            shaft_holder_void(r=wheel_shaft_r+wheel_void_tol,
                               gap=wheel_shaft_holder_gap, h=ratchet_shaft_l+
-                              wheel_void_tol*2, $fn=24);
+                              wheel_void_tol*2, gap_angle=5, $fn=24);
       // Wheel void
-#      translate([gate_x, grid_xy/2, wheel_offset_z])
+      translate([gate_x, grid_xy/2, wheel_offset_z])
        rotate([90, 0, 0])
          rotate([0, 0, 45])
-           translate([0, 0, -r2r/2-r-r_tol]) {
+           translate([0, 0, -r2r/2-r-r_t-r_tol+wheel_shaft_holder_t]) {
              cylinder(r=wheel_shaft_holder_r+wheel_void_tol+6, 
-                      h=r2r+r*2+r_tol*2, $fn=24);
+                      h=r2r+r*2+r_t*2+r_tol*2-wheel_shaft_holder_t*2, $fn=24);
            }
       // Ratchet shaft void
       translate([ratchet_shaft_x, grid_xy/2, ratchet_shaft_z_offset])
@@ -571,7 +609,7 @@ module sync_void() {
          translate([0, 0, -ratchet_shaft_l/2-wheel_void_tol])
            shaft_holder_void(r=ratchet_shaft_r+wheel_void_tol, 
                               gap=ratchet_shaft_holder_gap, h=ratchet_shaft_l+
-                              wheel_void_tol*2, $fn=24);
+                              wheel_void_tol*2, gap_angle=5, $fn=24);
      // Ratchet bar void
      translate([ratchet_shaft_x, grid_xy/2, ratchet_shaft_z_offset])
       rotate([90, 0, 0])
@@ -945,7 +983,8 @@ grid_z = 24; // Grid vertical pitch
 grid_base_t = 4; // Grid block base thickness
 
 grid_spacer_truss_t = 3;
-grid_spacer_cross_t = 4;
+grid_spacer_cross_t = 8;
+grid_spacer_corner_extra = 5;
 
 // Grid alignment peg dimensions
 grid_peg_xy = 5;
@@ -984,19 +1023,42 @@ module grid_block_base(height=1, length=1, width=1, void=false) {
   }
 }
 
-module grid_spacer(length=1, height=1) {
+module grid_spacer(length=1, height=1, for_peg=false, v_bars=true, c_bars=false) {
   difference() {
     union() {
       translate([-grid_xy/2+tol, -grid_xy/2+tol, 0])
         pyramid_box_truss(grid_xy*length-tol*2, grid_xy-tol*2, grid_z*height-tol,
-                      length, 1, height<3 ? 2 : 4,
+                      length, 1, height<7 ? 2 : (height + height % 2),
                       grid_spacer_truss_t, grid_spacer_truss_t, grid_spacer_truss_t, 
-                      (height<3 ? 0 : grid_spacer_cross_t), 
-                      (height<3 ? grid_spacer_truss_t : 0),
-                      false, false, 16);
+                      (c_bars ? grid_spacer_cross_t : 0), 
+                      (v_bars ? grid_spacer_truss_t : 0),
+                      false, false, (v_bars ? grid_spacer_corner_extra : 0), 16);
       grid_block_base(length=length, height=height);
+      if (for_peg)
+        translate([-grid_xy/2, -grid_xy/2, 0])
+          grid_spacer_pegholes(length=length);
     }
     grid_block_base(length=length, height=height, void=true);
+    if (for_peg)
+      translate([-grid_xy/2, -grid_xy/2, 0])
+        grid_spacer_pegholes(length=width, void=true);
+  }
+}
+
+module grid_spacer_solid(length=1, height=1, for_peg=false) {
+  difference() {
+    union() {
+      translate([-grid_xy/2+tol, -grid_xy/2+tol, 0])
+        cube([grid_xy*length-tol*2, grid_xy-tol*2, grid_z*height-tol]);
+      grid_block_base(length=length, height=height);
+      if (for_peg)
+        translate([-grid_xy/2, -grid_xy/2, 0])
+          grid_spacer_pegholes(length=length);
+    }
+    grid_block_base(length=length, height=height, void=true);
+    if (for_peg)
+      translate([-grid_xy/2, -grid_xy/2, 0])
+        grid_spacer_pegholes(length=width, void=true);
   }
 }
 
@@ -1257,9 +1319,12 @@ module grid_block_fabric() {
         translate([0, 0, grid_z]) rotate([180, 0, 180]) grid_connector(extra_back=15);
         translate([0, 0, -grid_z/2]) cube([grid_xy*2, grid_xy, grid_z], center=true);
         // Cutout for clearing an adjacent track
-        translate([-grid_xy/2-grid_conn_total_x, 0, grid_z])
+        if (false) translate([-grid_xy/2-grid_conn_total_x, 0, grid_z])
           rotate([0, 70, 0])
             translate([0, -grid_xy/2, -grid_z])
+              cube([grid_xy, grid_xy, grid_z]);
+        // Cutout for clearing an adjancent full block. Alternative to the above.
+        translate([-grid_xy*1.5+tol, -grid_xy/2, 0])
               cube([grid_xy, grid_xy, grid_z]);          
       }
 //      translate([-grid_xy/2+tol, -grid_xy/2+tol, 0]) // Printing help block
@@ -1348,15 +1413,16 @@ gate_switch_end = 80;
 
 /* Gate with grid connectors
    Size fixed to 3x2x2, origin on the lower level middle of the input edge */
-module grid_gate() {
+module grid_gate(omit_sync=false, omit_switch=false, omit_connect=false,
+                 slowdown=false) {
   difference() {
     union() {
       for (i = [-grid_xy/2, grid_xy/2]) {
         // Input connectors
         // translate([grid_xy/2, i, grid_z]) rotate([0, 0, 180]) grid_connector();
         // Input straight pipe section
-        translate([0, i, grid_z+grid_base_t+r+r_tol]) rotate([0, 90, 0]) 
-          dpipe(gate_input_straight, top_cut=gate_top_cut);
+        translate([tol, i, grid_z+grid_base_t+r+r_tol]) rotate([0, 90, 0]) 
+          dpipe(gate_input_straight-tol, top_cut=gate_top_cut);
         // Input curved pipe section
         for (j = [-r2r/2, r2r/2])
           translate([gate_input_straight, i+j, grid_z+grid_base_t+r+r_tol]) 
@@ -1365,7 +1431,7 @@ module grid_gate() {
         // Output straight pipe section
         translate([grid_xy*3-gate_output_straight, i, grid_base_t+r+r_tol]) 
           rotate([0, 90, 0]) 
-            dpipe(gate_output_straight, top_cut=gate_top_cut);
+            dpipe(gate_output_straight-tol, top_cut=gate_top_cut);
         // Output curved pipe section
         for (j = [-r2r/2, r2r/2])
           translate([grid_xy*3-gate_input_straight, i+j, +grid_base_t+r+r_tol]) 
@@ -1379,12 +1445,12 @@ module grid_gate() {
               rotate([0, gate_io_curve_angle])
                 translate([0, i, gate_io_curve_r])
                   { 
-                    grid_gate_middle(top_cut=gate_top_cut);
+                    grid_gate_middle(top_cut=gate_top_cut, slowdown=slowdown);
                     // Rectangular base
                     translate([-grid_xy, -gate_bottom_w/2, -gate_bottom_t])
                     cube([grid_xy*4, gate_bottom_w, gate_bottom_t]); 
                     // Joining the tracks together
-                    if (i < 0) {
+                    if (!omit_connect && i < 0) {
                      translate([grid_xy/3, 0, -gate_bottom_t])
                         cube([grid_xy/4, grid_xy, gate_bottom_t]); 
                      translate([grid_xy*2, 0, -gate_bottom_t])
@@ -1393,15 +1459,16 @@ module grid_gate() {
                   }
             }
           /* Clip the baseplate to the bounding box of the whole gate */
-          translate([0, i-grid_xy/2, 0])
-            cube([grid_xy*3, grid_xy*2, grid_z*2]);
+          translate([tol, i-grid_xy/2, 0])
+            cube([grid_xy*3-tol*2, grid_xy*2, grid_z*2]);
         }
         // Output side bottom support (also needs lattice)
         // translate([grid_xy*2.5, i, 0])
         //  grid_block_base(height=0, length=1, width=1);
       }
       // Sync static parts
-      //sync_frame_parts();
+      if (!omit_sync)
+        sync_frame_parts();
     }
     // Void section
     for (i = [-grid_xy/2, grid_xy/2]) {
@@ -1432,25 +1499,35 @@ module grid_gate() {
                    grid_z+grid_base_t+r+r_tol-gate_io_curve_r]) 
           rotate([0, gate_io_curve_angle])
             translate([0, i, gate_io_curve_r]) 
-              grid_gate_middle(void=true, switch=true); // (i>0));
+              grid_gate_middle(void=true, switch=!omit_switch,
+                               slowdown=slowdown);
         // Output side bottom support void
         translate([grid_xy*2.5, i, 0])
           grid_block_base(height=0, length=1, width=1, void=true);
     }
-    //sync_void();
+    if (!omit_sync)
+      sync_void();
   }
+  /*
   difference() {
     sync_frame_parts();
     sync_void();
-  }
+  }*/
   // Sync moving parts, for demonstration and fit check purposes
-   
+  
   translate([gate_x, 0, wheel_offset_z])
+    //rotate([0, 35, 0])
     double_wheels();
   translate([gate_x, 0, wheel_offset_z])
     rotate([0, follower_rest_angle, 0])
-      rotate([180, 15, 0])
+      rotate([180, 15, 0]) {
+  //follower_arm(trigger_pos=1);
+  //follower_arm(trigger_pos=2);
+  //follower_arm(trigger_pos=3);
+  //follower_arm(trigger_pos=4);
         follower_arm();
+      }
+  
   translate([ratchet_shaft_x, +grid_xy/2, ratchet_shaft_z_offset])
     rotate([0, 190, 0]) mirror([1, 0, 0]) ratchet_arm();
   translate([ratchet_shaft_x, -grid_xy/2, ratchet_shaft_z_offset])
@@ -1458,69 +1535,51 @@ module grid_gate() {
   
 }
 
-/* The straight, slanted middle section of the gate */
-module grid_gate_middle(void=false, switch=false, top_cut=0.0) {
-  rotate([0, 90, 0]) 
-    dpipe(gate_middle_length, void=void, top_cut=top_cut);
-  if (switch)
-    rotate([0, 90, 0])
-      translate([0, 0, gate_switch_start])
-        switch_dpipe(gate_switch_end-gate_switch_start, void=true);
-}
-
-module grid_gate_old() 
-{
-  difference() {
-    union() {
-      translate([0, grid_xy, mid_h])
-        rotate([0, 90+slope, 0]) {
-          translate([0, 0, sync_frame_pos-5]) dpipe(5);
-          translate([0, 0, sync_frame_pos]) switch_dpipe(sync_frame_l, roofonly=true);
-          translate([0, 0, sync_frame_pos+sync_frame_l]) switch_dpipe(25);
-          translate([0, 0, sync_frame_pos+sync_frame_l+25]) switch_dpipe(10, roofonly=true);
-          translate([0, 0, sync_frame_pos+sync_frame_l+35]) dpipe(5);
-       }
-      translate([0, 0, mid_h])
-        rotate([0, 90+slope, 0]) {
-          translate([0, 0, sync_frame_pos-5]) dpipe(5);
-          translate([0, 0, sync_frame_pos]) switch_dpipe(sync_frame_l, roofonly=true);
-          translate([0, 0, sync_frame_pos+sync_frame_l]) switch_dpipe(35, roofonly=true);
-          translate([0, 0, sync_frame_pos+sync_frame_l+35]) dpipe(5);
-        }
-      translate([sync_frame_pos, grid_xy/2, mid_h])
-        rotate([0, slope, 0])
-          sync_frame_parts();
-      translate([grid_xy/2, 0, -grid_z])
-        grid_block_base(height=2);
-      translate([grid_xy*2.5, 0, -grid_z])
-        grid_block_base();
+/* The straight, slanted middle section of the gate. */
+module grid_gate_middle(void=false, switch=false, top_cut=0.0, slowdown=false) {
+  if (slowdown) {
+    if (!void) {
+      rotate([0, 90, 0]) 
+        dpipe(gate_middle_length, void=void, top_cut=top_cut);
+      translate([68, 0, 0]) rotate([0, 90, 0]) 
+        dpipe(10, void=void, top_cut=0.0);
+    } else {
+    /* Original idea, 4 inverters in sequence, slowdown is ok but the tight
+       curve in the end can make balls jump the sides after exiting. */
+    /* n = 4;
+    for (i = [1 : n]) {
+      translate([gate_middle_length/n*(i-1), 0, 0]) rotate([0, 90, 0])
+        dpipe(0.1, void=void);
+      translate([gate_middle_length/n*(i-1), 0, 0]) rotate([0, 90, 0])
+        switch_dpipe(gate_middle_length/n, void=void, inverter=true);
+    } */
+    /* n = 4; displace = 4;
+    for (i = [1 : n]) translate([gate_middle_length/n*(i-1), 0, 0]) rotate([0, 90, 0]) {
+      dpipe(0.1, void=void);
+      translate([0, -r2r/2, 0]) rotate([0, -90, 105]) 
+        pipe_displace(gate_middle_length/n, displace, half=true, void=true);
+      translate([0, r2r/2, 0]) rotate([0, -90, 75]) 
+        pipe_displace(gate_middle_length/n, displace, half=true, void=true);
+    }  */  
+    displace = 4; ramp_start = 30; ramp_len = 30; 
+    translate([0, 0, 0]) rotate([0, 90, 0]) dpipe(ramp_start, void=void);
+    translate([ramp_start, 0, 0]) rotate([0, 90, 0]) {
+      dpipe(0.1, void=void);
+      translate([0, -r2r/2, 0]) rotate([0, -90, 105]) 
+        pipe_displace(ramp_len, displace, half=true, void=true);
+      translate([0, r2r/2, 0]) rotate([0, -90, 75]) 
+        pipe_displace(ramp_len, displace, half=true, void=true);
     }
-    translate([sync_frame_pos, w/2, mid_h])
-      rotate([0, slope, 0])
-        sync_void();
-    translate([0, grid_xy, mid_h])
-        rotate([0, 90+slope, 0]) {
-          translate([0, 0, 0]) dpipe(5, void=true);
-          translate([0, 0, sync_frame_pos]) switch_dpipe(sync_frame_l, roofonly=true, void=true);
-          //translate([0, 0, 5+sync_frame_l]) dpipe(4, void=true); 
-            
-          // Crossover section
-          translate([0, 0, 5+sync_frame_l]) switch_dpipe(25, inverter=true, void=true); 
-          translate([0, 0, 5+sync_frame_l]) dpipe(25, void=true); 
-            
-          translate([0, 0, 5+sync_frame_l+25]) dpipe(15, void=true); 
-          //translate([0, 0, 20+sync_frame_l]) switch_dpipe(35, void=true);
-          //translate([0, 0, 20+sync_frame_l+35]) dpipe(5, void=true); 
-          translate([0, 0, gate_l-20]) dpipe(20, void=true);
-        }
-    translate([0, 0, mid_h])
-        rotate([0, 90+slope, 0]) {
-          translate([0, 0, 0]) dpipe(5, void=true);
-          translate([0, 0, sync_frame_pos]) switch_dpipe(sync_frame_l, roofonly=true, void=true); 
-          translate([0, 0, 5+sync_frame_l]) switch_dpipe(35, roofonly=true, void=true);   
-          translate([0, 0, 5+sync_frame_l+35]) dpipe(5, void=true);   
-          //translate([0, 0, 20+sync_frame_l]) kick_and_sink_dpipe(35, 55, 7, void=true);
-        }
+    translate([ramp_start+ramp_len, 0, 0]) rotate([0, 90, 0]) 
+      dpipe(gate_middle_length-ramp_start-ramp_len, void=void);
+    }
+  } else {
+    rotate([0, 90, 0]) 
+      dpipe(gate_middle_length, void=void, top_cut=top_cut);
+    if (switch)
+      rotate([0, 90, 0])
+        translate([0, 0, gate_switch_start])
+          switch_dpipe(gate_switch_end-gate_switch_start, void=true);
   }
 }
 
@@ -1536,38 +1595,75 @@ module grid_assembly() {
 
 //rotate([0, -90, 0])
 //grid_block_fabric();
-//rotate([0, -gate_io_curve_angle, 0])
-//difference() { 
-  grid_gate(); 
-//  cube([120,120,120]);}
+//rotate([0, -gate_io_curve_angle, 0]) 
+//  grid_gate();
+//translate([-grid_xy*3, 0, grid_z]) grid_gate();
+//difference() {
+//  grid_gate(omit_sync=true, omit_switch=true, omit_connect=true, slowdown=true);
+//  cube([200, 200, 200]);
+//}
+//translate([73, -grid_xy/2+r2r/2, 20]) sphere(r=r);
 //translate([grid_xy/2, 0, 0]) rotate([0, 0, -90])
 //translate([0, grid_xy, 0]) grid_block_signal(length=2);
-//grid_block_signal_end(length=3);
+//difference() {
+//  grid_block_signal_end(length=1);
+// grid_block_signal_end_neg(length=1);
+//  translate([2, 0, 0]) linear_extrude(10) scale([2, 2, 1]) rotate([0, 0, -90]) text("X", font="USAAF_Stencil", halign="center", valign="center"); }
+//difference() {
+//  grid_block_signal_end(length=1);
+//  linear_extrude(10) scale([2.5, 2.5, 1]) rotate([0, 0, 90]) text("C", font="USAAF_Stencil", halign="center", valign="center"); }
 //translate([grid_xy*3.5, -grid_xy/2, 0]) grid_block_signal(length=1);
 //translate([grid_xy*-.5, -grid_xy/2, grid_z]) grid_block_signal(length=1);
 //translate([-grid_xy, 0, grid_z]) grid_block_signal(length=1);
 //translate([0, -grid_xy, 0]) grid_block_signal(length=1, invert=true);
 //translate([grid_xy, 0, 0]) 
 //grid_block_signal(invert=true);
+//grid_block_signal(length=2);
+//translate([grid_xy, 0, 0]) rotate([0, 0, 180])grid_block_signal(length=2);
 //translate([-grid_xy/2, 0, grid_z-grid_conn_z]) color("salmon") grid_connector();
 //translate([grid_xy, 0, grid_z-grid_conn_z]) color("salmon") grid_connector_multi(length=1, width=1);
 //difference() { union() {´
 //grid_block_base(length=2, width=2, height=1);
-//grid_spacer_zeroh(length=3, width=4);
-//translate([-grid_xy/2, grid_xy/2, -grid_z]) 
-//grid_spacer_gate_support(length=4, height=1);
-//translate([-grid_xy/2*3, grid_xy/2, -grid_z]) grid_spacer(length=1, height=2);
+//grid_spacer_zeroh(length=2, width=1);
+//translate([-grid_xy/2, grid_xy/2, 0]) rotate([0, 0, 90])
+//grid_spacer_gate_support(length=1, height=1);
+//translate([-grid_xy/2*3, grid_xy/2, -grid_z])
+//for (h = [1:8]) translate([h*grid_xy, 0, 0])
+//grid_spacer(length=1, height=6, v_bars=false, c_bars=true);
+//grid_spacer(length=1, height=1, v_bars=true, c_bars=false);
+//grid_spacer_solid(length=1, height=3);
 //translate([-grid_xy/2*5, grid_xy/2, -grid_z]) grid_spacer(length=1, height=3);
 //translate([-grid_xy/2*7, grid_xy/2, -grid_z]) grid_spacer(length=1, height=4);
 //} translate([0, 0, -50]) cube([100, 100, 100]); }
 //translate([-grid_xy/2, 0, grid_z*2-grid_conn_z]) grid_connector();
 //translate([0,0 , grid_z*2-grid_conn_z]) grid_connector_multi(length=3, width=1
-//, omit_start_x=true, omit_end_x=true, 
+//, omit_start_x=true, omit_end_x=tru, 
 //, omit_start_y=true, omit_end_y=true
 //); 
-//double_wheels();
+//rotate([0, 45, 0]) double_wheels();
 //ratchet_arm();
-//follower_arm();
+
+// GATES
+// AND: If triggering signal is 0, clears output signal
+// OR: If triggering signal is 1, sets output signal
+// XOR: If triggering signal is 1, inverts output signal
+// (REPEATER is OR, but incoming output signal mst be 0)
+
+// AND-L (left output)
+//follower_arm(trigger_pos=4, kicker_ch=1, kicker_clears=true, kicker_sets=false);
+// AND-R (right output)
+//follower_arm(trigger_pos=2, kicker_ch=2, kicker_clears=true, kicker_sets=false);
+// OR-L (left output)
+//follower_arm(trigger_pos=3, kicker_ch=1, kicker_clears=false, kicker_sets=true);
+// OR-R (right output)
+//follower_arm(trigger_pos=1, kicker_ch=2, kicker_clears=false, kicker_sets=true);
+// XOR-L (left output)
+//follower_arm(trigger_pos=3, kicker_ch=1, kicker_clears=true, kicker_sets=true);
+// XOR-R (right output)
+//follower_arm(trigger_pos=1, kicker_ch=2, kicker_clears=true, kicker_sets=true);
+
+
+
 
 //rotate([0, -90, 0])
 //rotate([0, slope, 0])
