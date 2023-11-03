@@ -68,3 +68,21 @@ duty as the snap-in bars.
 The snap-in bar mechanism will be important. Because the gates will overhang quite
 a bit, the upper part will need some kind of hook and rotate into place action.
 
+### Frame design idea 1
+
+Horizontal bars should be triangular and the module bottom edges bevelled.
+Vertical bars can be round and they need to slot into each other, either with cones
+or cylinders fitting inside each other.
+
+The module corners will have cuts corresponding to the frame vertical bars. If these
+are tall enough, they will prevent the module from tilting in any direction. 
+
+The remaining problem is that the insertion direction is still left unsecured. How
+do we sandwich the modules between the frame layers? We don't want to extend every
+module upwards, that would be a lot of (fragile) extra stuff to print for things like
+basic track pieces.
+
+Maybe spacer pipe sections. Drop in a module, insert spacers to the opposite frame
+bars and once the next frame layer is in place, the spacers will lock the module in
+place.
+
