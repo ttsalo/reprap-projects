@@ -21,7 +21,18 @@ industry =
   ["c", 145, 30,
   ["c", 145, 30,
   ["c", 145, 30,
-]]]]]]];
+  ["s", 110,
+  ["s", 110,
+  ["c", 490, -13,
+  ["t", // First industry turnout
+    ["f", // Industry branch backwards
+      ["s", 110,
+    ]],
+    ["s", 55,
+      ["s", 110,
+      ["s", 110,
+      ]]]
+  ]]]]]]]]]]];
 
 yard = 
   ["t", // First turnout of the yard
@@ -30,14 +41,22 @@ yard =
       ["s", 55,
       ["s", 110,
       ["s", 110,
-    ]]]]],
+      ["s", 110,
+    ]]]]]],
     ["c", 490, -13, 
       ["t", // Second turnout of the yard
         ["s", 110,
           ["s", 55,
           ["s", 110,
-          ["s", 110, 
-        ]]]],
+          ["s", 55,
+          ["s", 110,
+          ["t", // Runaround turnout
+            ["s", 55,
+            ],
+            ["f",
+              ["c", 490, 13, ]
+          ]]
+        ]]]]],
         ["c", 490, -13, 
           ["t", // Third turnout of the yard
             ["s", 110,
@@ -45,8 +64,8 @@ yard =
               ["s", 55,
               ["s", 110, ]]]],
             ["c", 490, 13, 
-              ["s", 55, 
-              ["s", 110, ]]
+              ["c", 490, 13, 
+              ]
         ]],
       ]],
     ]
@@ -55,6 +74,10 @@ yard =
 layout =
   ["s", 110,
   ["c", 490, 13,
+  ["t", 
+    ["f", 
+      ["s", 110,
+      ["c", 490, -13, ]]],
   ["s", 110,
   ["s", 110,
   ["c", 195, 30,
@@ -69,7 +92,7 @@ layout =
     ["s", 25,
     ["t", // Curved turnout on the yard side
       industry,
-      yard,
+      ["c", 490, -13, yard]
     ],
   ]]]]],
   ["c", 220, 45,
@@ -80,11 +103,22 @@ layout =
   ["c", 195, 45,
   ["c", 195, 45,
   ["s", 55,
-  ["c", 195, 45,
-  ["c", 195, 45,
-  ["t",  ["c", 490, 13], ["s", 110,
-  ]
-  ]]]]]]]]]]]]]]]]]]]];
+  ["t", // Curved turnout (west into the station tracks
+    ["c", 195, 30,
+      ["c", 195, 30,
+      ["c", 195, 30,
+      ["s", 110,
+      ["s", 110,
+      ["s", 55, ]]]]]],
+    ["s", 25,
+      ["c", 195, 30,
+      ["c", 195, 30,
+      ["c", 195, 30,
+       ["s", 110,
+      ["s", 110,
+      ["s", 55, ]]]]]]]
+    ]
+  ]]]]]]]]]]]]]]]]]];
 
 
 l2 =  ["c", 145, -45,
@@ -93,7 +127,7 @@ l2 =  ["c", 145, -45,
 function straight(pos, l) = [pos[0], pos[1]+l, pos[2]];
 
 module draw_layout(lout) {
-  translate([-w/2, -0.1, 0]) color("lightblue") cube([w, 0.2, h*2]);
+  translate([-w/2, -0.2, 0]) color("lightblue") cube([w, 0.4, h*2]);
   if (lout[0] == "s") {
     translate([-w/2, 0, 0])
       cube([w, lout[1], 2.5]);
@@ -130,6 +164,12 @@ module draw_layout(lout) {
   }
 }
 
-color("lightgray") translate([-80, -550, -1]) cube([608, 1212, 0.5]);
+translate([-80, -550, -1]) {
+  color("lightgray") cube([608, 1212, 0.5]);
+  color("DarkSlateGray") translate([0, 1212-160, 0]) cube([160, 160, 50]);
+}
+translate([-80, -690, -1]) {
+  color("SandyBrown") translate([100, 400, 0]) cube([56, 119, 60]);
+}
 //draw_layout(l2);
 draw_layout(layout);
