@@ -22,17 +22,20 @@ industry =
   ["c", 145, 30,
   ["c", 145, 30,
   ["s", 110,
-  ["s", 110,
   ["c", 490, -13,
   ["t", // First industry turnout
     ["f", // Industry branch backwards
       ["s", 110,
-    ]],
-    ["s", 55,
+      ["c", 145, -30,
+      ["s", 55,
       ["s", 110,
+    ]]]]],
+    ["s", 110,
       ["s", 110,
-      ]]]
-  ]]]]]]]]]]];
+      ["s", 55,
+      ["s", 110,
+      ]]]]
+  ]]]]]]]]]];
 
 yard = 
   ["t", // First turnout of the yard
