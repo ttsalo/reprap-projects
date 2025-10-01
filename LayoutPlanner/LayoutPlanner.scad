@@ -31,7 +31,7 @@ industry =
       ["s", 110,
     ]]]]],
     ["s", 110,
-      ["s", 110,
+      ["c", 490, 13, //"s", 110,
       ["s", 55,
       ["s", 110,
       ]]]]
@@ -167,12 +167,22 @@ module draw_layout(lout) {
   }
 }
 
+// Conttrols
 translate([-80, -550, -1]) {
   color("lightgray") cube([608, 1212, 0.5]);
   color("DarkSlateGray") translate([0, 1212-160, 0]) cube([160, 160, 50]);
 }
+// Passenger station
 translate([-80, -690, -1]) {
   color("SandyBrown") translate([100, 400, 0]) cube([56, 119, 60]);
+}
+// Goods warehouse
+translate([200, -640, -1]) {
+  color("SandyBrown") translate([100, 400, 0]) rotate([0, 0, -13]) cube([63, 133, 56]);
+}
+// Sawmill
+translate([220, 320, -1]) {
+  color("SandyBrown") rotate([0, 0, 30]) cube([78, 122, 55]);
 }
 //draw_layout(l2);
 draw_layout(layout);
