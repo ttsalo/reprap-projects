@@ -1,12 +1,15 @@
 // Candelabra by Tomi T. Salo 2025
 
-candle_h = 12;
-candle_d = 40;
-holder_wt = 4;
-holder_base_d = 15;
+candle_h = 12; // Depth of the cup for the candle
+candle_d = 40; // Diameter of the cup for the candle
+holder_wt = 4; // Adjusted to give two perimeters at the thinnest part
+holder_base_d = 15; // Diameter of the stalks of the candle holders
+
+// Height of the conical part of the candle holder, the fudge factor
+// gives a suitable cone angle
 holder_base_h = ((candle_d + holder_wt) - holder_base_d) / 1.7;
 
-base_t = 3;
+base_t = 3; // Baseplate thickness
 
 module holder() {
   cylinder(d1=holder_base_d, d2=candle_d+holder_wt*2, h=holder_base_h, $fn=6);
@@ -18,7 +21,10 @@ module holder() {
     }    
 }
 
-/* Base layout definition is a structure of nested lists that are drawn in order
+/* Baseplate layout definition is a structure of nested lists (a tree)
+   These layouts are repeated six times at 60 angles to give a snowflake shape.
+   A more natural-looking alternative to the koch snowflake.
+
    Key "s" defines a straight segment, with elements:
     1: length
     2: width at start
@@ -57,6 +63,20 @@ base_layout = [
 ];
 
 mini_base_layout = [
+  "s", 12, 10, 7.5, 
+    ["b2",
+      ["s", 8, 4, 0.5, ],
+      ["s", 8, 7.5, 5,
+        ["b3", 
+          ["s", 12, 5, 2, 
+            ["b4", 
+              ["s", 5, 3, 0.5, ],
+              ["s", 5, 3, 0.5, ]
+    ]]]]
+  ]
+];
+
+midi_base_layout = [
   "s", 22, 10, 7, 
   ["b4", 
     ["s", 10.5, 5, 0.5, ],
@@ -115,8 +135,6 @@ module base() {
 
 /* Snowflake base, six symmetrical arms defined by the mini_base_layout structure. */
 module mini_base() {
-  rotate([0, 0, 0])
-    cylinder(d1=30, d2=0, h=35, $fn=6);
   linear_extrude(height=base_t) {
     for (i = [0, 60, 120, 180, 240, 300])
       rotate([0, 0, i])
@@ -124,12 +142,23 @@ module mini_base() {
   }
 }
 
+/* Snowflake base, six symmetrical arms defined by the midi_base_layout structure. */
+module midi_base() {
+  rotate([0, 0, 0])
+    cylinder(d1=30, d2=0, h=35, $fn=6);
+  linear_extrude(height=base_t) {
+    for (i = [0, 60, 120, 180, 240, 300])
+      rotate([0, 0, i])
+        base_arm(midi_base_layout);
+  }
+}
 
-
+/* Koch snowflake fractal element. Origin is at the middle of a triangle face
+   length 'base'. Recurses until level 0 is reached. */
 module koch(level, base) {
   edge=base/3;
-  h=edge*cos(30);
-  polygon(points=[[0, -edge/2], [edge*cos(30), 0], [0, edge/2]]);
+  linear_extrude(height=base_t) 
+    polygon(points=[[0, -edge/2], [edge*cos(30), 0], [0, edge/2]]);
   if (level > 0) {
      translate([0, -edge, 0])
        koch(level=level-1, base=base/3);      
@@ -146,22 +175,47 @@ module koch(level, base) {
 
 /* Mini version of Koch snowflake base. */
 module mini_koch_base() {
+  base_d=60;
+  dist=sin(30)*base_d/2;
+  edge=cos(30)*base_d;
+    
+  cylinder(d=base_d, h=base_t, $fn=3);
+  for (i = [60, 180, 300])
+    rotate([0, 0, i])
+      translate([dist, 0, 0])
+        koch(level=2, base=edge);    
+}
+
+/* Midi version of Koch snowflake base. */
+module midi_koch_base() {
   base_d=120;
   dist=sin(30)*base_d/2;
   edge=cos(30)*base_d;
     
   cylinder(d1=40, d2=0, h=35, $fn=3);
   cylinder(d=base_d, h=base_t, $fn=3);
-  linear_extrude(height=base_t) {
-    for (i = [60, 180, 300])
-        rotate([0, 0, i])
+  for (i = [60, 180, 300])
+    rotate([0, 0, i])
       translate([dist, 0, 0])
-        koch(level=3, base=edge);
-  }
-    
+        koch(level=3, base=edge);    
 }
 
-/* Layout definition is a structure of nested lists that are drawn in order
+/* Large version of Koch snowflake base. */
+module koch_base() {
+  base_d=195;
+  dist=sin(30)*base_d/2;
+  edge=cos(30)*base_d;
+    
+  cylinder(d1=60, d2=0, h=55, $fn=6);
+  cylinder(d=base_d, h=base_t, $fn=3);
+  for (i = [60, 180, 300])
+    rotate([0, 0, i])
+      translate([dist, 0, 0])
+        koch(level=4, base=edge);    
+}
+
+/* Holder layout definition is a structure of nested lists, much like the baseplate.
+
    Key "b" defines a branch point where the layout branches into sublists.
    Key "h" defines a candle holder (terminal point)
    Key "s" defines a straight segment, with elements:
@@ -183,6 +237,18 @@ midi_layout = [
 
 maxi_layout = [
   "b", [
+    ["s", 150, ["h"]],
+    ["d", 140, 60, 30, ["h"]],
+    ["d", 130, 60, 90, ["h"]],
+    ["d", 140, 60, 150, ["h"]],
+    ["d", 130, 60, 210, ["h"]],
+    ["d", 140, 60, 270, ["h"]],
+    ["d", 130, 50, 330, ["h"]],
+  ]
+];
+
+maxi_funky_layout = [
+  "b", [
     ["d", 140, 60, 0, ["h"]],
     ["d", 150, 70, 120, ["h"]],
     ["d", 160, 70, 240, ["h"]],
@@ -202,7 +268,8 @@ maxi_layout = [
 
 module candelabra(layout) {
   if (layout[0] == "s") {
-    cylinder(d=holder_base_d, h=layout[1], $fn=24);
+    rotate([0, 0, 30])
+      cylinder(d=holder_base_d, h=layout[1], $fn=6);
     translate([0, 0, layout[1]])
       candelabra(layout[2]);
   }
@@ -224,25 +291,28 @@ module candelabra(layout) {
 }
 
 module candelabra_mini() {
-  mini_base();
+  // mini_base();
+  mini_koch_base();
   holder();
 }
 
-//candelabra_mini();
+// candelabra_mini();
 
 module candelabra_midi() {
-  mini_koch_base();
+  // midi_base();
+  midi_koch_base();
   candelabra(midi_layout);
 }
 
-candelabra_midi();
+// candelabra_midi();
 
 module candelabra_maxi() {
-  base();
+  //base();
+  koch_base();
   candelabra(maxi_layout);
 }
 
-//candelabra_maxi();
+candelabra_maxi();
 
 // Some utility modules from a different project, these have some extra
 // functionality not used here.
