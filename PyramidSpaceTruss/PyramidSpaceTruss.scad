@@ -44,22 +44,25 @@ use <../includes/maths.scad>;
      wanted at the sides
      
    corner_extra: extra reinforcement for the vertical bars
+   
+   omit_pyramid: Omit the pyramid sections inside the truss. Useful for
+     relatively flat trusses where the pyramid bars would be too slanted.
      
    bar_fn: used as the $fn parameter for the round bars
    */
 
 /* Example box truss structure. */
-if (false)
-  pyramid_box_truss(40, 40, 120, // Overall dimensions
-                      1, 1, 6,      // Segment counts
+if (true)
+  pyramid_box_truss(40, 40, 80, // Overall dimensions
+                      2, 2, 2,      // Segment counts
                       4, 4, 4, 4, 4, // Thicknesses
-                      true, true, 0, $16);
+                      true, true, 0, true, $16);
    
 module 
 pyramid_box_truss(x_size, y_size, z_size, x_segs, y_segs, z_segs,
                          slat_z_thickness, slat_xy_thickness, slat_k_thickness,
                          bar_diameter, vert_thickness, crossbars1, crossbars2, 
-                         corner_extra, bar_fn)
+                         corner_extra, omit_pyramid, bar_fn)
 {
   x_pitch = (x_size - slat_xy_thickness) / x_segs;
   y_pitch = (y_size - slat_xy_thickness) / y_segs;
@@ -70,7 +73,7 @@ pyramid_box_truss(x_size, y_size, z_size, x_segs, y_segs, z_segs,
       pyramid_truss(x_size, y_size, z_pitch + slat_z_thickness, 
                     x_segs, y_segs,
                     slat_z_thickness, slat_xy_thickness, slat_k_thickness,
-                    bar_diameter, bar_fn, (z % 2));
+                    bar_diameter, bar_fn, (z % 2), omit_pyramid);
   }
 
   if (corner_extra > 0 || bar_diameter > 0)
@@ -93,26 +96,24 @@ pyramid_box_truss(x_size, y_size, z_size, x_segs, y_segs, z_segs,
     intersection () {
       cube([x_size, y_size, z_size]);
       for (z = [0 : z_segs / 2 - 1]) {
-        translate([slat_xy_thickness/2, slat_xy_thickness/2, z * 2 * z_pitch])
+        for (y = [0 : y_segs]) {
+          if (omit_pyramid || y == 0 || y == y_segs) {
+         translate([slat_xy_thickness/2, slat_xy_thickness/2 + y * y_pitch, z * 2 * z_pitch])
           truss_side_lattice(z_pitch * 2 + slat_z_thickness, x_segs,
                              x_pitch, slat_xy_thickness, bar_diameter, vert_thickness,
 			     bar_fn, true, false, crossbars1, crossbars2);
-        translate([slat_xy_thickness/2, 
-		   y_size - slat_xy_thickness/2, z * 2 * z_pitch])
-          truss_side_lattice(z_pitch * 2 + slat_z_thickness, x_segs,
-                             x_pitch, slat_xy_thickness, bar_diameter, vert_thickness,
-			     bar_fn, true, true, crossbars1, crossbars2);
-        translate([slat_xy_thickness/2, slat_xy_thickness/2, z * 2 * z_pitch])
+        }
+    }
+
+       for (x = [0 : x_segs]) {
+          if (omit_pyramid || x == 0 || x == x_segs) {
+         translate([slat_xy_thickness/2 + x * x_pitch, slat_xy_thickness/2, z * 2 * z_pitch])
           rotate([0, 0, 90])
           truss_side_lattice(z_pitch * 2 + slat_z_thickness, y_segs,
                              y_pitch, slat_xy_thickness, bar_diameter, vert_thickness,
 			     bar_fn, false, true, crossbars1, crossbars2);
-        translate([x_size - slat_xy_thickness/2, 
-		   slat_xy_thickness/2, z * 2 * z_pitch])
-          rotate([0, 0, 90])
-          truss_side_lattice(z_pitch * 2 + slat_z_thickness, y_segs,
-                             y_pitch, slat_xy_thickness, bar_diameter, vert_thickness,
-			     bar_fn, false, false, crossbars1, crossbars2);
+          }
+      }
       }
     }
   }
@@ -144,7 +145,7 @@ module multi_pyramid_truss(x_size, y_size, z_size, x_segs, y_segs, z_segs,
    section smaller than the bottom one) */
 module pyramid_truss(x_size, y_size, z_size, x_segs, y_segs,
                      slat_z_thickness, slat_xy_thickness, slat_k_thickness,
-                     bar_diameter, bar_fn, flip)
+                     bar_diameter, bar_fn, flip, omit_pyramid)
 {
   x_pitch = (x_size - slat_xy_thickness) / x_segs;
   y_pitch = (y_size - slat_xy_thickness) / y_segs;
@@ -156,11 +157,13 @@ module pyramid_truss(x_size, y_size, z_size, x_segs, y_segs,
         union () {
           truss_lattice(x_size, y_size, x_segs, y_segs, x_pitch, y_pitch,
                         slat_z_thickness, slat_xy_thickness, slat_k_thickness);
+          if (!omit_pyramid) {
           translate([x_pitch/2, y_pitch/2, z_size - slat_z_thickness])
             truss_lattice(x_size - x_pitch, y_size - y_pitch, x_segs - 1, 
                           y_segs - 1, x_pitch, y_pitch,
                           slat_z_thickness, slat_xy_thickness, 
                           slat_k_thickness);
+          
           translate([slat_xy_thickness/2, slat_xy_thickness/2, 
                      slat_z_thickness/2])
             for (x = [ 0 : x_segs - 1]) {
@@ -170,6 +173,7 @@ module pyramid_truss(x_size, y_size, z_size, x_segs, y_segs,
                           bar_diameter, bar_fn);
               }
             }
+          }
         }
   }
 }
@@ -284,7 +288,7 @@ module truss_side_lattice(z_size, x_segs, x_pitch, slat_xy_thickness,
      to make the model temporarily easier to render.
 */
 
-if (true)
+if (false)
   triangular_truss(100, 5, 25, 40, 10, 20, // Dimensions
                    4, 2, 3.6, 4, 2.4, 2, 2.4, 2, // Thicknesses
                    8);
